@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// Databases store collections of pages with typed properties
 /// (title, select, multi-select, date, checkbox, etc.).
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct Database {
     /// Always `"database"`.
     pub object: String,

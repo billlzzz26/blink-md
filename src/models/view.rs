@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 /// A database view resource returned by the API.
 ///
 /// Views define how a database's data is displayed (table, board, gallery, etc.).
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct View {
     /// Always `"view"`.
     pub object: String,
@@ -19,7 +19,7 @@ pub struct View {
 }
 
 /// The type of database view and its configuration.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[serde(tag = "type")]
 pub enum ViewType {
     /// Table view — rows displayed in columns.
@@ -37,42 +37,42 @@ pub enum ViewType {
 }
 
 /// Configuration for a table view.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct TableConfig {
     /// Property visibility and order settings.
     pub properties: serde_json::Value,
 }
 
 /// Configuration for a board view.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct BoardConfig {
     /// Property to group cards by.
     pub group_by: serde_json::Value,
 }
 
 /// Configuration for a gallery view.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct GalleryConfig {
     /// Cover image configuration.
     pub cover: serde_json::Value,
 }
 
 /// Configuration for a list view.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct ListConfig {
     /// Whether to show cover images.
     pub show: Option<bool>,
 }
 
 /// Configuration for a calendar view.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct CalendarConfig {
     /// Date property to use for calendar display.
     pub date: Option<serde_json::Value>,
 }
 
 /// Configuration for a timeline view.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct TimelineConfig {
     /// Property to group items by.
     pub group_by: serde_json::Value,

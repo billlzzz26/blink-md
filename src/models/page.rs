@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// Pages live inside databases or at the workspace root and contain
 /// structured properties (title, select fields, dates, etc.).
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct Page {
     /// Always `"page"`.
     pub object: String,

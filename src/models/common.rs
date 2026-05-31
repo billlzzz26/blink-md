@@ -1,13 +1,12 @@
-//! Common types shared across all Notion API models.
+//! Common models used by various Notion API resources.
 
-use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
 /// An object identifier (UUID format).
 pub type ObjectId = String;
 
 /// A Notion user (person or bot).
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub struct User {
     /// Always `"user"`.
@@ -24,7 +23,7 @@ pub struct User {
 }
 
 /// The type discriminator for [`User`].
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum UserType {
     /// A human user with an email address.
@@ -34,14 +33,14 @@ pub enum UserType {
 }
 
 /// Information about a person user.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct PersonInfo {
     /// The user's email address.
     pub email: Option<String>,
 }
 
 /// Information about a bot user.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct BotInfo {
     /// Optional owner of the bot.
     pub owner: Option<Owner>,
@@ -50,7 +49,7 @@ pub struct BotInfo {
 }
 
 /// The owner of a bot.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[serde(tag = "type")]
 pub enum Owner {
     /// Owned by the workspace.
@@ -60,7 +59,7 @@ pub enum Owner {
 }
 
 /// The parent container for a Notion resource.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct Parent {
     /// Which kind of parent this is.
     #[serde(flatten)]
@@ -68,7 +67,7 @@ pub struct Parent {
 }
 
 /// The type discriminator for [`Parent`].
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ParentType {
     /// A page inside a database.
@@ -82,7 +81,7 @@ pub enum ParentType {
 }
 
 /// A rich text element returned by Notion.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum RichText {
     /// Plain text with optional link and annotations.
@@ -111,26 +110,36 @@ pub enum RichText {
     },
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+impl RichText {
+    pub fn plain_text(&self) -> &str {
+        match self {
+            RichText::Text { plain_text, .. } => plain_text.as_deref().unwrap_or(""),
+            RichText::Mention { plain_text, .. } => plain_text.as_deref().unwrap_or(""),
+            RichText::Equation { plain_text, .. } => plain_text.as_deref().unwrap_or(""),
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct TextContent {
     pub content: String,
     pub link: Option<Link>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct EquationContent {
     pub expression: String,
 }
 
 /// A URL link attached to rich text.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct Link {
     /// The target URL.
     pub url: String,
 }
 
 /// Text formatting annotations.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct Annotations {
     /// Bold text.
     pub bold: bool,
@@ -140,14 +149,14 @@ pub struct Annotations {
     pub strikethrough: bool,
     /// Underlined text.
     pub underline: bool,
-    /// Monospace code format.
+    /// Inline code formatting.
     pub code: bool,
     /// Color identifier (e.g. `"default"`, `"blue_background"`).
     pub color: String,
 }
 
 /// A mention target inside rich text.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[serde(tag = "type")]
 pub enum MentionObject {
     /// Mention of a user.
@@ -156,35 +165,35 @@ pub enum MentionObject {
     Page { page: PageMention },
     /// Mention of a database.
     Database { database: DatabaseMention },
-    /// Mention of a date range.
-    Date { date: NaiveDate },
+    /// Mention of a date.
+    Date { date: serde_json::Value },
     /// Mention of a URL preview.
     LinkPreview { url: String },
 }
 
 /// A page reference used in mentions.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct PageMention {
     /// The page ID.
     pub id: ObjectId,
 }
 
 /// A database reference used in mentions.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct DatabaseMention {
     /// The database ID.
     pub id: ObjectId,
 }
 
 /// File or image block content shared across models.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct FileBlockContent {
     #[serde(flatten)]
     pub file_type: FileType,
 }
 
 /// The type of file (external URL or uploaded file).
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[serde(tag = "type")]
 pub enum FileType {
     /// An external URL (e.g. images hosted elsewhere).
@@ -194,14 +203,14 @@ pub enum FileType {
 }
 
 /// An external file reference with a URL.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct ExternalFile {
     /// The file URL.
     pub url: String,
 }
 
 /// A file uploaded to Notion.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct UploadedFile {
     /// The file download URL.
     pub url: String,
@@ -210,13 +219,13 @@ pub struct UploadedFile {
 }
 
 /// An icon on a page, database, or callout block.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[serde(tag = "type")]
 pub enum Icon {
     /// An emoji icon (e.g. `"📝"`).
     Emoji { emoji: String },
     /// An external image URL.
     External { external: ExternalFile },
-    /// A file uploaded to Notion.
+    /// An uploaded image file.
     File { file: UploadedFile },
 }

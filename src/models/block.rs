@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// Every block has base metadata (id, timestamps, author, parent) plus
 /// a `block_type` field that determines its content structure.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct Block {
     /// Always `"block"`.
     pub object: String,
@@ -36,7 +36,7 @@ pub struct Block {
 }
 
 /// The type discriminator for [`Block`].
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[serde(tag = "type")]
 pub enum BlockType {
     /// A paragraph with rich text and optional children.
@@ -145,14 +145,14 @@ pub enum BlockType {
 
 // ── Content structs ───────────────────────────────────────────────
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct TextBlockContent {
     pub rich_text: Vec<RichText>,
     pub color: String,
     pub children: Option<Vec<Block>>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct HeadingContent {
     pub rich_text: Vec<RichText>,
     pub color: String,
@@ -160,7 +160,7 @@ pub struct HeadingContent {
     pub children: Option<Vec<Block>>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct ToDoContent {
     pub rich_text: Vec<RichText>,
     pub checked: bool,
@@ -168,28 +168,28 @@ pub struct ToDoContent {
     pub children: Option<Vec<Block>>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct ChildPageContent {
     pub title: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct ChildDatabaseContent {
     pub title: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct EmbedContent {
     pub url: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct BookmarkContent {
     pub url: String,
     pub caption: Vec<RichText>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct CalloutContent {
     pub rich_text: Vec<RichText>,
     pub icon: Option<Icon>,
@@ -197,34 +197,34 @@ pub struct CalloutContent {
     pub children: Option<Vec<Block>>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct EquationContent {
     pub expression: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct LinkPreviewContent {
     pub url: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct TemplateContent {
     pub rich_text: Vec<RichText>,
     pub children: Option<Vec<Block>>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct SyncedBlockContent {
     pub synced_from: Option<SyncedFrom>,
     pub children: Option<Vec<Block>>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct SyncedFrom {
     pub block_id: ObjectId,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct TableContent {
     pub table_width: u32,
     pub has_column_header: bool,
@@ -232,12 +232,12 @@ pub struct TableContent {
     pub children: Option<Vec<Block>>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct TableRowContent {
     pub cells: Vec<Vec<RichText>>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct MeetingNotesContent {
     pub rich_text: Vec<RichText>,
     pub children: Option<Vec<Block>>,
@@ -245,13 +245,13 @@ pub struct MeetingNotesContent {
 
 // ── Position (2026-03-11) ─────────────────────────────────────────
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct Position {
     #[serde(flatten)]
     pub position_type: PositionType,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[serde(tag = "type")]
 pub enum PositionType {
     #[serde(rename = "after_block")]
@@ -262,7 +262,7 @@ pub enum PositionType {
     End,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct BlockIdRef {
     pub id: ObjectId,
 }

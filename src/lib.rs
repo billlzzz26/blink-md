@@ -26,6 +26,8 @@ pub mod api;
 pub mod client;
 pub mod error;
 pub mod models;
+pub mod sync;
 
 pub use client::NotionClient;
-pub use error::NotionError;
+pub use error::{NotionError, Result};
+

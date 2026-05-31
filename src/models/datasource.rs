@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// Data sources allow Notion to connect to external data
 /// providers like Google Sheets, Jira, etc.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct DataSource {
     /// Always `"data_source"`.
     pub object: String,
