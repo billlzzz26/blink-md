@@ -1,8 +1,6 @@
 //! Unit tests for common types (User, Owner, Parent, RichText)
 
-use notion_rs::models::common::{
-    BotInfo, MentionObject, Owner, Parent, ParentType, PersonInfo, RichText, User, UserType,
-};
+use notion_rs::models::common::{Owner, Parent, ParentType, RichText, User, UserType};
 
 #[test]
 fn test_user_person() {
@@ -105,7 +103,7 @@ fn test_parent_page() {
 fn test_rich_text() {
     let json = r#"{
         "type": "text",
-        "rich_text": {
+        "text": {
             "content": "Hello World",
             "link": null
         }
@@ -113,8 +111,8 @@ fn test_rich_text() {
 
     let rich_text: RichText = serde_json::from_str(json).unwrap();
     match rich_text {
-        RichText::Text { content, .. } => {
-            assert_eq!(content, "Hello World");
+        RichText::Text { text, .. } => {
+            assert_eq!(text.content, "Hello World");
         }
         _ => panic!("Expected Text variant"),
     }

@@ -86,14 +86,17 @@ mod tests {
 
     #[test]
     fn test_json_schema_builder() {
-        let schema = JsonSchema::object()
-            .string("name")
-            .number("age")
-            .build();
-        
+        let schema = JsonSchema::object().string("name").number("age").build();
+
         assert_eq!(schema["type"], "object");
-        assert!(schema["required"].as_array().unwrap().contains(&json!("name")));
-        assert!(schema["required"].as_array().unwrap().contains(&json!("age")));
+        assert!(schema["required"]
+            .as_array()
+            .unwrap()
+            .contains(&json!("name")));
+        assert!(schema["required"]
+            .as_array()
+            .unwrap()
+            .contains(&json!("age")));
         assert_eq!(schema["properties"]["name"]["type"], "string");
     }
 }

@@ -10,3 +10,4 @@ pub mod database;
 pub mod datasource;
 pub mod page;
 pub mod view;
+pub mod db;

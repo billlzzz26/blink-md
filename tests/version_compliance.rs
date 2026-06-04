@@ -1,4 +1,4 @@
-use notion_rs::models::block::{Block, BlockType, Position, PositionType, BlockIdRef};
+use notion_rs::models::block::{BlockIdRef, BlockType, Position, PositionType};
 use notion_rs::models::page::Page;
 use serde_json::json;
 
@@ -32,8 +32,10 @@ fn test_position_object_serialization() {
     // Verify that Position uses the 2026 nested object format
     let pos = Position {
         position_type: PositionType::AfterBlock {
-            after_block: BlockIdRef { id: "target_id".to_string() }
-        }
+            after_block: BlockIdRef {
+                id: "target_id".to_string(),
+            },
+        },
     };
 
     let serialized = serde_json::to_value(&pos).unwrap();
@@ -51,9 +53,10 @@ fn test_meeting_notes_rename() {
         }
     });
 
-    let block_type: BlockType = serde_json::from_value(json_old).expect("Should accept transcription alias");
+    let block_type: BlockType =
+        serde_json::from_value(json_old).expect("Should accept transcription alias");
     match block_type {
-        BlockType::MeetingNotes { .. } => {},
+        BlockType::MeetingNotes { .. } => {}
         _ => panic!("Expected MeetingNotes"),
     }
 

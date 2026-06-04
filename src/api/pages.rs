@@ -61,11 +61,7 @@ impl NotionClient {
             .await
     }
 
-    pub async fn move_page(
-        &self,
-        page_id: &str,
-        parent: serde_json::Value,
-    ) -> Result<Page> {
+    pub async fn move_page(&self, page_id: &str, parent: serde_json::Value) -> Result<Page> {
         let path = format!("/pages/{}", page_id);
         let body = serde_json::json!({
             "parent": parent
@@ -76,7 +72,8 @@ impl NotionClient {
 
     pub async fn duplicate_page(&self, page_id: &str) -> Result<Page> {
         let path = format!("/pages/{}/duplicate", page_id);
-        self.request(reqwest::Method::POST, &path, None::<&()>).await
+        self.request(reqwest::Method::POST, &path, None::<&()>)
+            .await
     }
 
     pub async fn get_page_property(

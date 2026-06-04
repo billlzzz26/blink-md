@@ -54,6 +54,31 @@ enum Commands {
     },
     /// Launch interactive TUI
     Tui,
+    /// Convert between Markdown/HTML/PDF/DOCX and JSON/Markdown
+    Convert {
+        #[arg(short, long)]
+        input: std::path::PathBuf,
+        #[arg(short, long)]
+        output: std::path::PathBuf,
+        #[arg(long)]
+        from: Option<String>,
+        #[arg(long)]
+        to: Option<String>,
+    },
+    /// Sync local folder to Notion
+    Sync {
+        #[arg(short, long)]
+        dir: std::path::PathBuf,
+        #[arg(long)]
+        notion_db: Option<String>,
+    },
+    /// Show diff between two files
+    Diff {
+        old: std::path::PathBuf,
+        new: std::path::PathBuf,
+    },
+    /// Start MCP server
+    McpServe,
 }
 
 #[derive(Subcommand)]
@@ -177,10 +202,10 @@ enum CommentAction {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
-    let token = cli.token.unwrap_or_else(|| {
-        std::env::var("NOTION_TOKEN")
-            .expect("NOTION_TOKEN environment variable not set and --token not provided")
-    });
+    let token = cli
+        .token
+        .or_else(|| std::env::var("NOTION_TOKEN").ok())
+        .unwrap_or_default();
     let client = NotionClient::new(&token);
 
     match cli.command {
@@ -200,28 +225,44 @@ async fn main() -> anyhow::Result<()> {
         },
         Commands::Pages { action } => match action {
             PageAction::List => {
-                let results = client.search(None, Some(serde_json::json!({
-                    "property": "object",
-                    "value": "page"
-                }))).await?;
+                let results = client
+                    .search(
+                        None,
+                        Some(serde_json::json!({
+                            "property": "object",
+                            "value": "page"
+                        })),
+                    )
+                    .await?;
                 print_search_results(results);
             }
             PageAction::Get { page_id } => {
                 let page = client.get_page(&page_id).await?;
                 println!("{}", serde_json::to_string_pretty(&page)?);
             }
-            PageAction::Create { parent_id, parent_type, properties_json } => {
+            PageAction::Create {
+                parent_id,
+                parent_type,
+                properties_json,
+            } => {
                 let parent = serde_json::json!({ parent_type: parent_id });
                 let properties = serde_json::from_str(&properties_json)?;
                 let page = client.create_page(parent, properties, None).await?;
                 println!("{}", serde_json::to_string_pretty(&page)?);
             }
-            PageAction::Update { page_id, properties_json } => {
+            PageAction::Update {
+                page_id,
+                properties_json,
+            } => {
                 let properties = serde_json::from_str(&properties_json)?;
                 let page = client.update_page(&page_id, Some(properties), None).await?;
                 println!("{}", serde_json::to_string_pretty(&page)?);
             }
-            PageAction::Move { page_id, parent_id, parent_type } => {
+            PageAction::Move {
+                page_id,
+                parent_id,
+                parent_type,
+            } => {
                 let parent = serde_json::json!({ parent_type: parent_id });
                 let page = client.move_page(&page_id, parent).await?;
                 println!("{}", serde_json::to_string_pretty(&page)?);
@@ -243,17 +284,29 @@ async fn main() -> anyhow::Result<()> {
                 let db = client.get_database(&database_id).await?;
                 println!("{}", serde_json::to_string_pretty(&db)?);
             }
-            DatabaseAction::Create { parent_id, title_json, properties_json } => {
+            DatabaseAction::Create {
+                parent_id,
+                title_json,
+                properties_json,
+            } => {
                 let parent = serde_json::json!({ "page_id": parent_id });
                 let title = serde_json::from_str(&title_json)?;
                 let properties = serde_json::from_str(&properties_json)?;
                 let db = client.create_database(parent, title, properties).await?;
                 println!("{}", serde_json::to_string_pretty(&db)?);
             }
-            DatabaseAction::Update { database_id, title_json, properties_json } => {
+            DatabaseAction::Update {
+                database_id,
+                title_json,
+                properties_json,
+            } => {
                 let title = title_json.map(|t| serde_json::from_str(&t)).transpose()?;
-                let properties = properties_json.map(|p| serde_json::from_str(&p)).transpose()?;
-                let db = client.update_database(&database_id, title, properties).await?;
+                let properties = properties_json
+                    .map(|p| serde_json::from_str(&p))
+                    .transpose()?;
+                let db = client
+                    .update_database(&database_id, title, properties)
+                    .await?;
                 println!("{}", serde_json::to_string_pretty(&db)?);
             }
         },
@@ -262,7 +315,11 @@ async fn main() -> anyhow::Result<()> {
                 let view = client.get_view(&view_id).await?;
                 println!("{}", serde_json::to_string_pretty(&view)?);
             }
-            ViewAction::Update { view_id, name, config_json } => {
+            ViewAction::Update {
+                view_id,
+                name,
+                config_json,
+            } => {
                 let config = config_json.map(|c| serde_json::from_str(&c)).transpose()?;
                 let view = client.update_view(&view_id, name, config).await?;
                 println!("{}", serde_json::to_string_pretty(&view)?);
@@ -277,9 +334,14 @@ async fn main() -> anyhow::Result<()> {
                 let blocks = client.get_block_children(&block_id).await?;
                 println!("{}", serde_json::to_string_pretty(&blocks)?);
             }
-            BlockAction::Append { block_id, children_json } => {
+            BlockAction::Append {
+                block_id,
+                children_json,
+            } => {
                 let children = serde_json::from_str(&children_json)?;
-                let results = client.append_block_children(&block_id, children, None).await?;
+                let results = client
+                    .append_block_children(&block_id, children, None)
+                    .await?;
                 println!("{}", serde_json::to_string_pretty(&results)?);
             }
         },
@@ -288,7 +350,11 @@ async fn main() -> anyhow::Result<()> {
                 let comments = client.list_comments(&block_id).await?;
                 println!("{}", serde_json::to_string_pretty(&comments)?);
             }
-            CommentAction::Create { id, target_type, text_json } => {
+            CommentAction::Create {
+                id,
+                target_type,
+                text_json,
+            } => {
                 use notion_rs::api::comments::CommentParent;
                 let parent = if target_type == "page_id" {
                     CommentParent::PageId { page_id: id }
@@ -307,6 +373,27 @@ async fn main() -> anyhow::Result<()> {
         Commands::Tui => {
             cli::run_tui(client).await?;
         }
+        Commands::Convert {
+            input: _,
+            output: _,
+            from: _,
+            to: _,
+        } => {
+            // cli::convert::run_convert(input, output, from, to).await?;
+            println!("The 'convert' command is being rewritten for Universal IR. Please stay tuned!");
+        }
+        Commands::Sync { dir, notion_db } => {
+            let db = notion_db
+                .or_else(|| std::env::var("NOTION_DB_ID").ok())
+                .expect("NOTION_DB_ID is required for sync");
+            cli::sync_cmd::start_sync(dir, client, db).await?;
+        }
+        Commands::Diff { old, new } => {
+            cli::diff::run_diff(old, new).await?;
+        }
+        Commands::McpServe => {
+            cli::mcp::run_mcp_server().await?;
+        }
     }
 
     Ok(())
@@ -317,8 +404,11 @@ fn print_search_results(results: Vec<serde_json::Value>) {
     println!("{:-<40}-+-{:-<36}-+-{:-<10}", "", "", "");
     for res in results {
         let id = res.get("id").and_then(|v| v.as_str()).unwrap_or("N/A");
-        let obj_type = res.get("object").and_then(|v| v.as_str()).unwrap_or("unknown");
-        
+        let obj_type = res
+            .get("object")
+            .and_then(|v| v.as_str())
+            .unwrap_or("unknown");
+
         let title = if obj_type == "page" {
             res.get("properties")
                 .and_then(|p| p.get("title"))
@@ -327,7 +417,8 @@ fn print_search_results(results: Vec<serde_json::Value>) {
                     res.get("properties")
                         .and_then(|p| p.as_object())
                         .and_then(|obj| {
-                            obj.values().find(|v| v.get("type").and_then(|t| t.as_str()) == Some("title"))
+                            obj.values()
+                                .find(|v| v.get("type").and_then(|t| t.as_str()) == Some("title"))
                         })
                 })
                 .and_then(|t| t.get("title"))

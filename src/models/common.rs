@@ -50,7 +50,7 @@ pub struct BotInfo {
 
 /// The owner of a bot.
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
-#[serde(tag = "type")]
+#[serde(tag = "type", rename_all = "snake_case")]
 pub enum Owner {
     /// Owned by the workspace.
     Workspace { workspace: bool },
@@ -157,7 +157,7 @@ pub struct Annotations {
 
 /// A mention target inside rich text.
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
-#[serde(tag = "type")]
+#[serde(tag = "type", rename_all = "snake_case")]
 pub enum MentionObject {
     /// Mention of a user.
     User { user: User },
@@ -194,7 +194,7 @@ pub struct FileBlockContent {
 
 /// The type of file (external URL or uploaded file).
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
-#[serde(tag = "type")]
+#[serde(tag = "type", rename_all = "snake_case")]
 pub enum FileType {
     /// An external URL (e.g. images hosted elsewhere).
     External { external: ExternalFile },
@@ -220,7 +220,7 @@ pub struct UploadedFile {
 
 /// An icon on a page, database, or callout block.
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
-#[serde(tag = "type")]
+#[serde(tag = "type", rename_all = "snake_case")]
 pub enum Icon {
     /// An emoji icon (e.g. `"📝"`).
     Emoji { emoji: String },

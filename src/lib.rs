@@ -24,10 +24,16 @@
 
 pub mod api;
 pub mod client;
+pub mod converter;
 pub mod error;
+pub mod ir;
 pub mod models;
 pub mod sync;
 
 pub use client::NotionClient;
+pub use converter::{ConverterError, ConverterRegistry, FromPlatform, ToPlatform};
 pub use error::{NotionError, Result};
-
+pub use ir::{
+    DocumentMetadata, InlineElement, Platform, StyleRef, StyleSheet, TextStyle, UniversalBlock,
+    UniversalDocument,
+};

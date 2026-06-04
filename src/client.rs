@@ -17,7 +17,13 @@ pub struct NotionClient {
     http: HttpClient,
     token: String,
     base_url: String,
-    limiter: Arc<RateLimiter<governor::state::NotKeyed, governor::state::InMemoryState, governor::clock::DefaultClock>>,
+    limiter: Arc<
+        RateLimiter<
+            governor::state::NotKeyed,
+            governor::state::InMemoryState,
+            governor::clock::DefaultClock,
+        >,
+    >,
 }
 
 impl NotionClient {
@@ -37,7 +43,7 @@ impl NotionClient {
             .build()
             .expect("Failed to build HTTP client");
 
-        // Notion default limit is 3 requests per second. 
+        // Notion default limit is 3 requests per second.
         // We set it slightly lower for safety, or let user configure later.
         let quota = Quota::per_second(NonZeroU32::new(3).unwrap());
         let limiter = Arc::new(RateLimiter::direct(quota));
@@ -68,7 +74,8 @@ impl NotionClient {
             Duration::from_secs(5),
             Duration::from_secs(7),
             Duration::from_secs(10),
-        ].into_iter();
+        ]
+        .into_iter();
 
         Retry::spawn(strategy, || async {
             // Wait for rate limiter slot
@@ -81,16 +88,15 @@ impl NotionClient {
                 req = req.json(body);
             }
 
-            let response = req.send().await.map_err(|e| {
-                NotionError::Api {
-                    code: "request_failed".to_string(),
-                    message: e.to_string(),
-                    status: 0,
-                }
+            let response = req.send().await.map_err(|e| NotionError::Api {
+                code: "request_failed".to_string(),
+                message: e.to_string(),
+                status: 0,
             })?;
 
             Self::process_response(response).await
-        }).await
+        })
+        .await
     }
 
     async fn process_response<T: DeserializeOwned>(response: Response) -> Result<T> {

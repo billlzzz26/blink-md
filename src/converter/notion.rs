@@ -1,0 +1,625 @@
+//! Notion ↔ Universal IR Converter
+
+use crate::ir::{
+    blocks::{EmbedProvider, ListItem, MediaSource, MentionType, Platform, TaskItem, UniversalBlock},
+    converter::{ConverterError, FromPlatform, ToPlatform},
+    inline::{InlineElement, Mention, TextRun, TextStyle},
+    metadata::{DocumentMetadata, PropertyValue},
+    style::{StyleRef, StyleSheet},
+    table::{TableCell, TableRow, TableRowType},
+    UniversalDocument,
+};
+use crate::models::{
+    block::{Block, BlockType},
+    common::{Annotations, FileBlockContent, Icon, MentionObject, Parent, RichText, User},
+    database::Database,
+    page::Page,
+};
+use chrono::{DateTime, Utc};
+use serde_json::Value;
+use std::collections::HashMap;
+
+/// Notion API → Universal IR
+pub struct NotionFromPlatform;
+
+impl FromPlatform for NotionFromPlatform {
+    const PLATFORM: Platform = Platform::Notion;
+    type Input = Page; // Also supports Block, Database, etc. via other methods
+
+    fn from_platform(page: Page) -> Result<UniversalDocument, ConverterError> {
+        let mut blocks = Vec::new();
+
+        // For now, we need block children separately
+        // In practice, this would fetch block children recursively
+        // This is a skeleton - real implementation fetches children
+
+        let metadata = DocumentMetadata {
+            title: Some(page.title_from_properties()),
+            author: None, // Would come from created_by
+            created_time: Some(page.created_time),
+            last_edited_time: Some(page.last_edited_time),
+            properties: page.properties
+                .as_object()
+                .map(|obj| obj.iter().map(|(k, v)| (k.clone(), property_value_to_ir(v))).collect())
+                .unwrap_or_default(),
+            source_platform: Some(Platform::Notion),
+            source_id: Some(page.id),
+            custom: HashMap::new(),
+        };
+
+        let styles = StyleSheet::default();
+
+        Ok(UniversalDocument { metadata, blocks, styles })
+    }
+}
+
+/// Universal IR → Notion API
+pub struct NotionToPlatform;
+
+impl ToPlatform for NotionToPlatform {
+    const PLATFORM: Platform = Platform::Notion;
+    type Output = CreatePageRequest;
+
+    fn to_platform(doc: &UniversalDocument) -> Result<Self::Output, ConverterError> {
+        let parent = doc.metadata.source_id.as_ref()
+            .map(|id| serde_json::json!({ "page_id": id }))
+            .unwrap_or(serde_json::json!({ "workspace": true }));
+
+        let properties = properties_from_ir(&doc.metadata.properties)?;
+        let children = blocks_to_notion(&doc.blocks)?;
+
+        Ok(CreatePageRequest {
+            parent,
+            properties,
+            children: Some(children),
+            icon: None,
+            cover: None,
+        })
+    }
+}
+
+/// Request for creating a page
+#[derive(serde::Serialize)]
+pub struct CreatePageRequest {
+    pub parent: Value,
+    pub properties: Value,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub children: Option<Vec<Block>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub icon: Option<Icon>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cover: Option<FileBlockContent>,
+}
+
+/// Convert Notion RichText to IR InlineElements
+pub fn rich_text_to_ir(rich_text: &[RichText]) -> Vec<InlineElement> {
+    rich_text.iter().map(rich_text_single_to_ir).collect()
+}
+
+fn rich_text_single_to_ir(rt: &RichText) -> InlineElement {
+    match rt {
+        RichText::Text { text, annotations, plain_text: _, href, .. } => {
+            let mut style = TextStyle::new();
+            if let Some(ann) = annotations {
+                if ann.bold { style = style.bold(); }
+                if ann.italic { style = style.italic(); }
+                if ann.strikethrough { style = style.strikethrough(); }
+                if ann.underline { style = style.underline(); }
+                if ann.code { style = style.code(); }
+                if !ann.color.is_empty() && ann.color != "default" {
+                    style = style.color(ann.color.clone());
+                }
+            }
+            if let Some(url) = href {
+                style = style.link(url.clone());
+            }
+            InlineElement::TextRun {
+                content: text.content.clone(),
+                style: Some(style),
+            }
+        }
+        RichText::Mention { mention, annotations, plain_text: _, href, .. } => {
+            let mut style = TextStyle::new();
+            if let Some(ann) = annotations {
+                if ann.bold { style = style.bold(); }
+                if ann.italic { style = style.italic(); }
+                if ann.strikethrough { style = style.strikethrough(); }
+                if ann.underline { style = style.underline(); }
+                if ann.code { style = style.code(); }
+                if !ann.color.is_empty() && ann.color != "default" {
+                    style = style.color(ann.color.clone());
+                }
+            }
+            if let Some(url) = href {
+                style = style.link(url.clone());
+            }
+            InlineElement::Mention {
+                mention_type: mention_object_to_type(mention),
+                target: mention_object_to_target(mention),
+                label: None,
+                style: Some(style),
+            }
+        }
+        RichText::Equation { equation, annotations, plain_text: _, href, .. } => {
+            let mut style = TextStyle::new();
+            if let Some(ann) = annotations {
+                if ann.bold { style = style.bold(); }
+                if ann.italic { style = style.italic(); }
+                if ann.strikethrough { style = style.strikethrough(); }
+                if ann.underline { style = style.underline(); }
+                if ann.code { style = style.code(); }
+                if !ann.color.is_empty() && ann.color != "default" {
+                    style = style.color(ann.color.clone());
+                }
+            }
+            if let Some(url) = href {
+                style = style.link(url.clone());
+            }
+            InlineElement::Equation {
+                expression: equation.expression.clone(),
+                style: Some(style),
+            }
+        }
+    }
+}
+
+/// Convert MentionObject to MentionType
+fn mention_object_to_type(mention: &MentionObject) -> MentionType {
+    match mention {
+        MentionObject::User { .. } => MentionType::User,
+        MentionObject::Page { .. } => MentionType::Page,
+        MentionObject::Database { .. } => MentionType::Database,
+        MentionObject::Date { .. } => MentionType::Date,
+        MentionObject::LinkPreview { .. } => MentionType::LinkPreview,
+    }
+}
+
+/// Convert MentionObject to target string
+fn mention_object_to_target(mention: &MentionObject) -> String {
+    match mention {
+        MentionObject::User { user } => user.id.clone(),
+        MentionObject::Page { page } => page.id.clone(),
+        MentionObject::Database { database } => database.id.clone(),
+        MentionObject::Date { date } => date.to_string(),
+        MentionObject::LinkPreview { url } => url.clone(),
+    }
+}
+
+/// Convert Notion Block to UniversalBlock
+pub fn block_to_ir(block: &Block) -> Result<UniversalBlock, ConverterError> {
+    match &block.block_type {
+        BlockType::Paragraph { paragraph } => Ok(UniversalBlock::Paragraph {
+            content: rich_text_to_ir(&paragraph.rich_text),
+            style: None,
+        }),
+        BlockType::Heading1 { heading_1 } => Ok(UniversalBlock::Heading {
+            level: 1,
+            content: rich_text_to_ir(&heading_1.rich_text),
+            style: None,
+        }),
+        BlockType::Heading2 { heading_2 } => Ok(UniversalBlock::Heading {
+            level: 2,
+            content: rich_text_to_ir(&heading_2.rich_text),
+            style: None,
+        }),
+        BlockType::Heading3 { heading_3 } => Ok(UniversalBlock::Heading {
+            level: 3,
+            content: rich_text_to_ir(&heading_3.rich_text),
+            style: None,
+        }),
+        BlockType::CodeBlock { code } => Ok(UniversalBlock::CodeBlock {
+            language: code.language.clone(),
+            content: rich_text_to_ir(&code.rich_text).iter()
+                .map(|e| match e {
+                    InlineElement::TextRun { content, .. } => content.clone(),
+                    _ => String::new(),
+                })
+                .collect::<Vec<_>>()
+                .join(""),
+            style: None,
+        }),
+        BlockType::BulletedListItem { bulleted_list_item } => {
+            // This is a list item, not the list itself
+            // In practice, we'd group consecutive items
+            Ok(UniversalBlock::BulletList {
+                items: vec![ListItem {
+                    content: vec![UniversalBlock::Paragraph {
+                        content: rich_text_to_ir(&bulleted_list_item.rich_text),
+                        style: None,
+                    }],
+                    style: None,
+                }],
+                style: None,
+            })
+        }
+        BlockType::NumberedListItem { numbered_list_item } => Ok(UniversalBlock::OrderedList {
+            items: vec![ListItem {
+                content: vec![UniversalBlock::Paragraph {
+                    content: rich_text_to_ir(&numbered_list_item.rich_text),
+                    style: None,
+                }],
+                style: None,
+            }],
+            start: 1,
+            style: None,
+        }),
+        BlockType::ToDo { to_do } => Ok(UniversalBlock::TaskList {
+            items: vec![TaskItem {
+                content: vec![UniversalBlock::Paragraph {
+                    content: rich_text_to_ir(&to_do.rich_text),
+                    style: None,
+                }],
+                checked: to_do.checked,
+                style: None,
+            }],
+            style: None,
+        }),
+        BlockType::Toggle { toggle } => Ok(UniversalBlock::Toggle {
+            summary: rich_text_to_ir(&toggle.rich_text),
+            content: vec![], // Children fetched separately
+            style: None,
+        }),
+        BlockType::Callout { callout } => Ok(UniversalBlock::Callout {
+            icon: callout.icon.as_ref().and_then(|i| match i {
+                Icon::Emoji { emoji } => Some(emoji.clone()),
+                _ => None,
+            }),
+            color: callout.color.clone(),
+            content: vec![UniversalBlock::Paragraph {
+                content: rich_text_to_ir(&callout.rich_text),
+                style: None,
+            }],
+            style: None,
+        }),
+        BlockType::Quote { quote } => Ok(UniversalBlock::Quote {
+            content: vec![UniversalBlock::Paragraph {
+                content: rich_text_to_ir(&quote.rich_text),
+                style: None,
+            }],
+            style: None,
+        }),
+        BlockType::Image { image } => Ok(UniversalBlock::Image {
+            src: file_content_to_media_source(&image.file)?,
+            alt: None,
+            caption: image.caption.as_ref().map(|c| rich_text_to_ir(c)),
+            style: None,
+        }),
+        BlockType::Video { video } => Ok(UniversalBlock::Video {
+            src: file_content_to_media_source(&video.file)?,
+            caption: video.caption.as_ref().map(|c| rich_text_to_ir(c)),
+            style: None,
+        }),
+        BlockType::File { file } => Ok(UniversalBlock::File {
+            src: file_content_to_media_source(&file.file)?,
+            name: file.name.clone().unwrap_or_else(|| "file".to_string()),
+            style: None,
+        }),
+        BlockType::Pdf { pdf } => Ok(UniversalBlock::File {
+            src: file_content_to_media_source(&pdf.file)?,
+            name: pdf.name.clone().unwrap_or_else(|| "document.pdf".to_string()),
+            style: None,
+        }),
+        BlockType::Bookmark { bookmark } => Ok(UniversalBlock::Embed {
+            url: bookmark.url.clone(),
+            provider: EmbedProvider::Other("bookmark".to_string()),
+            fallback: None,
+            style: None,
+        }),
+        BlockType::Embed { embed } => Ok(UniversalBlock::Embed {
+            url: embed.url.clone(),
+            provider: embed_provider_from_str(&embed.provider),
+            fallback: None,
+            style: None,
+        }),
+        BlockType::ChildPage { child_page } => Ok(UniversalBlock::Raw {
+            platform: Platform::Notion,
+            data: serde_json::json!({
+                "type": "child_page",
+                "title": child_page.title
+            }),
+        }),
+        BlockType::ChildDatabase { child_database } => Ok(UniversalBlock::Raw {
+            platform: Platform::Notion,
+            data: serde_json::json!({
+                "type": "child_database",
+                "title": child_database.title
+            }),
+        }),
+        BlockType::Table { table } => {
+            // Table blocks don't have content directly - rows are children
+            Ok(UniversalBlock::Table {
+                rows: vec![],
+                header: None,
+                style: None,
+            })
+        }
+        BlockType::TableRow { table_row } => Ok(UniversalBlock::Raw {
+            platform: Platform::Notion,
+            data: serde_json::json!({
+                "type": "table_row",
+                "cells": table_row.cells
+            }),
+        }),
+        BlockType::Column { column } => Ok(UniversalBlock::Raw {
+            platform: Platform::Notion,
+            data: serde_json::json!({
+                "type": "column",
+                "children": column.children
+            }),
+        }),
+        BlockType::ColumnList { column_list } => Ok(UniversalBlock::Columns {
+            columns: vec![],
+            style: None,
+        }),
+        BlockType::SyncedBlock { synced_block } => Ok(UniversalBlock::Raw {
+            platform: Platform::Notion,
+            data: serde_json::json!({
+                "type": "synced_block",
+                "synced_from": synced_block.synced_from
+            }),
+        }),
+        BlockType::Template { template } => Ok(UniversalBlock::Raw {
+            platform: Platform::Notion,
+            data: serde_json::json!({
+                "type": "template",
+                "rich_text": template.rich_text
+            }),
+        }),
+        BlockType::LinkToPage { link_to_page } => Ok(UniversalBlock::Mention {
+            mention_type: MentionType::Page,
+            target: link_to_page.page_id.clone().unwrap_or_default(),
+            label: None,
+            style: None,
+        }),
+        BlockType::Divider => Ok(UniversalBlock::Raw {
+            platform: Platform::Notion,
+            data: serde_json::json!({ "type": "divider" }),
+        }),
+        BlockType::TableOfContents { table_of_contents } => Ok(UniversalBlock::TableOfContents {
+            depth: table_of_contents.color.as_ref().map(|_| 3).unwrap_or(3),
+            style: None,
+        }),
+        BlockType::Equation { equation } => Ok(UniversalBlock::Paragraph {
+            content: vec![InlineElement::Equation {
+                expression: equation.expression.clone(),
+                style: None,
+            }],
+            style: None,
+        }),
+        BlockType::Breadcrumb => Ok(UniversalBlock::Raw {
+            platform: Platform::Notion,
+            data: serde_json::json!({ "type": "breadcrumb" }),
+        }),
+        BlockType::Unsupported { .. } => Ok(UniversalBlock::Raw {
+            platform: Platform::Notion,
+            data: serde_json::json!({ "type": "unsupported" }),
+        }),
+    }
+}
+
+/// Convert Universal IR blocks to Notion Blocks
+pub fn blocks_to_notion(blocks: &[UniversalBlock]) -> Result<Vec<Block>, ConverterError> {
+    blocks.iter().map(block_ir_to_notion).collect()
+}
+
+fn block_ir_to_notion(block: &UniversalBlock) -> Result<Block, ConverterError> {
+    // Simplified - real implementation would handle all variants
+    match block {
+        UniversalBlock::Paragraph { content, .. } => Ok(Block {
+            object: "block".to_string(),
+            id: "temp".to_string(),
+            created_time: Utc::now(),
+            last_edited_time: Utc::now(),
+            created_by: User::default(),
+            last_edited_by: User::default(),
+            has_children: false,
+            in_trash: false,
+            parent: None,
+            block_type: BlockType::Paragraph {
+                paragraph: crate::models::block::TextBlockContent {
+                    rich_text: inline_to_rich_text(content),
+                    color: "default".to_string(),
+                },
+            },
+        }),
+        UniversalBlock::Heading { level, content, .. } => {
+            let block_type = match level {
+                1 => BlockType::Heading1 { heading_1: heading_content(content) },
+                2 => BlockType::Heading2 { heading_2: heading_content(content) },
+                3 => BlockType::Heading3 { heading_3: heading_content(content) },
+                _ => BlockType::Paragraph { paragraph: paragraph_content(content) },
+            };
+            Ok(Block {
+                object: "block".to_string(),
+                id: "temp".to_string(),
+                created_time: Utc::now(),
+                last_edited_time: Utc::now(),
+                created_by: User::default(),
+                last_edited_by: User::default(),
+                has_children: false,
+                in_trash: false,
+                parent: None,
+                block_type,
+            })
+        }
+        UniversalBlock::CodeBlock { language, content, .. } => Ok(Block {
+            object: "block".to_string(),
+            id: "temp".to_string(),
+            created_time: Utc::now(),
+            last_edited_time: Utc::now(),
+            created_by: User::default(),
+            last_edited_by: User::default(),
+            has_children: false,
+            in_trash: false,
+            parent: None,
+            block_type: BlockType::CodeBlock {
+                code: crate::models::block::CodeBlockContent {
+                    rich_text: vec![RichText::Text {
+                        text: crate::models::common::TextContent { content: content.clone(), link: None },
+                        annotations: None,
+                        plain_text: Some(content.clone()),
+                        href: None,
+                    }],
+                    caption: vec![],
+                    language: language.clone().unwrap_or_default(),
+                },
+            },
+        }),
+        _ => Err(ConverterError::ConversionFailed(format!("Block type not yet implemented: {:?}", block))),
+    }
+}
+
+fn heading_content(content: &[InlineElement]) -> crate::models::block::HeadingContent {
+    crate::models::block::HeadingContent {
+        rich_text: inline_to_rich_text(content),
+        color: "default".to_string(),
+        is_toggleable: false,
+    }
+}
+
+fn paragraph_content(content: &[InlineElement]) -> crate::models::block::TextBlockContent {
+    crate::models::block::TextBlockContent {
+        rich_text: inline_to_rich_text(content),
+        color: "default".to_string(),
+    }
+}
+
+/// Convert IR InlineElements to Notion RichText
+fn inline_to_rich_text(elements: &[InlineElement]) -> Vec<RichText> {
+    elements.iter().map(inline_single_to_rich_text).collect()
+}
+
+fn inline_single_to_rich_text(elem: &InlineElement) -> RichText {
+    match elem {
+        InlineElement::TextRun { content, style } => {
+            let mut annotations = Annotations::default();
+            if let Some(s) = style {
+                if s.bold == Some(true) { annotations.bold = true; }
+                if s.italic == Some(true) { annotations.italic = true; }
+                if s.strikethrough == Some(true) { annotations.strikethrough = true; }
+                if s.underline == Some(true) { annotations.underline = true; }
+                if s.code == Some(true) { annotations.code = true; }
+                if let Some(color) = &s.color { annotations.color = color.clone(); }
+            }
+            RichText::Text {
+                text: crate::models::common::TextContent { content: content.clone(), link: style.and_then(|s| s.link).map(|url| crate::models::common::Link { url }) },
+                annotations: Some(annotations),
+                plain_text: Some(content.clone()),
+                href: None,
+            }
+        }
+        InlineElement::Mention { mention_type, target, label, .. } => {
+            match mention_type {
+                MentionType::User => RichText::Mention {
+                    mention: MentionObject::User { user: User { object: "user".to_string(), id: target.clone(), user_type: crate::models::common::UserType::Person { person: crate::models::common::PersonInfo { email: None } }, name: label.clone(), avatar_url: None } },
+                    annotations: None,
+                    plain_text: label.clone(),
+                    href: None,
+                },
+                MentionType::Page => RichText::Mention {
+                    mention: MentionObject::Page { page: crate::models::common::PageMention { id: target.clone() } },
+                    annotations: None,
+                    plain_text: label.clone(),
+                    href: None,
+                },
+                MentionType::Database => RichText::Mention {
+                    mention: MentionObject::Database { database: crate::models::common::DatabaseMention { id: target.clone() } },
+                    annotations: None,
+                    plain_text: label.clone(),
+                    href: None,
+                },
+                MentionType::Date => RichText::Mention {
+                    mention: MentionObject::Date { date: serde_json::json!({ "start": target }) },
+                    annotations: None,
+                    plain_text: label.clone(),
+                    href: None,
+                },
+                _ => RichText::Text {
+                    text: crate::models::common::TextContent { content: label.clone().unwrap_or_else(|| target.clone()), link: None },
+                    annotations: None,
+                    plain_text: label.clone(),
+                    href: None,
+                },
+            }
+        }
+        InlineElement::Equation { expression, .. } => RichText::Equation {
+            equation: crate::models::common::EquationContent { expression: expression.clone() },
+            annotations: None,
+            plain_text: Some(expression.clone()),
+            href: None,
+        },
+        InlineElement::HardBreak => RichText::Text {
+            text: crate::models::common::TextContent { content: "\n".to_string(), link: None },
+            annotations: None,
+            plain_text: Some("\n".to_string()),
+            href: None,
+        },
+        InlineElement::SoftBreak => RichText::Text {
+            text: crate::models::common::TextContent { content: " ".to_string(), link: None },
+            annotations: None,
+            plain_text: Some(" ".to_string()),
+            href: None,
+        },
+    }
+}
+
+/// Convert FileBlockContent to MediaSource
+fn file_content_to_media_source(file: &FileBlockContent) -> Result<MediaSource, ConverterError> {
+    match &file.file_type {
+        crate::models::common::FileType::External { external } => Ok(MediaSource::External { url: external.url.clone() }),
+        crate::models::common::FileType::Uploaded { file } => Ok(MediaSource::Uploaded { url: file.url.clone(), expiry_time: file.expiry_time.map(|t| t.to_string()) }),
+    }
+}
+
+/// Convert embed provider string to enum
+fn embed_provider_from_str(s: &str) -> EmbedProvider {
+    match s.to_lowercase().as_str() {
+        "youtube" => EmbedProvider::YouTube,
+        "figma" => EmbedProvider::Figma,
+        "twitter" | "x" => EmbedProvider::Twitter,
+        "github" => EmbedProvider::GitHub,
+        "loom" => EmbedProvider::Loom,
+        "miro" => EmbedProvider::Miro,
+        "whimsical" => EmbedProvider::Whimsical,
+        "framer" => EmbedProvider::Framer,
+        _ => EmbedProvider::Other(s.to_string()),
+    }
+}
+
+/// Convert Notion properties to IR PropertyValue
+fn property_value_to_ir(value: &Value) -> PropertyValue {
+    // Simplified - real implementation handles all property types
+    PropertyValue::Custom { key: "unknown".to_string(), value: value.clone() }
+}
+
+/// Convert IR PropertyValue to Notion properties JSON
+fn properties_from_ir(props: &HashMap<String, PropertyValue>) -> Result<Value, ConverterError> {
+    let mut map = serde_json::Map::new();
+    for (key, value) in props {
+        map.insert(key.clone(), property_value_from_ir(value)?);
+    }
+    Ok(Value::Object(map))
+}
+
+fn property_value_from_ir(value: &PropertyValue) -> Result<Value, ConverterError> {
+    match value {
+        PropertyValue::Title { title } => Ok(serde_json::json!({
+            "title": inline_to_rich_text(title)
+        })),
+        PropertyValue::RichText { rich_text } => Ok(serde_json::json!({
+            "rich_text": inline_to_rich_text(rich_text)
+        })),
+        PropertyValue::Number { number } => Ok(serde_json::json!({ "number": number })),
+        PropertyValue::Select { select } => Ok(serde_json::json!({ "select": select })),
+        PropertyValue::MultiSelect { multi_select } => Ok(serde_json::json!({ "multi_select": multi_select })),
+        PropertyValue::Date { date } => Ok(serde_json::json!({ "date": date })),
+        PropertyValue::Checkbox { checkbox } => Ok(serde_json::json!({ "checkbox": checkbox })),
+        PropertyValue::Url { url } => Ok(serde_json::json!({ "url": url })),
+        PropertyValue::Email { email } => Ok(serde_json::json!({ "email": email })),
+        PropertyValue::PhoneNumber { phone_number } => Ok(serde_json::json!({ "phone_number": phone_number })),
+        PropertyValue::Relation { relation } => Ok(serde_json::json!({ "relation": relation.iter().map(|id| serde_json::json!({ "id": id })).collect::<Vec<_>>() })),
+        PropertyValue::Files { files } => Ok(serde_json::json!({ "files": files })),
+        PropertyValue::Custom { key, value } => Ok(serde_json::json!({ key: value })),
+        _ => Err(ConverterError::ConversionFailed(format!("Property type not yet implemented: {:?}", value))),
+    }
+}

@@ -1,7 +1,11 @@
-use crate::models::block::{Block, BlockType, HeadingContent, TextBlockContent, ToDoContent, CalloutContent};
-use crate::models::common::{RichText, TextContent, UserType, BotInfo, Annotations, Icon};
-use pulldown_cmark::{Parser, Event, Tag, TagEnd, Options};
+use crate::models::block::{
+    Block, BlockType, CalloutContent, HeadingContent, TextBlockContent, ToDoContent,
+};
+use crate::models::common::{
+    Annotations, BotInfo, Icon, MentionObject, RichText, TextContent, UserType,
+};
 use chrono::Utc;
+use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd};
 
 /// A trait for types that can be rendered as Notion-flavored Markdown.
 pub trait ToMarkdown {
@@ -9,18 +13,78 @@ pub trait ToMarkdown {
     fn to_markdown(&self, indent: usize) -> String;
 }
 
+pub fn mention_to_markdown(mention: &MentionObject) -> String {
+    // Determine tag and attributes based on mention type
+    match mention {
+        MentionObject::User { user } => {
+            let name = user.name.as_deref().unwrap_or("User");
+            let url = format!("https://www.notion.so/{}", user.id);
+            format!(r#"<mention-user url="{}">{}</mention-user>"#, url, name)
+        }
+        MentionObject::Page { page } => {
+            // PageMention only has id; we don't have title. Use placeholder.
+            let title = "Page"; // Ideally we would fetch the title, but we don't have it here.
+            let url = format!("https://www.notion.so/{}", page.id);
+            format!(r#"<mention-page url="{}">{}</mention-page>"#, url, title)
+        }
+        MentionObject::Database { database } => {
+            let name = "Database"; // Placeholder
+            let url = format!("https://www.notion.so/{}", database.id);
+            format!(
+                r#"<mention-database url="{}">{}</mention-database>"#,
+                url, name
+            )
+        }
+        MentionObject::Date { date } => {
+            // Try to parse the date object; fallback to a simple representation.
+            // Expected format: {"start": "2024-01-01", "end": "2024-01-02", "timeZone": "America/New_York", ...}
+            let start = date.get("start").and_then(|v| v.as_str()).unwrap_or("");
+            let end = date.get("end").and_then(|v| v.as_str()).unwrap_or("");
+            let start_time = date.get("startTime").and_then(|v| v.as_str()).unwrap_or("");
+            let end_time = date.get("endTime").and_then(|v| v.as_str()).unwrap_or("");
+            let time_zone = date.get("timeZone").and_then(|v| v.as_str()).unwrap_or("");
+
+            if !start.is_empty()
+                && !end.is_empty()
+                && !start_time.is_empty()
+                && !end_time.is_empty()
+                && !time_zone.is_empty()
+            {
+                format!(
+                    r#"<mention-date start="{}" startTime="{}" end="{}" endTime="{}" timeZone="{}" />"#,
+                    start, start_time, end, end_time, time_zone
+                )
+            } else if !start.is_empty() && !end.is_empty() && !time_zone.is_empty() {
+                format!(
+                    r#"<mention-date start="{}" end="{}" timeZone="{}" />"#,
+                    start, end, time_zone
+                )
+            } else if !start.is_empty() && !start_time.is_empty() && !time_zone.is_empty() {
+                format!(
+                    r#"<mention-date start="{}" startTime="{}" timeZone="{}" />"#,
+                    start, start_time, time_zone
+                )
+            } else if !start.is_empty() {
+                format!(r#"<mention-date start="{}" />"#, start)
+            } else {
+                "<mention-date />".to_string()
+            }
+        }
+        MentionObject::LinkPreview { url } => {
+            format!(r#"<mention-link-preview url="{}" />"#, url)
+        }
+    }
+}
 impl ToMarkdown for Vec<RichText> {
     fn to_markdown(&self, _indent: usize) -> String {
         let mut result = String::new();
         for rich in self {
             match rich {
                 RichText::Text {
-                    text,
-                    annotations,
-                    ..
+                    text, annotations, ..
                 } => {
                     let mut content = text.content.clone();
-                    
+
                     // Apply annotations
                     if let Some(ann) = annotations {
                         if ann.bold {
@@ -50,19 +114,17 @@ impl ToMarkdown for Vec<RichText> {
 
                     result.push_str(&content);
                 }
-                RichText::Mention { .. } => {
-                    // TODO: Implement mentions properly based on spec
-                    result.push_str("[Mention]");
+                RichText::Mention { mention, .. } => {
+                    result.push_str(&mention_to_markdown(mention));
                 }
                 RichText::Equation { equation, .. } => {
-                    result.push_str(&format!("$`{}`$", equation.expression));
+                    result.push_str(&format!("$`{}$", equation.expression));
                 }
             }
         }
         result
     }
 }
-
 impl ToMarkdown for Block {
     fn to_markdown(&self, indent: usize) -> String {
         let tabs = "\t".repeat(indent);
@@ -70,26 +132,55 @@ impl ToMarkdown for Block {
 
         match &self.block_type {
             BlockType::Paragraph { paragraph } => {
-                result.push_str(&format!("{}{}", tabs, render_text_content(paragraph, indent)));
+                result.push_str(&format!(
+                    "{}{}",
+                    tabs,
+                    render_text_content(paragraph, indent)
+                ));
             }
             BlockType::Heading1 { heading_1 } => {
-                result.push_str(&format!("{}# {}", tabs, render_heading_content(heading_1, indent)));
+                result.push_str(&format!(
+                    "{}# {}",
+                    tabs,
+                    render_heading_content(heading_1, indent)
+                ));
             }
             BlockType::Heading2 { heading_2 } => {
-                result.push_str(&format!("{}## {}", tabs, render_heading_content(heading_2, indent)));
+                result.push_str(&format!(
+                    "{}## {}",
+                    tabs,
+                    render_heading_content(heading_2, indent)
+                ));
             }
             BlockType::Heading3 { heading_3 } => {
-                result.push_str(&format!("{}### {}", tabs, render_heading_content(heading_3, indent)));
+                result.push_str(&format!(
+                    "{}### {}",
+                    tabs,
+                    render_heading_content(heading_3, indent)
+                ));
             }
             BlockType::BulletedListItem { bulleted_list_item } => {
-                result.push_str(&format!("{}- {}", tabs, render_text_content(bulleted_list_item, indent)));
+                result.push_str(&format!(
+                    "{}- {}",
+                    tabs,
+                    render_text_content(bulleted_list_item, indent)
+                ));
             }
             BlockType::NumberedListItem { numbered_list_item } => {
-                result.push_str(&format!("{}1. {}", tabs, render_text_content(numbered_list_item, indent)));
+                result.push_str(&format!(
+                    "{}1. {}",
+                    tabs,
+                    render_text_content(numbered_list_item, indent)
+                ));
             }
             BlockType::ToDo { to_do } => {
                 let check = if to_do.checked { "x" } else { " " };
-                result.push_str(&format!("{}- [{}] {}", tabs, check, render_todo_content(to_do, indent)));
+                result.push_str(&format!(
+                    "{}- [{}] {}",
+                    tabs,
+                    check,
+                    render_todo_content(to_do, indent)
+                ));
             }
             BlockType::Divider {} => {
                 result.push_str(&format!("{}---", tabs));
@@ -98,12 +189,19 @@ impl ToMarkdown for Block {
                 result.push_str(&format!("{}> {}", tabs, render_text_content(quote, indent)));
             }
             BlockType::Callout { callout } => {
-                let icon_str = callout.icon.as_ref().map(|i| match i {
-                    Icon::Emoji { emoji } => emoji.clone(),
-                    _ => "ℹ️".to_string(), // Default
-                }).unwrap_or_else(|| "ℹ️".to_string());
-                
-                result.push_str(&format!("{}<callout icon=\"{}\" color=\"{}\">\n", tabs, icon_str, callout.color));
+                let icon_str = callout
+                    .icon
+                    .as_ref()
+                    .map(|i| match i {
+                        Icon::Emoji { emoji } => emoji.clone(),
+                        _ => "ℹ️".to_string(), // Default
+                    })
+                    .unwrap_or_else(|| "ℹ️".to_string());
+
+                result.push_str(&format!(
+                    "{}<callout icon=\"{}\" color=\"{}\">\n",
+                    tabs, icon_str, callout.color
+                ));
                 result.push_str(&format!("{}\t{}\n", tabs, callout.rich_text.to_markdown(0)));
                 if let Some(children) = &callout.children {
                     for child in children {
@@ -114,7 +212,11 @@ impl ToMarkdown for Block {
                 result.push_str(&format!("{}</callout>", tabs));
             }
             _ => {
-                result.push_str(&format!("{}<!-- Unsupported block type: {} -->", tabs, self.type_str()));
+                result.push_str(&format!(
+                    "{}<!-- Unsupported block type: {} -->",
+                    tabs,
+                    self.type_str()
+                ));
             }
         }
 
@@ -146,7 +248,7 @@ fn render_heading_content(content: &HeadingContent, indent: usize) -> String {
     if content.is_toggleable {
         attrs.push("toggle=\"true\"".to_string());
     }
-    
+
     if !attrs.is_empty() {
         out = format!("{} {{{}}}", out, attrs.join(" "));
     }
@@ -224,23 +326,29 @@ impl ParserState {
     }
 
     fn is_in_list(&self) -> bool {
-        self.container_stack.iter().any(|c| matches!(c, ContainerType::BulletedList | ContainerType::NumberedList))
+        self.container_stack
+            .iter()
+            .any(|c| matches!(c, ContainerType::BulletedList | ContainerType::NumberedList))
     }
 
     fn is_in_quote(&self) -> bool {
-        self.container_stack.iter().any(|c| matches!(c, ContainerType::Quote))
+        self.container_stack
+            .iter()
+            .any(|c| matches!(c, ContainerType::Quote))
     }
 
     fn is_in_callout(&self) -> bool {
-        self.container_stack.iter().any(|c| matches!(c, ContainerType::Callout))
+        self.container_stack
+            .iter()
+            .any(|c| matches!(c, ContainerType::Callout))
     }
 }
 
 /// Parses a Markdown string into a sequence of Notion blocks.
 pub fn parse_markdown(md: &str) -> Vec<Block> {
-    let mut options = Options::empty();
-    options.insert(Options::ENABLE_STRIKETHROUGH);
-    options.insert(Options::ENABLE_TASKLISTS);
+    let options = Options::all(); // Just enable everything to be safe and compatible with GFM
+                                  // options.insert(Options::ENABLE_STRIKETHROUGH);
+                                  // options.insert(Options::ENABLE_TASKLISTS);
 
     let parser = Parser::new_ext(md, options);
     let mut blocks = Vec::new();
@@ -276,7 +384,7 @@ pub fn parse_markdown(md: &str) -> Vec<Block> {
                     state.container_stack.pop();
                     blocks.push(create_block(BlockType::Quote {
                         quote: TextBlockContent {
-                            rich_text: current_rich_text.drain(..).collect(),
+                            rich_text: std::mem::take(&mut current_rich_text),
                             color: "default".to_string(),
                             children: None,
                         },
@@ -284,18 +392,23 @@ pub fn parse_markdown(md: &str) -> Vec<Block> {
                 }
                 TagEnd::Paragraph => {
                     if !state.is_in_list() && !state.is_in_quote() && !state.is_in_callout() {
-                        blocks.push(create_block(BlockType::Paragraph {
-                            paragraph: TextBlockContent {
-                                rich_text: current_rich_text.drain(..).collect(),
-                                color: "default".to_string(),
-                                children: None,
-                            },
-                        }));
+                        if !current_rich_text.is_empty() {
+                            blocks.push(create_block(BlockType::Paragraph {
+                                paragraph: TextBlockContent {
+                                    rich_text: std::mem::take(&mut current_rich_text),
+                                    color: "default".to_string(),
+                                    children: None,
+                                },
+                            }));
+                        }
                     } else if state.is_in_quote() || state.is_in_callout() {
                         // In a quote/callout, we add a newline if there's already text
                         if !current_rich_text.is_empty() {
                             current_rich_text.push(RichText::Text {
-                                text: TextContent { content: "\n".into(), link: None },
+                                text: TextContent {
+                                    content: "\n".into(),
+                                    link: None,
+                                },
                                 annotations: Some(state.to_annotations()),
                                 plain_text: Some("\n".into()),
                                 href: None,
@@ -307,7 +420,7 @@ pub fn parse_markdown(md: &str) -> Vec<Block> {
                     let block_type = if let Some(checked) = state.current_todo_checked.take() {
                         BlockType::ToDo {
                             to_do: ToDoContent {
-                                rich_text: current_rich_text.drain(..).collect(),
+                                rich_text: std::mem::take(&mut current_rich_text),
                                 checked,
                                 color: "default".to_string(),
                                 children: None,
@@ -317,14 +430,14 @@ pub fn parse_markdown(md: &str) -> Vec<Block> {
                         match state.container_stack.last() {
                             Some(ContainerType::NumberedList) => BlockType::NumberedListItem {
                                 numbered_list_item: TextBlockContent {
-                                    rich_text: current_rich_text.drain(..).collect(),
+                                    rich_text: std::mem::take(&mut current_rich_text),
                                     color: "default".to_string(),
                                     children: None,
                                 },
                             },
                             _ => BlockType::BulletedListItem {
                                 bulleted_list_item: TextBlockContent {
-                                    rich_text: current_rich_text.drain(..).collect(),
+                                    rich_text: std::mem::take(&mut current_rich_text),
                                     color: "default".to_string(),
                                     children: None,
                                 },
@@ -337,7 +450,7 @@ pub fn parse_markdown(md: &str) -> Vec<Block> {
                     let block_type = match level {
                         pulldown_cmark::HeadingLevel::H1 => BlockType::Heading1 {
                             heading_1: HeadingContent {
-                                rich_text: current_rich_text.drain(..).collect(),
+                                rich_text: std::mem::take(&mut current_rich_text),
                                 color: "default".to_string(),
                                 is_toggleable: false,
                                 children: None,
@@ -345,7 +458,7 @@ pub fn parse_markdown(md: &str) -> Vec<Block> {
                         },
                         pulldown_cmark::HeadingLevel::H2 => BlockType::Heading2 {
                             heading_2: HeadingContent {
-                                rich_text: current_rich_text.drain(..).collect(),
+                                rich_text: std::mem::take(&mut current_rich_text),
                                 color: "default".to_string(),
                                 is_toggleable: false,
                                 children: None,
@@ -353,7 +466,7 @@ pub fn parse_markdown(md: &str) -> Vec<Block> {
                         },
                         _ => BlockType::Heading3 {
                             heading_3: HeadingContent {
-                                rich_text: current_rich_text.drain(..).collect(),
+                                rich_text: std::mem::take(&mut current_rich_text),
                                 color: "default".to_string(),
                                 is_toggleable: false,
                                 children: None,
@@ -395,7 +508,7 @@ pub fn parse_markdown(md: &str) -> Vec<Block> {
             Event::Rule => {
                 blocks.push(create_block(BlockType::Divider {}));
             }
-            Event::Html(html) => {
+            Event::Html(html) | Event::InlineHtml(html) => {
                 if html.starts_with("<callout") {
                     state.container_stack.push(ContainerType::Callout);
                     // Extract icon and color (simple parsing)
@@ -407,12 +520,18 @@ pub fn parse_markdown(md: &str) -> Vec<Block> {
                     }
                 } else if html.starts_with("</callout>") {
                     state.container_stack.pop();
-                    let icon = state.current_callout_icon.take().map(|e| Icon::Emoji { emoji: e });
-                    let color = state.current_callout_color.take().unwrap_or_else(|| "default".to_string());
-                    
+                    let icon = state
+                        .current_callout_icon
+                        .take()
+                        .map(|e| Icon::Emoji { emoji: e });
+                    let color = state
+                        .current_callout_color
+                        .take()
+                        .unwrap_or_else(|| "default".to_string());
+
                     blocks.push(create_block(BlockType::Callout {
                         callout: CalloutContent {
-                            rich_text: current_rich_text.drain(..).collect(),
+                            rich_text: std::mem::take(&mut current_rich_text),
                             icon,
                             color,
                             children: None,
@@ -432,7 +551,7 @@ fn extract_attr(html: &str, attr: &str) -> Option<String> {
     if let Some(start) = html.find(&pattern) {
         let start = start + pattern.len();
         if let Some(end) = html[start..].find('"') {
-            return Some(html[start..start+end].to_string());
+            return Some(html[start..start + end].to_string());
         }
     }
     None
@@ -459,11 +578,11 @@ fn dummy_user() -> crate::models::common::User {
         id: "dummy".to_string(),
         name: None,
         avatar_url: None,
-        user_type: UserType::Bot { 
-            bot: BotInfo { 
-                owner: None, 
-                workspace_name: None 
-            } 
+        user_type: UserType::Bot {
+            bot: BotInfo {
+                owner: None,
+                workspace_name: None,
+            },
         },
     }
 }

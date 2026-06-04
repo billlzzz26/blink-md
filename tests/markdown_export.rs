@@ -1,7 +1,9 @@
+use chrono::Utc;
 use notion_rs::api::markdown::ToMarkdown;
 use notion_rs::models::block::{Block, BlockType, HeadingContent, TextBlockContent};
-use notion_rs::models::common::{RichText, TextContent, User, UserType, PersonInfo, Annotations, Link};
-use chrono::Utc;
+use notion_rs::models::common::{
+    Annotations, Link, PersonInfo, RichText, TextContent, User, UserType,
+};
 
 #[test]
 fn test_heading_1_to_markdown() {
@@ -14,7 +16,7 @@ fn test_heading_1_to_markdown() {
         plain_text: None,
         href: None,
     }];
-    
+
     let block = Block {
         object: "block".to_string(),
         id: "id".to_string(),
@@ -72,7 +74,9 @@ fn test_complex_rich_text_to_markdown() {
         RichText::Text {
             text: TextContent {
                 content: "Italic Link".to_string(),
-                link: Some(Link { url: "https://example.com".to_string() }),
+                link: Some(Link {
+                    url: "https://example.com".to_string(),
+                }),
             },
             annotations: Some(Annotations {
                 bold: false,
@@ -86,7 +90,7 @@ fn test_complex_rich_text_to_markdown() {
             href: None,
         },
     ];
-    
+
     let rendered = rich_text.to_markdown(0);
     println!("Rendered: {}", rendered);
     assert!(rendered.contains("**Bold **"));
@@ -105,7 +109,7 @@ fn test_callout_with_children() {
         plain_text: None,
         href: None,
     }];
-    
+
     let child = Block {
         object: "block".to_string(),
         id: "child_id".to_string(),
@@ -146,7 +150,9 @@ fn test_callout_with_children() {
         block_type: BlockType::Callout {
             callout: notion_rs::models::block::CalloutContent {
                 rich_text,
-                icon: Some(notion_rs::models::common::Icon::Emoji { emoji: "💡".to_string() }),
+                icon: Some(notion_rs::models::common::Icon::Emoji {
+                    emoji: "💡".to_string(),
+                }),
                 color: "blue_background".to_string(),
                 children: Some(vec![child]),
             },
@@ -155,7 +161,7 @@ fn test_callout_with_children() {
 
     let rendered = callout.to_markdown(0);
     println!("Rendered Callout:\n{}", rendered);
-    
+
     assert!(rendered.contains("<callout icon=\"💡\" color=\"blue_background\">"));
     assert!(rendered.contains("\tCallout Title"));
     assert!(rendered.contains("\tChild Paragraph"));
