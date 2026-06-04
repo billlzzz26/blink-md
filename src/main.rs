@@ -232,9 +232,11 @@ async fn main() -> anyhow::Result<()> {
                             "property": "object",
                             "value": "page"
                         })),
+                        None,
+                        None,
                     )
                     .await?;
-                print_search_results(results);
+                print_search_results(results.results);
             }
             PageAction::Get { page_id } => {
                 let page = client.get_page(&page_id).await?;
@@ -273,8 +275,8 @@ async fn main() -> anyhow::Result<()> {
             }
             PageAction::Export { page_id } => {
                 use notion_rs::api::markdown::ToMarkdown;
-                let blocks = client.get_block_children(&page_id).await?;
-                for block in blocks {
+                let list = client.get_block_children(&page_id, None, None).await?;
+                for block in list.results {
                     println!("{}", block.to_markdown(0));
                 }
             }
@@ -331,18 +333,18 @@ async fn main() -> anyhow::Result<()> {
         },
         Commands::Blocks { action } => match action {
             BlockAction::Children { block_id } => {
-                let blocks = client.get_block_children(&block_id).await?;
-                println!("{}", serde_json::to_string_pretty(&blocks)?);
+                let list = client.get_block_children(&block_id, None, None).await?;
+                println!("{}", serde_json::to_string_pretty(&list.results)?);
             }
             BlockAction::Append {
                 block_id,
                 children_json,
             } => {
                 let children = serde_json::from_str(&children_json)?;
-                let results = client
+                let list = client
                     .append_block_children(&block_id, children, None)
                     .await?;
-                println!("{}", serde_json::to_string_pretty(&results)?);
+                println!("{}", serde_json::to_string_pretty(&list.results)?);
             }
         },
         Commands::Comments { action } => match action {
@@ -367,8 +369,8 @@ async fn main() -> anyhow::Result<()> {
             }
         },
         Commands::Search { query } => {
-            let results = client.search(query, None).await?;
-            print_search_results(results);
+            let results = client.search(query, None, None, None).await?;
+            print_search_results(results.results);
         }
         Commands::Tui => {
             cli::run_tui(client).await?;

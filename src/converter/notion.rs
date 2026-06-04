@@ -13,7 +13,7 @@ use crate::models::{
     block::{Block, BlockType},
     common::{Annotations, FileBlockContent, Icon, MentionObject, Parent, RichText, User},
     database::Database,
-    page::Page,
+    page::{CreatePageRequest, Page},
 };
 use chrono::{DateTime, Utc};
 use serde_json::Value;
@@ -22,20 +22,28 @@ use std::collections::HashMap;
 /// Notion API → Universal IR
 pub struct NotionFromPlatform;
 
+/// A Notion Page along with its child blocks (recursively).
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
+pub struct PageWithBlocks {
+    pub page: Page,
+    pub blocks: Vec<Block>,
+}
+
 impl FromPlatform for NotionFromPlatform {
     const PLATFORM: Platform = Platform::Notion;
-    type Input = Page; // Also supports Block, Database, etc. via other methods
+    type Input = PageWithBlocks;
 
-    fn from_platform(page: Page) -> Result<UniversalDocument, ConverterError> {
-        let mut blocks = Vec::new();
-
-        // For now, we need block children separately
-        // In practice, this would fetch block children recursively
-        // This is a skeleton - real implementation fetches children
+    fn from_platform(input: PageWithBlocks) -> Result<UniversalDocument, ConverterError> {
+        let PageWithBlocks { page, blocks } = input;
+        
+        let mut ir_blocks = Vec::new();
+        for block in blocks {
+            ir_blocks.push(block_to_ir(&block)?);
+        }
 
         let metadata = DocumentMetadata {
             title: Some(page.title_from_properties()),
-            author: None, // Would come from created_by
+            author: Some(page.created_by.id.clone()),
             created_time: Some(page.created_time),
             last_edited_time: Some(page.last_edited_time),
             properties: page.properties
@@ -49,7 +57,7 @@ impl FromPlatform for NotionFromPlatform {
 
         let styles = StyleSheet::default();
 
-        Ok(UniversalDocument { metadata, blocks, styles })
+        Ok(UniversalDocument { metadata, blocks: ir_blocks, styles })
     }
 }
 
@@ -72,23 +80,9 @@ impl ToPlatform for NotionToPlatform {
             parent,
             properties,
             children: Some(children),
-            icon: None,
-            cover: None,
+            ..Default::default()
         })
     }
-}
-
-/// Request for creating a page
-#[derive(serde::Serialize)]
-pub struct CreatePageRequest {
-    pub parent: Value,
-    pub properties: Value,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub children: Option<Vec<Block>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub icon: Option<Icon>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub cover: Option<FileBlockContent>,
 }
 
 /// Convert Notion RichText to IR InlineElements

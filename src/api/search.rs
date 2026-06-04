@@ -21,21 +21,17 @@ impl NotionClient {
         &self,
         query: Option<String>,
         filter: Option<serde_json::Value>,
-    ) -> Result<Vec<serde_json::Value>> {
+        start_cursor: Option<String>,
+        page_size: Option<u32>,
+    ) -> Result<crate::models::common::List<serde_json::Value>> {
         let body = SearchRequest {
             query,
             sort: None,
             filter,
-            start_cursor: None,
-            page_size: None,
+            start_cursor,
+            page_size,
         };
-        #[derive(serde::Deserialize)]
-        struct SearchResponse {
-            results: Vec<serde_json::Value>,
-        }
-        let resp: SearchResponse = self
-            .request(reqwest::Method::POST, "/search", Some(&body))
-            .await?;
-        Ok(resp.results)
+        self.request(reqwest::Method::POST, "/search", Some(&body))
+            .await
     }
 }

@@ -30,6 +30,9 @@ pub mod ir;
 pub mod models;
 pub mod sync;
 
+#[cfg(feature = "mcp")]
+pub mod mcp;
+
 pub use client::NotionClient;
 pub use converter::{ConverterError, ConverterRegistry, FromPlatform, ToPlatform};
 pub use error::{NotionError, Result};

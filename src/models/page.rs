@@ -55,3 +55,29 @@ impl Page {
             .to_string()
     }
 }
+
+/// Request for creating a new Notion page.
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct CreatePageRequest {
+    pub parent: serde_json::Value,
+    pub properties: serde_json::Value,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub children: Option<Vec<crate::models::block::Block>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub icon: Option<Icon>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cover: Option<FileBlockContent>,
+}
+
+/// Request for updating an existing Notion page.
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct UpdatePageRequest {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub properties: Option<serde_json::Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub in_trash: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub icon: Option<Icon>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cover: Option<FileBlockContent>,
+}

@@ -117,8 +117,9 @@ impl App {
     }
 
     async fn load_pages(&mut self) -> Result<()> {
-        let results = self.client.search(None, None).await?;
+        let results = self.client.search(None, None, None, None).await?;
         self.pages = results
+            .results
             .into_iter()
             .filter_map(|v| serde_json::from_value::<Page>(v).ok())
             .collect();
@@ -130,8 +131,9 @@ impl App {
     }
 
     async fn load_block_tree(&mut self, page_id: &str) -> Result<()> {
-        let blocks = self.client.get_block_children(page_id).await?;
-        self.block_tree = blocks
+        let list = self.client.get_block_children(page_id, None, None).await?;
+        self.block_tree = list
+            .results
             .into_iter()
             .map(|b| TreeNode {
                 indent: 0,
@@ -153,8 +155,9 @@ impl App {
                 node.children.clear();
             } else {
                 if node.block.has_children {
-                    let children = self.client.get_block_children(&node.block.id).await?;
-                    node.children = children
+                    let list = self.client.get_block_children(&node.block.id, None, None).await?;
+                    node.children = list
+                        .results
                         .into_iter()
                         .map(|b| TreeNode {
                             indent: node.indent + 1,
@@ -227,9 +230,12 @@ impl App {
                     "property": "object",
                     "value": "database"
                 })),
+                None,
+                None,
             )
             .await?;
         self.databases = results
+            .results
             .into_iter()
             .filter_map(|v| serde_json::from_value(v).ok())
             .collect();
@@ -246,9 +252,9 @@ impl App {
         }
         let results = self
             .client
-            .search(Some(self.search_query.clone()), None)
+            .search(Some(self.search_query.clone()), None, None, None)
             .await?;
-        self.search_results = results;
+        self.search_results = results.results;
         if !self.search_results.is_empty() {
             self.search_selected = 0;
             self.detail_text = format!("Found {} results", self.search_results.len());

@@ -79,28 +79,42 @@ impl NotionClient {
             .await
     }
 
+    pub async fn query_database(
+        &self,
+        database_id: &str,
+        filter: Option<serde_json::Value>,
+        sorts: Option<Vec<serde_json::Value>>,
+        start_cursor: Option<String>,
+        page_size: Option<u32>,
+    ) -> Result<crate::models::common::List<serde_json::Value>> {
+        let path = format!("/databases/{}/query", database_id);
+        let body = QueryBody {
+            filter,
+            sorts,
+            start_cursor,
+            page_size,
+        };
+        self.request(reqwest::Method::POST, &path, Some(&body))
+            .await
+    }
+
     pub async fn query_data_source(
         &self,
         data_source_id: &str,
         filter: Option<serde_json::Value>,
         sorts: Option<Vec<serde_json::Value>>,
-    ) -> Result<Vec<serde_json::Value>> {
-        // Returns pages (results array)
+        start_cursor: Option<String>,
+        page_size: Option<u32>,
+    ) -> Result<crate::models::common::List<serde_json::Value>> {
         let path = format!("/data_sources/{}/query", data_source_id);
         let body = QueryBody {
             filter,
             sorts,
-            start_cursor: None,
-            page_size: None,
+            start_cursor,
+            page_size,
         };
-        #[derive(serde::Deserialize)]
-        struct QueryResponse {
-            results: Vec<serde_json::Value>,
-        }
-        let resp: QueryResponse = self
-            .request(reqwest::Method::POST, &path, Some(&body))
-            .await?;
-        Ok(resp.results)
+        self.request(reqwest::Method::POST, &path, Some(&body))
+            .await
     }
 
     pub async fn get_data_source(&self, data_source_id: &str) -> Result<DataSource> {

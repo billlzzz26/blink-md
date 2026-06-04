@@ -9,7 +9,6 @@ use serde::Serialize;
 use std::num::NonZeroU32;
 use std::sync::Arc;
 use std::time::Duration;
-use tokio_retry::Retry;
 
 /// An HTTP client for the Notion API (version 2026-03-11).
 #[derive(Clone)]
@@ -69,15 +68,10 @@ impl NotionClient {
         path: &str,
         body: Option<&impl Serialize>,
     ) -> Result<T> {
-        // Retry strategy: 5s, 7s, 10s as requested
-        let strategy = vec![
-            Duration::from_secs(5),
-            Duration::from_secs(7),
-            Duration::from_secs(10),
-        ]
-        .into_iter();
+        let mut attempts = 0;
+        let max_attempts = 3;
 
-        Retry::spawn(strategy, || async {
+        loop {
             // Wait for rate limiter slot
             self.limiter.until_ready().await;
 
@@ -94,9 +88,28 @@ impl NotionClient {
                 status: 0,
             })?;
 
-            Self::process_response(response).await
-        })
-        .await
+            let status = response.status();
+
+            if status.is_success() {
+                return response.json().await.map_err(Into::into);
+            }
+
+            if status.as_u16() == 429 && attempts < max_attempts {
+                attempts += 1;
+                let retry_after = response
+                    .headers()
+                    .get("Retry-After")
+                    .and_then(|h| h.to_str().ok())
+                    .and_then(|s| s.parse::<u64>().ok())
+                    .unwrap_or(5 * attempts as u64); // Exponential fallback if header missing
+
+                tokio::time::sleep(Duration::from_secs(retry_after)).await;
+                continue;
+            }
+
+            // Other errors or exhausted attempts
+            return Self::process_response(response).await;
+        }
     }
 
     async fn process_response<T: DeserializeOwned>(response: Response) -> Result<T> {

@@ -229,3 +229,16 @@ pub enum Icon {
     /// An uploaded image file.
     File { file: UploadedFile },
 }
+
+/// A generic list of objects returned by the Notion API, used for pagination.
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub struct List<T> {
+    /// Always "list".
+    pub object: String,
+    /// The list of objects.
+    pub results: Vec<T>,
+    /// The cursor for the next page, if any.
+    pub next_cursor: Option<String>,
+    /// Whether there are more results.
+    pub has_more: bool,
+}

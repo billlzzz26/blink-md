@@ -1,27 +1,6 @@
 use crate::client::NotionClient;
 use crate::error::Result;
-use crate::models::page::Page;
-use serde::Serialize;
-
-#[derive(Serialize)]
-struct UpdatePageRequest {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    properties: Option<serde_json::Value>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    in_trash: Option<bool>,
-}
-
-#[derive(Serialize)]
-struct CreatePageRequest {
-    parent: serde_json::Value,
-    properties: serde_json::Value,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    children: Option<Vec<crate::models::block::Block>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    icon: Option<crate::models::common::Icon>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    cover: Option<crate::models::common::FileBlockContent>,
-}
+use crate::models::page::{CreatePageRequest, Page, UpdatePageRequest};
 
 impl NotionClient {
     pub async fn create_page(
@@ -34,8 +13,7 @@ impl NotionClient {
             parent,
             properties,
             children,
-            icon: None,
-            cover: None,
+            ..Default::default()
         };
         self.request(reqwest::Method::POST, "/pages", Some(&body))
             .await
@@ -47,18 +25,20 @@ impl NotionClient {
     }
 
     pub async fn update_page(
-        &self,
-        page_id: &str,
-        properties: Option<serde_json::Value>,
-        in_trash: Option<bool>,
-    ) -> Result<Page> {
-        let path = format!("/pages/{}", page_id);
-        let body = UpdatePageRequest {
-            properties,
-            in_trash,
-        };
-        self.request(reqwest::Method::PATCH, &path, Some(&body))
-            .await
+            &self,
+            page_id: &str,
+            properties: Option<serde_json::Value>,
+            in_trash: Option<bool>,
+        ) -> Result<Page> {
+            let path = format!("/pages/{}", page_id);
+            let body = UpdatePageRequest {
+                properties,
+                in_trash,
+                ..Default::default()
+            };
+            self.request(reqwest::Method::PATCH, &path, Some(&body))
+                .await
+        }
     }
 
     pub async fn move_page(&self, page_id: &str, parent: serde_json::Value) -> Result<Page> {

@@ -102,6 +102,12 @@ pub enum BlockType {
     /// An inline LaTeX equation.
     #[serde(rename = "equation")]
     Equation { equation: EquationContent },
+    /// A code block with syntax highlighting.
+    #[serde(rename = "code")]
+    CodeBlock { code: CodeBlockContent },
+    /// A link to a page.
+    #[serde(rename = "link_to_page")]
+    LinkToPage { link_to_page: LinkToPageContent },
     /// A horizontal divider line.
     #[serde(rename = "divider")]
     Divider {},
@@ -203,6 +209,26 @@ pub struct EquationContent {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub struct CodeBlockContent {
+    pub rich_text: Vec<RichText>,
+    pub caption: Vec<RichText>,
+    pub language: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub struct LinkToPageContent {
+    #[serde(flatten)]
+    pub page_type: LinkToPageType,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum LinkToPageType {
+    PageId { page_id: String },
+    DatabaseId { database_id: String },
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct LinkPreviewContent {
     pub url: String,
 }
@@ -291,6 +317,8 @@ impl Block {
             BlockType::Callout { .. } => "callout",
             BlockType::Quote { .. } => "quote",
             BlockType::Equation { .. } => "equation",
+            BlockType::CodeBlock { .. } => "code",
+            BlockType::LinkToPage { .. } => "link_to_page",
             BlockType::Divider { .. } => "divider",
             BlockType::TableOfContents { .. } => "table_of_contents",
             BlockType::Breadcrumb { .. } => "breadcrumb",
