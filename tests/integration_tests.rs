@@ -4,7 +4,7 @@
 //! actual API calls.  If `wiremock` isn't available, the tests compile
 //! but are marked `#[ignore]`.
 
-use notion_rs::client::NotionClient;
+use blink_md::client::NotionClient;
 
 /// Helper that builds a client pointed at a local wiremock server.
 #[allow(dead_code)]

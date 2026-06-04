@@ -5,7 +5,7 @@
 //! ## Quick Start
 //!
 //! ```ignore
-//! use notion_rs::NotionClient;
+//! use blink_md::NotionClient;
 //!
 //! #[tokio::main]
 //! async fn main() {

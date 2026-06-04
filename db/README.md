@@ -1,4 +1,4 @@
-# Database Dictionary: notion-rs
+# Database Dictionary: blink-md
 
 ## Overview
 This database schema is designed to serve as a local cache and sync engine for Notion data, ensuring 100% visual fidelity with the Notion UI. It uses a hybrid relational/JSONB approach to handle the dynamic nature of Notion's blocks and properties.

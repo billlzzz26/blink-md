@@ -1,6 +1,6 @@
 //! Unit tests for common types (User, Owner, Parent, RichText)
 
-use notion_rs::models::common::{Owner, Parent, ParentType, RichText, User, UserType};
+use blink_md::models::common::{Owner, Parent, ParentType, RichText, User, UserType};
 
 #[test]
 fn test_user_person() {

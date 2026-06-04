@@ -4,11 +4,11 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use notion_rs::models::block::Block as NotionBlock;
-use notion_rs::models::common::User;
-use notion_rs::models::database::Database;
-use notion_rs::models::page::Page;
-use notion_rs::NotionClient;
+use blink_md::models::block::Block as NotionBlock;
+use blink_md::models::common::User;
+use blink_md::models::database::Database;
+use blink_md::models::page::Page;
+use blink_md::NotionClient;
 use ratatui::{
     layout::{Constraint, Layout},
     style::{Color, Modifier, Style},

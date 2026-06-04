@@ -25,20 +25,19 @@ impl NotionClient {
     }
 
     pub async fn update_page(
-            &self,
-            page_id: &str,
-            properties: Option<serde_json::Value>,
-            in_trash: Option<bool>,
-        ) -> Result<Page> {
-            let path = format!("/pages/{}", page_id);
-            let body = UpdatePageRequest {
-                properties,
-                in_trash,
-                ..Default::default()
-            };
-            self.request(reqwest::Method::PATCH, &path, Some(&body))
-                .await
-        }
+        &self,
+        page_id: &str,
+        properties: Option<serde_json::Value>,
+        in_trash: Option<bool>,
+    ) -> Result<Page> {
+        let path = format!("/pages/{}", page_id);
+        let body = UpdatePageRequest {
+            properties,
+            in_trash,
+            ..Default::default()
+        };
+        self.request(reqwest::Method::PATCH, &path, Some(&body))
+            .await
     }
 
     pub async fn move_page(&self, page_id: &str, parent: serde_json::Value) -> Result<Page> {

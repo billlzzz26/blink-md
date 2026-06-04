@@ -1,7 +1,7 @@
 use chrono::Utc;
-use notion_rs::api::markdown::ToMarkdown;
-use notion_rs::models::block::{Block, BlockType, HeadingContent, TextBlockContent};
-use notion_rs::models::common::{
+use blink_md::api::markdown::ToMarkdown;
+use blink_md::models::block::{Block, BlockType, HeadingContent, TextBlockContent};
+use blink_md::models::common::{
     Annotations, Link, PersonInfo, RichText, TextContent, User, UserType,
 };
 
@@ -148,9 +148,9 @@ fn test_callout_with_children() {
         in_trash: false,
         parent: None,
         block_type: BlockType::Callout {
-            callout: notion_rs::models::block::CalloutContent {
+            callout: blink_md::models::block::CalloutContent {
                 rich_text,
-                icon: Some(notion_rs::models::common::Icon::Emoji {
+                icon: Some(blink_md::models::common::Icon::Emoji {
                     emoji: "💡".to_string(),
                 }),
                 color: "blue_background".to_string(),

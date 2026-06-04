@@ -1,5 +1,5 @@
 use anyhow::Result;
-use notion_rs::api::markdown::{parse_markdown, ToMarkdown};
+use blink_md::api::markdown::{parse_markdown, ToMarkdown};
 use similar::{ChangeTag, TextDiff};
 use std::path::PathBuf;
 

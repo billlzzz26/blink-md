@@ -1,7 +1,7 @@
 use anyhow::Result;
-use notion_rs::api::markdown::ToMarkdown;
-use notion_rs::api::universal_parser::markdown_to_universal;
-use notion_rs::models::universal_mapper::universal_to_notion_type;
+use blink_md::api::markdown::ToMarkdown;
+use blink_md::api::universal_parser::markdown_to_universal;
+use blink_md::models::universal_mapper::universal_to_notion_type;
 use std::path::PathBuf;
 
 pub async fn run_convert(
@@ -32,7 +32,7 @@ pub async fn run_convert(
             for ub in universal_blocks {
                 let nb_type = universal_to_notion_type(&ub);
                 // Create a dummy notion block to use to_markdown
-                let nb = notion_rs::models::block::Block {
+                let nb = blink_md::models::block::Block {
                     object: "block".to_string(),
                     id: "temp".to_string(),
                     created_time: chrono::Utc::now(),
@@ -57,14 +57,14 @@ pub async fn run_convert(
     Ok(())
 }
 
-fn dummy_user() -> notion_rs::models::common::User {
-    notion_rs::models::common::User {
+fn dummy_user() -> blink_md::models::common::User {
+    blink_md::models::common::User {
         object: "user".to_string(),
         id: "dummy".to_string(),
         name: None,
         avatar_url: None,
-        user_type: notion_rs::models::common::UserType::Bot {
-            bot: notion_rs::models::common::BotInfo {
+        user_type: blink_md::models::common::UserType::Bot {
+            bot: blink_md::models::common::BotInfo {
                 owner: None,
                 workspace_name: None,
             },

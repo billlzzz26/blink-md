@@ -1,4 +1,4 @@
-# notion-rs TODO.md — v0.2.0 Universal Document IR
+# blink-md TODO.md — v0.2.0 Universal Document IR
 
 ## Overview
 **Version**: 0.2.0
@@ -106,7 +106,7 @@
 
 - [ ] Full `pmcp` 2.9 server implementation in `src/cli/mcp.rs`
 - [ ] MCP Tools for all core Notion capabilities
-- [ ] Unified `notion-rs convert` command using rewritten IR-platform converters
+- [ ] Unified `blink-md convert` command using rewritten IR-platform converters
 - [ ] Sync command enhancement with IR-based local ↔ Notion sync
 
 ---

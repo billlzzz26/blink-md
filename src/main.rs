@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use notion_rs::NotionClient;
+use blink_md::NotionClient;
 
 mod cli;
 
@@ -274,7 +274,7 @@ async fn main() -> anyhow::Result<()> {
                 println!("{}", serde_json::to_string_pretty(&page)?);
             }
             PageAction::Export { page_id } => {
-                use notion_rs::api::markdown::ToMarkdown;
+                use blink_md::api::markdown::ToMarkdown;
                 let list = client.get_block_children(&page_id, None, None).await?;
                 for block in list.results {
                     println!("{}", block.to_markdown(0));
@@ -357,7 +357,7 @@ async fn main() -> anyhow::Result<()> {
                 target_type,
                 text_json,
             } => {
-                use notion_rs::api::comments::CommentParent;
+                use blink_md::api::comments::CommentParent;
                 let parent = if target_type == "page_id" {
                     CommentParent::PageId { page_id: id }
                 } else {

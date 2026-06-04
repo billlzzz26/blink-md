@@ -1,5 +1,5 @@
 use anyhow::Result;
-use notion_rs::api::markdown::parse_markdown;
+use blink_md::api::markdown::parse_markdown;
 
 pub async fn run_mcp_server() -> Result<()> {
     // let mut server = Server::new("doc-converter", "1.0.0");

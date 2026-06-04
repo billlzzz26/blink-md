@@ -1,4 +1,4 @@
-# notion-rs
+# blink-md
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/rust-1.86%2B-blue.svg)](https://www.rust-lang.org)
@@ -34,8 +34,8 @@ The project is structured as both a library and a binary:
 Clone the repository and build the project:
 
 ```bash
-git clone https://github.com/your-username/notion-rs.git
-cd notion-rs
+git clone https://github.com/your-username/blink-md.git
+cd blink-md
 cargo build --release
 ```
 
@@ -43,7 +43,7 @@ cargo build --release
 
 #### Library
 
-Add `notion-rs` to your `Cargo.toml` and use the client:
+Add `blink-md` to your `Cargo.toml` and use the client:
 
 ```rust
 use notion_rs::NotionClient;

@@ -1,5 +1,5 @@
-use notion_rs::api::markdown::parse_markdown;
-use notion_rs::models::block::BlockType;
+use blink_md::api::markdown::parse_markdown;
+use blink_md::models::block::BlockType;
 
 #[test]
 fn test_parse_simple_paragraph() {
@@ -110,7 +110,7 @@ fn test_parse_callout() {
     match &blocks[0].block_type {
         BlockType::Callout { callout } => {
             assert_eq!(callout.rich_text[0].plain_text(), "Attention!");
-            if let Some(notion_rs::models::common::Icon::Emoji { emoji }) = &callout.icon {
+            if let Some(blink_md::models::common::Icon::Emoji { emoji }) = &callout.icon {
                 assert_eq!(emoji, "💡");
             } else {
                 panic!("Expected emoji icon");
@@ -123,8 +123,8 @@ fn test_parse_callout() {
 
 #[test]
 fn test_mention_to_markdown() {
-    use notion_rs::api::markdown::mention_to_markdown;
-    use notion_rs::models::common::{
+    use blink_md::api::markdown::mention_to_markdown;
+    use blink_md::models::common::{
         DatabaseMention, MentionObject, PageMention, PersonInfo, User, UserType,
     };
 

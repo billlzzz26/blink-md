@@ -1,6 +1,6 @@
 [package]
-name = "notion-rs"
-version = "0.1.0"
+name = "blink-md"
+version = "0.2.0"
 edition = "2021"
 description = "Unofficial Notion API SDK for Rust (version 2026-03-11)"
 license = "MIT"

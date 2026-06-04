@@ -197,6 +197,37 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "84d7ced0ae9557296835c32bf1b1e02b44c746701f898460fb000d7eaa84f00a"
 
 [[package]]
+name = "blink-md"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "clap",
+ "crossterm",
+ "docx-rs",
+ "futures",
+ "google-docs1",
+ "governor",
+ "lopdf",
+ "notify",
+ "pmcp",
+ "pulldown-cmark",
+ "ratatui",
+ "reqwest",
+ "scraper",
+ "serde",
+ "serde_json",
+ "similar",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-retry",
+ "tokio-util",
+ "uuid",
+ "wiremock",
+ "yup-oauth2",
+]
+
+[[package]]
 name = "block-buffer"
 version = "0.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2142,37 +2173,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "42b8cfee0e339a0337359f3c88165702ac6e600dc01c0cc9579a92d62b08477a"
 dependencies = [
  "bitflags 2.12.1",
-]
-
-[[package]]
-name = "notion-rs"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "chrono",
- "clap",
- "crossterm",
- "docx-rs",
- "futures",
- "google-docs1",
- "governor",
- "lopdf",
- "notify",
- "pmcp",
- "pulldown-cmark",
- "ratatui",
- "reqwest",
- "scraper",
- "serde",
- "serde_json",
- "similar",
- "thiserror 2.0.18",
- "tokio",
- "tokio-retry",
- "tokio-util",
- "uuid",
- "wiremock",
- "yup-oauth2",
 ]
 
 [[package]]

@@ -1,5 +1,5 @@
-use notion_rs::models::block::{BlockIdRef, BlockType, Position, PositionType};
-use notion_rs::models::page::Page;
+use blink_md::models::block::{BlockIdRef, BlockType, Position, PositionType};
+use blink_md::models::page::Page;
 use serde_json::json;
 
 #[test]
