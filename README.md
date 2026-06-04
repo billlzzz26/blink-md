@@ -1,94 +1,76 @@
-# blink-md
+# blink-md ⚡️
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Rust](https://img.shields.io/badge/rust-1.86%2B-blue.svg)](https://www.rust-lang.org)
+**blink-md** is a high-performance, platform-agnostic document sync and conversion engine built in Rust. It enables lossless transformation between Notion, Markdown (CommonMark/GFM), and other document formats using a Universal Intermediate Representation (IR).
 
-An unofficial Notion API SDK and TUI explorer for Rust. Built for performance, type safety, and ease of use.
+## 🚀 Key Features
 
-## Features
+- **Universal IR Architecture**: Platform-neutral document model for true lossless conversion.
+- **Relational Document Store**: PostgreSQL-optimized schema for local caching and high-fidelity UI rendering.
+- **Platform Adapters**:
+  - 🟢 **Notion API** (Version 2026-03-11 compliance)
+  - 🟢 **Markdown** (CommonMark + GFM support)
+  - 🟡 **GitHub / HTML / Google Docs** (In development)
+- **Interactive TUI**: A terminal user interface to explore and preview your documents in visual sequence.
+- **MCP Server**: Integrated Model Context Protocol (v2.9) for AI-driven document automation.
+- **Precise Ordering**: Uses LexoRank-style `sort_order` for 100% visual sequence fidelity.
 
-- **Robust SDK**: Type-safe models and client for the Notion API (version 2026-03-11).
-- **Interactive TUI**: A terminal user interface to explore your Notion workspace (Users, Pages, Blocks, Databases).
-- **Comprehensive Models**: Detailed implementation of Blocks, Pages, Databases, and Users.
-- **Async First**: Built on top of `tokio` and `reqwest` for high-performance asynchronous operations.
-
-## Architecture
-
-The project is structured as both a library and a binary:
-
-- `src/lib.rs`: The main entry point for the SDK.
-- `src/client.rs`: Core `NotionClient` implementation.
-- `src/api/`: Module-specific API implementations (Blocks, Pages, Databases, etc.).
-- `src/models/`: Strongly-typed Rust representations of Notion objects.
-- `src/cli/tui.rs`: Interactive Terminal User Interface powered by `ratatui` 0.30.
-
-## Getting Started
-
-### Prerequisites
-
-- Rust 1.86 or higher
-- A Notion Integration Token (Internal or Public)
-
-### Installation
-
-Clone the repository and build the project:
+## 🛠 Installation
 
 ```bash
-git clone https://github.com/your-username/blink-md.git
-cd blink-md
-cargo build --release
+cargo install blink-md
 ```
 
-### Usage
+## 📖 Usage
 
-#### Library
+### CLI
+```bash
+# Search for pages
+blink-md search "Project Plan"
 
-Add `blink-md` to your `Cargo.toml` and use the client:
+# Sync a local folder to Notion
+blink-md sync --dir ./docs --notion-db YOUR_DATABASE_ID
 
+# Convert between formats (Phase 2)
+blink-md convert --from notion --to markdown --input page_id=xxx --output file=doc.md
+```
+
+### Library
 ```rust
-use notion_rs::NotionClient;
+use blink_md::NotionClient;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let client = NotionClient::new("your_integration_token".to_string());
-    let users = client.list_users().await?;
-    println!("Found {} users", users.len());
+    let client = NotionClient::new("YOUR_TOKEN");
+    let page = client.get_page("PAGE_ID").await?;
+    println!("Page Title: {}", page.title_from_properties());
     Ok(())
 }
 ```
 
-#### TUI Explorer
+## 🏗 Architecture (v0.2.0)
 
-Run the built-in TUI to explore your workspace:
-
-```bash
-# Set your token as an environment variable
-export NOTION_TOKEN="your_integration_token"
-
-# Run the TUI
-cargo run -- tui
+```text
+[ Notion ] <--- Adapter ---> [ Universal IR ] <--- Adapter ---> [ Markdown ]
+                                   |
+                                   v
+                         [ Relational DB Store ]
+                                   |
+                                   v
+                         [ Interactive TUI / UI ]
 ```
 
-> [!TIP]
-> Use `Tab` / `BackTab` to switch between categories (Users, Pages, Blocks, etc.) and `j`/`k` or arrow keys to navigate lists.
+## 🗺 Roadmap
 
-## Development
+We are currently working towards **v0.2.0**. Track our progress on the [GitHub Roadmap](https://github.com/billlzzz26/blink-md/projects/2).
 
-### Running Tests
+- **Phase 2 (Current)**: UX & TUI Refinement (Theme, Loading, Error handling).
+- **Phase 3**: Core Platform Converters (Bidirectional Notion/Markdown).
+- **Phase 4**: Extended Converters (GitHub, HTML, Google Docs).
+- **Phase 5**: Advanced Notion Features (File Uploads, Webhooks).
 
-```bash
-cargo test
-```
+## 📄 License
 
-### Dependency Management
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-The project uses modern Rust libraries:
-- **TUI**: `ratatui` 0.30 with `crossterm` 0.28
-- **Async**: `tokio` 1.0
-- **HTTP**: `reqwest` 0.12
-- **Serialization**: `serde` 1.0
-
-## Status
-
-> [!IMPORTANT]
-> This is an unofficial SDK and is currently in active development. API coverage is expanding; check the `src/api/` directory for currently supported endpoints.
+---
+*Generated by Gemini CLI. Aligned with blink-md v0.2.0 Standards.*
