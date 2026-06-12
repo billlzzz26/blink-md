@@ -1,17 +1,17 @@
 use anyhow::Result;
-use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
-    execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
-};
 use blink_md::models::block::Block as NotionBlock;
 use blink_md::models::common::User;
 use blink_md::models::database::Database;
 use blink_md::models::page::Page;
 use blink_md::NotionClient;
+use crossterm::{
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
+    execute,
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+};
 use ratatui::{
     layout::{Constraint, Layout},
-    style::{Color, Modifier, Style},
+    style::{Modifier, Style},
     text::{Line, Span},
     widgets::{Block as WidgetBlock, Borders, List, ListItem, Paragraph, Tabs},
     Frame, Terminal,
@@ -155,7 +155,10 @@ impl App {
                 node.children.clear();
             } else {
                 if node.block.has_children {
-                    let list = self.client.get_block_children(&node.block.id, None, None).await?;
+                    let list = self
+                        .client
+                        .get_block_children(&node.block.id, None, None)
+                        .await?;
                     node.children = list
                         .results
                         .into_iter()
@@ -441,9 +444,20 @@ fn ui(f: &mut Frame, app: &App) {
     let [tabs_area, main_area] =
         Layout::vertical([Constraint::Length(3), Constraint::Fill(1)]).areas(f.area());
 
+    let theme = crate::cli::theme::Theme::notion();
     let titles: Vec<Line> = TabsState::titles()
         .iter()
-        .map(|t| Line::from(Span::styled(*t, Style::default().fg(Color::White))))
+        .enumerate()
+        .map(|(i, t)| {
+            let style = if i == app.tab.index() {
+                Style::default()
+                    .fg(theme.accent_text)
+                    .add_modifier(Modifier::BOLD)
+            } else {
+                Style::default().fg(theme.stone_gray)
+            };
+            Line::from(Span::styled(*t, style))
+        })
         .collect();
     let tabs = Tabs::new(titles)
         .block(
@@ -452,7 +466,12 @@ fn ui(f: &mut Frame, app: &App) {
                 .title("notion-rs TUI"),
         )
         .select(app.tab.index())
-        .highlight_style(Style::default().add_modifier(Modifier::REVERSED));
+        .highlight_style(
+            Style::default()
+                .fg(theme.accent_text)
+                .bg(theme.accent)
+                .add_modifier(Modifier::BOLD),
+        );
     f.render_widget(tabs, tabs_area);
 
     let [list_area, detail_area] =
@@ -463,12 +482,24 @@ fn ui(f: &mut Frame, app: &App) {
         TabsState::Users => app
             .users
             .iter()
-            .map(|u| ListItem::new(u.name.clone().unwrap_or_default()))
+            .map(|u| {
+                let name = u.name.clone().unwrap_or_default();
+                ListItem::new(Line::from(Span::styled(
+                    name,
+                    Style::default().fg(theme.primary_text),
+                )))
+            })
             .collect(),
         TabsState::Pages => app
             .pages
             .iter()
-            .map(|p| ListItem::new(p.title_from_properties()))
+            .map(|p| {
+                let title = p.title_from_properties();
+                ListItem::new(Line::from(Span::styled(
+                    title,
+                    Style::default().fg(theme.primary_text),
+                )))
+            })
             .collect(),
         TabsState::BlocksTree => {
             let flat = app.flatten_tree(&app.block_tree);
@@ -477,14 +508,23 @@ fn ui(f: &mut Frame, app: &App) {
                     let prefix =
                         "  ".repeat(node.indent) + if node.expanded { "▼ " } else { "▶ " };
                     let text = format!("{}{}", prefix, node.block.type_str());
-                    ListItem::new(text)
+                    ListItem::new(Line::from(Span::styled(
+                        text,
+                        Style::default().fg(theme.primary_text),
+                    )))
                 })
                 .collect()
         }
         TabsState::Databases => app
             .databases
             .iter()
-            .map(|db| ListItem::new(db.title_text()))
+            .map(|db| {
+                let title = db.title_text();
+                ListItem::new(Line::from(Span::styled(
+                    title,
+                    Style::default().fg(theme.primary_text),
+                )))
+            })
             .collect(),
         TabsState::Search => app
             .search_results
@@ -496,14 +536,17 @@ fn ui(f: &mut Frame, app: &App) {
                     Some(s) => s.to_string(),
                     None => format!("result {}", i),
                 };
-                ListItem::new(text)
+                ListItem::new(Line::from(Span::styled(
+                    text,
+                    Style::default().fg(theme.primary_text),
+                )))
             })
             .collect(),
     };
 
     let list = List::new(list_items)
         .block(WidgetBlock::default().borders(Borders::ALL).title("Items"))
-        .highlight_style(Style::default().fg(Color::Black).bg(Color::White))
+        .highlight_style(Style::default().fg(theme.surface).bg(theme.accent))
         .highlight_symbol("> ");
     let mut list_state = ratatui::widgets::ListState::default();
     list_state.select(Some(app.selected_index()));
@@ -513,8 +556,16 @@ fn ui(f: &mut Frame, app: &App) {
     if app.tab == TabsState::Search {
         detail = format!("Search: {}\n\n{}", app.search_query, detail);
     }
+    let detail_style = if detail.contains("Error") || detail.contains("error") {
+        Style::default().fg(theme.error)
+    } else if detail.contains("Success") || detail.contains("success") {
+        Style::default().fg(theme.success)
+    } else {
+        Style::default().fg(theme.primary_text)
+    };
     let detail_para = Paragraph::new(detail)
         .block(WidgetBlock::default().borders(Borders::ALL).title("Detail"))
+        .style(detail_style)
         .wrap(ratatui::widgets::Wrap { trim: true });
     f.render_widget(detail_para, detail_area);
 }

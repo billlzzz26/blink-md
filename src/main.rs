@@ -1,5 +1,5 @@
-use clap::{Parser, Subcommand};
 use blink_md::NotionClient;
+use clap::{Parser, Subcommand};
 
 mod cli;
 
@@ -382,7 +382,9 @@ async fn main() -> anyhow::Result<()> {
             to: _,
         } => {
             // cli::convert::run_convert(input, output, from, to).await?;
-            println!("The 'convert' command is being rewritten for Universal IR. Please stay tuned!");
+            println!(
+                "The 'convert' command is being rewritten for Universal IR. Please stay tuned!"
+            );
         }
         Commands::Sync { dir, notion_db } => {
             let db = notion_db

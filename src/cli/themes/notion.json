@@ -1,0 +1,14 @@
+{
+  "name": "Notion",
+  "description": "Official Notion color palette",
+  "colors": {
+    "primary": [55, 53, 47],
+    "accent": [35, 131, 226],
+    "surface": [255, 255, 255],
+    "primary_text": [55, 53, 47],
+    "accent_text": [255, 255, 255],
+    "stone_gray": [155, 154, 151],
+    "error": [212, 76, 71],
+    "success": [68, 131, 97]
+  }
+}

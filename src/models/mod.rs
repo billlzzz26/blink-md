@@ -8,6 +8,6 @@ pub mod block;
 pub mod common;
 pub mod database;
 pub mod datasource;
+pub mod db;
 pub mod page;
 pub mod view;
-pub mod db;

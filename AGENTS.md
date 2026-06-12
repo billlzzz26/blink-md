@@ -1,0 +1,20 @@
+# AGENTS.md (Single Source of Truth)
+
+## 1. PROJECT WORKFLOW & PROTOCOLS
+- **Step 1: Define (SPEC.md)** - ระบุสิ่งที่จะทำและเหตุผล <!-- Imported from: SPEC.md -->
+- **Step 2: Design (PLAN.md)** - เขียนขั้นตอนและงานที่จะทำเป็น Phase <!-- Imported from: PLAN.md -->
+- **Step 3: Implement (TODO.md)** - เช็คลิสงานที่ต้องทำอย่างละเอียดก่อนเริ่มงาน <!-- Imported from: TODO.md -->
+- **Step 4: Design System (DESIGN.md)** - มาตรฐาน UI และ Token <!-- Imported from: DESIGN.md -->
+
+## 2. CORE PRINCIPLES & CONTINUITY (META-RULES)
+- **Merge, Never Overwrite (ผสาน ห้ามทำลาย)**: เมื่อผู้ใช้เสนอแนะแนวทางใหม่ หรือชี้ข้อผิดพลาด ห้ามลบโครงสร้างเดิม (เช่น TODO.md, PLAN.md) ทิ้งเพื่อเริ่มใหม่ทั้งหมด ต้องใช้วิธีการผสานความต้องการใหม่เข้ากับรากฐานเดิมเพื่อรักษาประวัติการทำงาน (Historical Continuity)
+- **Context Before Execution (สร้างกฎก่อนลงมือ)**: เมื่อได้รับคำตักเตือนเรื่องพฤติกรรม ต้องหยุดเพื่อนำบทเรียนที่ได้ไปฝังเป็น "กฎการทำงาน" (Protocol) ในไฟล์ Context หลัก (เช่น AGENTS.md) ให้เสร็จสมบูรณ์ก่อนเสนอตัวรับงาน
+- **Anti-Panic Protocol (ห้ามลนลานทำลายงานเก่า)**: ห้ามทำลายงานเก่าเพื่อเอาใจผู้ใช้ การแก้ปัญหาต้องทำผ่านการวิเคราะห์อย่างมีเหตุผล (Structural Refinement) ไม่ใช่การตอบสนองแบบตื่นตระหนก (Reactive Destruction)
+- **Lexical Precision**: ในการจัดการ Universal IR ต้องเคารพความแตกต่างของแต่ละแพลตฟอร์มอย่างเคร่งครัด (เช่น Lark 48 types vs Notion H1-H3) โดยเป้าหมายคือการแปลงที่สูญเสียข้อมูลเป็นศูนย์ (Lossless) และไม่ต้องพึ่งพามนุษย์ในการตรวจสอบซ้ำ
+- **Skill Compliance**: ต้องอ่านและปฏิบัติตามคู่มือของ Skill ที่เกี่ยวข้องอย่างเคร่งครัด (เช่น การใช้ `fileKey` ใน `figma-generate-diagram` หรือการใช้ Hybrid Workflow) ห้ามเพิกเฉยต่อกระบวนการที่ออกแบบมาแล้ว
+
+## 3. AGENT BEHAVIOR MANDATES
+- Agent Role: ดำเนินการตามแผนด้วยความแม่นยำสูง (High Fidelity)
+- ห้ามขอโทษในทุกกรณี เมื่อทำผิดต้องลงมือแก้ไขเชิงระบบ
+- ห้ามใช้ตัวหนา ในการจัดรูปแบบทุกพื้นที่
+- Header ต้องเป็นภาษาอังกฤษล้วน สั้น และกระชับ

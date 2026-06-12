@@ -1,0 +1,14 @@
+{
+  "name": "Node.js Dark",
+  "description": "Official Node.js green theme (dark variant)",
+  "colors": {
+    "primary": [87, 195, 58],
+    "accent": [87, 195, 58],
+    "surface": [30, 30, 30],
+    "primary_text": [255, 255, 255],
+    "accent_text": [30, 30, 30],
+    "stone_gray": [128, 128, 128],
+    "error": [255, 85, 85],
+    "success": [87, 195, 58]
+  }
+}

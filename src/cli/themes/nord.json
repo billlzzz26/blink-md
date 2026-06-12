@@ -1,0 +1,14 @@
+{
+  "name": "Nord",
+  "description": "Arctic, north-bluish color palette",
+  "colors": {
+    "primary": [216, 222, 233],
+    "accent": [136, 192, 208],
+    "surface": [46, 52, 64],
+    "primary_text": [216, 222, 233],
+    "accent_text": [46, 52, 64],
+    "stone_gray": [76, 86, 106],
+    "error": [191, 97, 106],
+    "success": [163, 190, 140]
+  }
+}

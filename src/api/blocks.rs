@@ -29,8 +29,7 @@ impl NotionClient {
             path.push('?');
             path.push_str(&params.join("&"));
         }
-        self.request(reqwest::Method::GET, &path, None::<&()>)
-            .await
+        self.request(reqwest::Method::GET, &path, None::<&()>).await
     }
 
     pub async fn append_block_children(

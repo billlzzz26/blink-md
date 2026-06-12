@@ -1,0 +1,14 @@
+{
+  "name": "Gruvbox Dark",
+  "description": "Retro groove color scheme",
+  "colors": {
+    "primary": [235, 219, 178],
+    "accent": [251, 173, 59],
+    "surface": [40, 40, 40],
+    "primary_text": [235, 219, 178],
+    "accent_text": [40, 40, 40],
+    "stone_gray": [146, 131, 116],
+    "error": [251, 73, 52],
+    "success": [184, 187, 38]
+  }
+}

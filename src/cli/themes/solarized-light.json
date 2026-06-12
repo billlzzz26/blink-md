@@ -1,0 +1,14 @@
+{
+  "name": "Solarized Light",
+  "description": "Precision colors for machines and people (light variant)",
+  "colors": {
+    "primary": [88, 110, 117],
+    "accent": [38, 139, 210],
+    "surface": [253, 246, 227],
+    "primary_text": [101, 123, 131],
+    "accent_text": [253, 246, 227],
+    "stone_gray": [147, 161, 161],
+    "error": [220, 50, 47],
+    "success": [88, 110, 117]
+  }
+}

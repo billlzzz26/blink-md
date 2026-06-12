@@ -1,7 +1,7 @@
 use anyhow::Result;
-use notify::{Event, RecursiveMode, Watcher};
 use blink_md::api::markdown::parse_markdown;
 use blink_md::NotionClient;
+use notify::{Event, RecursiveMode, Watcher};
 use serde_json::json;
 use std::path::PathBuf;
 use tokio::sync::mpsc;

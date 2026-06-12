@@ -1,0 +1,14 @@
+{
+  "name": "Node.js",
+  "description": "Official Node.js green theme",
+  "colors": {
+    "primary": [63, 131, 78],
+    "accent": [87, 195, 58],
+    "surface": [255, 255, 255],
+    "primary_text": [63, 131, 78],
+    "accent_text": [255, 255, 255],
+    "stone_gray": [128, 128, 128],
+    "error": [204, 0, 0],
+    "success": [63, 131, 78]
+  }
+}

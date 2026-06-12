@@ -1,0 +1,14 @@
+{
+  "name": "Solarized Dark",
+  "description": "Precision colors for machines and people",
+  "colors": {
+    "primary": [133, 153, 0],
+    "accent": [38, 139, 210],
+    "surface": [0, 43, 54],
+    "primary_text": [131, 148, 150],
+    "accent_text": [0, 43, 54],
+    "stone_gray": [88, 110, 117],
+    "error": [220, 50, 47],
+    "success": [133, 153, 0]
+  }
+}

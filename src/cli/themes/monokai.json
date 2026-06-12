@@ -1,0 +1,14 @@
+{
+  "name": "Monokai",
+  "description": "Classic vibrant color scheme",
+  "colors": {
+    "primary": [248, 248, 242],
+    "accent": [249, 38, 114],
+    "surface": [39, 40, 34],
+    "primary_text": [248, 248, 242],
+    "accent_text": [39, 40, 34],
+    "stone_gray": [117, 113, 94],
+    "error": [249, 38, 114],
+    "success": [166, 226, 46]
+  }
+}

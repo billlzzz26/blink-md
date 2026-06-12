@@ -1,0 +1,14 @@
+{
+  "name": "GitHub Light",
+  "description": "GitHub's official light theme",
+  "colors": {
+    "primary": [36, 41, 46],
+    "accent": [9, 105, 218],
+    "surface": [255, 255, 255],
+    "primary_text": [36, 41, 46],
+    "accent_text": [255, 255, 255],
+    "stone_gray": [106, 115, 125],
+    "error": [203, 37, 39],
+    "success": [44, 156, 61]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "Catppuccin Mocha",
+  "description": "Soothing pastel theme for high contrast",
+  "colors": {
+    "primary": [205, 214, 244],
+    "accent": [245, 194, 231],
+    "surface": [30, 30, 46],
+    "primary_text": [205, 214, 244],
+    "accent_text": [30, 30, 46],
+    "stone_gray": [108, 112, 134],
+    "error": [243, 139, 168],
+    "success": [166, 227, 161]
+  }
+}

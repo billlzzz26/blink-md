@@ -1,0 +1,14 @@
+{
+  "name": "GitHub Dark",
+  "description": "GitHub's official dark theme",
+  "colors": {
+    "primary": [209, 213, 218],
+    "accent": [88, 166, 255],
+    "surface": [22, 27, 34],
+    "primary_text": [209, 213, 218],
+    "accent_text": [22, 27, 34],
+    "stone_gray": [110, 118, 129],
+    "error": [248, 81, 73],
+    "success": [63, 185, 80]
+  }
+}

@@ -1,9 +1,9 @@
-use chrono::Utc;
 use blink_md::api::markdown::ToMarkdown;
 use blink_md::models::block::{Block, BlockType, HeadingContent, TextBlockContent};
 use blink_md::models::common::{
     Annotations, Link, PersonInfo, RichText, TextContent, User, UserType,
 };
+use chrono::Utc;
 
 #[test]
 fn test_heading_1_to_markdown() {

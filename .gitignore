@@ -2,3 +2,29 @@
 **/*.rs.bk
 .env
 .DS_Store
+
+# Sensitive files
+*.key
+*.pem
+*.secret
+secrets/
+
+# AI agent local data (not for git)
+.gemini/
+.learnings/
+
+# MCP subprojects
+src/mcp/jules/jules.key
+src/mcp/jules/target/
+src/mcp/md/target/
+src/mcp/mmd/target/
+src/mcp/core/target/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+Thumbs.db

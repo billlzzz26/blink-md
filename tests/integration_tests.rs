@@ -80,10 +80,13 @@ mod blocks_tests {
             .mount(&server)
             .await;
 
-        let blocks = client.get_block_children("page-1").await.unwrap();
-        assert_eq!(blocks.len(), 1);
-        assert_eq!(blocks[0].id, "b1");
-        assert!(!blocks[0].in_trash);
+        let blocks = client
+            .get_block_children("page-1", None, None)
+            .await
+            .unwrap();
+        assert_eq!(blocks.results.len(), 1);
+        assert_eq!(blocks.results[0].id, "b1");
+        assert!(!blocks.results[0].in_trash);
     }
 }
 
@@ -193,11 +196,11 @@ mod search_tests {
             .await;
 
         let results = client
-            .search(Some("hello".to_string()), None)
+            .search(Some("hello".to_string()), None, None, None)
             .await
             .unwrap();
-        assert_eq!(results.len(), 1);
-        assert_eq!(results[0]["id"], "page-1");
+        assert_eq!(results.results.len(), 1);
+        assert_eq!(results.results[0]["id"], "page-1");
     }
 }
 

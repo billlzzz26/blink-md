@@ -1,0 +1,14 @@
+{
+  "name": "Dracula",
+  "description": "Popular dark theme",
+  "colors": {
+    "primary": [248, 248, 242],
+    "accent": [189, 147, 249],
+    "surface": [40, 42, 54],
+    "primary_text": [248, 248, 242],
+    "accent_text": [40, 42, 54],
+    "stone_gray": [98, 114, 164],
+    "error": [255, 85, 85],
+    "success": [80, 250, 123]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "Tokyo Night",
+  "description": "Clean, dark theme celebrating Tokyo city lights",
+  "colors": {
+    "primary": [192, 202, 245],
+    "accent": [125, 207, 255],
+    "surface": [26, 27, 38],
+    "primary_text": [192, 202, 245],
+    "accent_text": [26, 27, 38],
+    "stone_gray": [86, 95, 137],
+    "error": [247, 118, 142],
+    "success": [158, 206, 106]
+  }
+}

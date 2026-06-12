@@ -1,0 +1,14 @@
+{
+  "name": "Gruvbox Light",
+  "description": "Retro groove color scheme (light variant)",
+  "colors": {
+    "primary": [60, 56, 54],
+    "accent": [180, 90, 20],
+    "surface": [251, 241, 199],
+    "primary_text": [60, 56, 54],
+    "accent_text": [251, 241, 199],
+    "stone_gray": [146, 131, 116],
+    "error": [204, 36, 29],
+    "success": [152, 151, 26]
+  }
+}
