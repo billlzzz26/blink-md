@@ -52,7 +52,7 @@ fn render_gfm_block(block: &UniversalBlock, indent: usize, out: &mut String) {
         UniversalBlock::Callout { content, .. } => {
             // GFM Alert syntax: > [!NOTE]
             out.push_str(&tabs);
-            out.push_str("> [!NOTE]\n"); 
+            out.push_str("> [!NOTE]\n");
             for b in content {
                 out.push_str(&tabs);
                 out.push_str("> ");
@@ -67,7 +67,9 @@ fn render_gfm_block(block: &UniversalBlock, indent: usize, out: &mut String) {
                 out.push_str("- ");
                 out.push_str(check);
                 for (i, b) in item.content.iter().enumerate() {
-                    if i > 0 { out.push_str("  "); }
+                    if i > 0 {
+                        out.push_str("  ");
+                    }
                     render_gfm_block(b, 0, out);
                 }
                 out.push('\n');
@@ -81,17 +83,18 @@ fn render_gfm_block(block: &UniversalBlock, indent: usize, out: &mut String) {
 
 fn render_gfm_inline(content: &[InlineElement], out: &mut String) {
     for element in content {
-        match element {
-            InlineElement::TextRun { content, style } => {
-                if let Some(s) = style {
-                    if s.strikethrough == Some(true) { out.push_str("~~"); }
-                    out.push_str(content);
-                    if s.strikethrough == Some(true) { out.push_str("~~"); }
-                } else {
-                    out.push_str(content);
+        if let InlineElement::TextRun { content, style } = element {
+            if let Some(s) = style {
+                if s.strikethrough == Some(true) {
+                    out.push_str("~~");
                 }
+                out.push_str(content);
+                if s.strikethrough == Some(true) {
+                    out.push_str("~~");
+                }
+            } else {
+                out.push_str(content);
             }
-            _ => {}
         }
     }
 }

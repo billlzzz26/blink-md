@@ -2,10 +2,10 @@
 fn test_build_metadata_exists() {
     let target_os = env!("BUILD_TARGET_OS");
     let env = env!("BUILD_ENVIRONMENT");
-    
+
     assert!(!target_os.is_empty(), "BUILD_TARGET_OS should not be empty");
     assert!(!env.is_empty(), "BUILD_ENVIRONMENT should not be empty");
-    
+
     println!("Running on OS: {}, Environment: {}", target_os, env);
 }
 
@@ -13,7 +13,7 @@ fn test_build_metadata_exists() {
 fn test_default_theme_logic() {
     let env = env!("BUILD_ENVIRONMENT");
     let is_termux = env == "termux";
-    
+
     // Logic check: if on termux, default should be dracula (dark), else notion (light)
     // We are testing the logic in src/cli/theme.rs:notion()
     if is_termux {

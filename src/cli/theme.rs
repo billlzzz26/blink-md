@@ -93,7 +93,7 @@ impl Theme {
         } else {
             "notion"
         };
-        Self::load(default_theme).unwrap_or_else(|_| Self {
+        Self::load(default_theme).unwrap_or(Self {
             primary: Color::Rgb(55, 53, 47),
             accent: Color::Rgb(35, 131, 226),
             surface: Color::White,
