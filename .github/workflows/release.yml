@@ -12,6 +12,8 @@ jobs:
   release:
     name: Release ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
     strategy:
       matrix:
         include:
@@ -53,6 +55,8 @@ jobs:
     name: Publish Release
     needs: release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v6
 
