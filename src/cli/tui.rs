@@ -78,6 +78,7 @@ struct App {
     detail_text: String,
     status_message: String,
     is_loading: bool,
+    show_help: bool,
     flattened_cache: Vec<TreeNode>,
     needs_reflatten: bool,
 }
@@ -110,6 +111,7 @@ impl App {
             detail_text: String::new(),
             status_message: String::from("Ready"),
             is_loading: false,
+            show_help: false,
             flattened_cache: vec![],
             needs_reflatten: true,
         }
@@ -497,7 +499,14 @@ where
         if let Event::Key(key) = event::read()? {
             if key.kind == KeyEventKind::Press {
                 match key.code {
-                    KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
+                    KeyCode::Char('q') | KeyCode::Esc => {
+                        if app.show_help {
+                            app.show_help = false;
+                        } else {
+                            return Ok(());
+                        }
+                    }
+                    KeyCode::Char('?') => app.show_help = !app.show_help,
                     KeyCode::Tab => {
                         let idx = (app.tab.index() + 1) % TabsState::titles().len();
                         app.tab = TabsState::from_index(idx);
@@ -531,6 +540,13 @@ where
                     }
                     KeyCode::Down | KeyCode::Char('j') => app.next_item(),
                     KeyCode::Up | KeyCode::Char('k') => app.prev_item(),
+                    KeyCode::Backspace => {
+                        if app.tab == TabsState::BlocksTree {
+                            app.tab = TabsState::Pages;
+                        } else if app.tab == TabsState::Search {
+                            app.search_query.pop();
+                        }
+                    }
                     KeyCode::Enter => match &app.tab {
                         TabsState::Pages => {
                             if let Some(page) = app.pages.get(app.pages_selected) {
@@ -557,9 +573,6 @@ where
                     },
                     KeyCode::Char(c) if app.tab == TabsState::Search => {
                         app.search_query.push(c);
-                    }
-                    KeyCode::Backspace if app.tab == TabsState::Search => {
-                        app.search_query.pop();
                     }
                     _ => {}
                 }
@@ -597,6 +610,7 @@ fn ui(f: &mut Frame, app: &mut App) {
         .block(
             WidgetBlock::default()
                 .borders(Borders::ALL)
+                .border_style(Style::default().fg(theme.border))
                 .title(format!("{}notion-rs TUI", title_prefix)),
         )
         .select(app.tab.index())
@@ -679,7 +693,12 @@ fn ui(f: &mut Frame, app: &mut App) {
     };
 
     let list = List::new(list_items)
-        .block(WidgetBlock::default().borders(Borders::ALL).title("Items"))
+        .block(
+            WidgetBlock::default()
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(theme.border))
+                .title("Items"),
+        )
         .highlight_style(Style::default().fg(theme.surface).bg(theme.accent))
         .highlight_symbol("> ");
     let mut list_state = ratatui::widgets::ListState::default();
@@ -698,7 +717,12 @@ fn ui(f: &mut Frame, app: &mut App) {
         Style::default().fg(theme.primary_text)
     };
     let detail_para = Paragraph::new(detail)
-        .block(WidgetBlock::default().borders(Borders::ALL).title("Detail"))
+        .block(
+            WidgetBlock::default()
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(theme.border))
+                .title("Detail"),
+        )
         .style(detail_style)
         .wrap(ratatui::widgets::Wrap { trim: true });
     f.render_widget(detail_para, detail_area);
@@ -713,4 +737,69 @@ fn ui(f: &mut Frame, app: &mut App) {
         Style::default().fg(theme.stone_gray),
     )));
     f.render_widget(footer, footer_area);
+
+    if app.show_help {
+        show_help_popup(f, theme);
+    }
+}
+
+fn show_help_popup(f: &mut Frame, theme: crate::cli::theme::Theme) {
+    use ratatui::widgets::Clear;
+
+    let block = WidgetBlock::default()
+        .title(" Keyboard Shortcuts ")
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(theme.accent));
+
+    let help_text = vec![
+        Line::from(vec![
+            Span::styled("[q/Esc]   ", Style::default().fg(theme.accent)),
+            Span::raw("Quit program or close popup"),
+        ]),
+        Line::from(vec![
+            Span::styled("[Tab]     ", Style::default().fg(theme.accent)),
+            Span::raw("Switch to next tab"),
+        ]),
+        Line::from(vec![
+            Span::styled("[BTab]    ", Style::default().fg(theme.accent)),
+            Span::raw("Switch to previous tab"),
+        ]),
+        Line::from(vec![
+            Span::styled("[j/k]     ", Style::default().fg(theme.accent)),
+            Span::raw("Move selection Up/Down"),
+        ]),
+        Line::from(vec![
+            Span::styled("[Enter]   ", Style::default().fg(theme.accent)),
+            Span::raw("Select item or expand/collapse block"),
+        ]),
+        Line::from(vec![
+            Span::styled("[Backspc] ", Style::default().fg(theme.accent)),
+            Span::raw("Go back to Pages from Blocks"),
+        ]),
+        Line::from(vec![
+            Span::styled("[?]       ", Style::default().fg(theme.accent)),
+            Span::raw("Toggle this help screen"),
+        ]),
+    ];
+
+    let paragraph = Paragraph::new(help_text).block(block);
+    let area = centered_rect(60, 40, f.area());
+    f.render_widget(Clear, area);
+    f.render_widget(paragraph, area);
+}
+
+fn centered_rect(percent_x: u16, percent_y: u16, r: ratatui::layout::Rect) -> ratatui::layout::Rect {
+    let popup_layout = Layout::vertical([
+        Constraint::Percentage((100 - percent_y) / 2),
+        Constraint::Percentage(percent_y),
+        Constraint::Percentage((100 - percent_y) / 2),
+    ])
+    .split(r);
+
+    Layout::horizontal([
+        Constraint::Percentage((100 - percent_x) / 2),
+        Constraint::Percentage(percent_x),
+        Constraint::Percentage((100 - percent_x) / 2),
+    ])
+    .split(popup_layout[1])[1]
 }
