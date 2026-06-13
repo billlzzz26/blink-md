@@ -1,30 +1,35 @@
-/target
+# Build output
+/target/
 **/*.rs.bk
-.env
-.DS_Store
 
-# Sensitive files
+# Environment & secrets
+.env*
 *.key
 *.pem
 *.secret
 secrets/
 
-# AI agent local data (not for git)
+# AI agent local data
 .gemini/
 .learnings/
 
-# MCP subprojects
-src/mcp/jules/jules.key
-src/mcp/jules/target/
-src/mcp/md/target/
-src/mcp/mmd/target/
-src/mcp/core/target/
+# MCP subproject build artifacts
+src/mcp/*/target/
 
 # IDE
 .idea/
 .vscode/
 *.swp
 *.swo
+*~
 
 # OS
+.DS_Store
 Thumbs.db
+
+# Compiled binaries
+*.o *.a *.so *.dylib *.dll
+*.log
+
+# Project-specific
+.cavekit/

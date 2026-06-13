@@ -1,0 +1,16 @@
+#!/bin/bash
+# Pre-commit hook for blink-md
+# Run quality gates before each commit
+
+set -e
+
+echo "=== pre-commit: fmt ==="
+cargo fmt --all
+
+echo "=== pre-commit: clippy ==="
+cargo clippy --workspace --all-targets -- -D warnings
+
+echo "=== pre-commit: test ==="
+cargo test --workspace
+
+echo "=== pre-commit: passed ==="
