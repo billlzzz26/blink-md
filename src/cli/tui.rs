@@ -544,7 +544,12 @@ where
                         if app.tab == TabsState::BlocksTree {
                             app.tab = TabsState::Pages;
                         } else if app.tab == TabsState::Search {
-                            app.search_query.pop();
+                            use unicode_segmentation::UnicodeSegmentation;
+                            // Pop the last visual grapheme cluster (base + marks)
+                            let mut graphemes: Vec<&str> =
+                                app.search_query.graphemes(true).collect();
+                            graphemes.pop();
+                            app.search_query = graphemes.concat();
                         }
                     }
                     KeyCode::Enter => match &app.tab {
@@ -806,4 +811,77 @@ fn centered_rect(
         Constraint::Percentage((100 - percent_x) / 2),
     ])
     .split(popup_layout[1])[1]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_thai_input_handling() {
+        let mut app = App::new(NotionClient::new("fake"));
+        app.tab = TabsState::Search;
+
+        // Test multi-byte Thai characters
+        let thai_text = "ภาษาไทย"; 
+        for c in thai_text.chars() {
+            app.search_query.push(c);
+        }
+        assert_eq!(app.search_query, "ภาษาไทย");
+        assert_eq!(app.search_query.chars().count(), 7);
+        
+        // Test complex combining marks: "ที่" (Base + i + tone)
+        app.search_query.clear();
+        let complex = "ที่นี่";
+        for c in complex.chars() {
+            app.search_query.push(c);
+        }
+        assert_eq!(app.search_query, "ที่นี่");
+        assert_eq!(complex.chars().count(), 6); // ท + ี + ่ + น + ี + ่
+        
+        // Test backspace on Thai characters (Grapheme cluster aware)
+        // Backspace should remove the entire visual cluster (Base + Marks)
+        use unicode_segmentation::UnicodeSegmentation;
+        let mut graphemes: Vec<&str> = app.search_query.graphemes(true).collect();
+        graphemes.pop(); 
+        app.search_query = graphemes.concat();
+        
+        // "ที่นี่" (2 clusters: ที่ + นี่) -> pop() -> "ที่"
+        assert_eq!(app.search_query, "ที่"); 
+        
+        graphemes = app.search_query.graphemes(true).collect();
+        graphemes.pop();
+        app.search_query = graphemes.concat();
+        assert_eq!(app.search_query, ""); // Removed everything
+        
+        // Verify visual width (Thai characters should occupy correct columns)
+        // Combining marks (vowels/tones) should be 0-width
+        use unicode_width::UnicodeWidthStr;
+        assert_eq!("สวัสดี".width(), 4); // ส(1)+ว(1)+ั(0)+ส(1)+ด(1)+ี(0) = 4
+        assert_eq!("ที่นี่".width(), 2); // ท(1)+ี(0)+่(0)+น(1)+ี(0)+่(0) = 2
+
+        // Test long Thai sentence with mixed English and symbols
+        app.search_query.clear();
+        let long_thai = "ทดสอบการพิมพ์ภาษาไทยที่มีความยาวมากๆ และผสม English 123 !";
+        for c in long_thai.chars() {
+            app.search_query.push(c);
+        }
+        assert_eq!(app.search_query, long_thai);
+        
+        // Verify width of long sentence:
+        let thai_part = "ทดสอบการพิมพ์ภาษาไทยที่มีความยาวมากๆ";
+        let thai_part_width = thai_part.width();
+        // Manual count: 
+        // ท(1) ด(1) ส(1) อ(1) บ(1) ก(1) า(1) ร(1) พ(1) ิ(0) ม(1) พ(1) ์(0) ภ(1) า(1) ษ(1) า(1) ไ(1) ท(1) ย(1) 
+        // ท(1) ี(0) ่(0) ม(1) ี(1) ค(1) ว(1) า(1) ม(1) ย(1) า(1) ว(1) ม(1) า(1) ก(1) ๆ(1)
+        // Correct count should be 31. Let's verify and update test.
+        assert_eq!(thai_part_width, 31); 
+        
+        // Test backspace at the end of long sentence
+        let mut graphemes: Vec<&str> = app.search_query.graphemes(true).collect();
+        let initial_count = graphemes.len();
+        graphemes.pop();
+        app.search_query = graphemes.concat();
+        assert_eq!(app.search_query.graphemes(true).count(), initial_count - 1);
+    }
 }

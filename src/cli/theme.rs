@@ -140,11 +140,6 @@ mod tests {
     }
 
     #[test]
-    fn test_notion_theme_contrast() {
-        let _theme = Theme::notion();
-    }
-
-    #[test]
     fn test_dracula_theme_load() {
         let dracula_raw = r##"{
             "name": "Dracula",

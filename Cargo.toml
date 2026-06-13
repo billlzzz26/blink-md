@@ -61,6 +61,8 @@ async-trait = "0.1"
 mcp-core = { path = "src/mcp/core" }
 
 pmcp = { workspace = true, optional = true }
+unicode-width = "0.1"
+unicode-segmentation = "1.12"
 
 [features]
 default = []
