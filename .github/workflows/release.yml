@@ -20,12 +20,19 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             artifact: blink-md-linux-amd64
+            binary: blink-md
           - os: macos-latest
             target: x86_64-apple-darwin
             artifact: blink-md-darwin-amd64
+            binary: blink-md
           - os: macos-latest
             target: aarch64-apple-darwin
             artifact: blink-md-darwin-arm64
+            binary: blink-md
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: blink-md-windows-amd64
+            binary: blink-md.exe
 
     steps:
       - uses: actions/checkout@v6
@@ -37,13 +44,24 @@ jobs:
       - name: Build release
         run: cargo build --release --target ${{ matrix.target }} -p blink-md
 
-      - name: Package binary
+      - name: Package binary (Unix)
+        if: runner.os != 'Windows'
         run: |
           mkdir -p dist
-          cp target/${{ matrix.target }}/release/blink-md dist/
+          cp target/${{ matrix.target }}/release/${{ matrix.binary }} dist/
           cd dist
-          tar -czf ${{ matrix.artifact }}.tar.gz blink-md
+          tar -czf ${{ matrix.artifact }}.tar.gz ${{ matrix.binary }}
           sha256sum ${{ matrix.artifact }}.tar.gz > ${{ matrix.artifact }}.tar.gz.sha256
+
+      - name: Package binary (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp target/${{ matrix.target }}/release/${{ matrix.binary }} dist/
+          cd dist
+          tar -czf ${{ matrix.artifact }}.zip ${{ matrix.binary }}
+          certutil -hashfile ${{ matrix.artifact }}.zip SHA256 > ${{ matrix.artifact }}.zip.sha256
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7

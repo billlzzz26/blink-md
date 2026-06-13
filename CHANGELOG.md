@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-06-13
+
+### Added
+- **Multi-Platform Support**: Added official release artifacts for Linux (amd64), macOS (Intel/M1), and Windows (amd64).
+- **Hardened Thai TUI**: Implemented grapheme-cluster aware input and precise visual width calculation for Thai characters.
+- **Universal Data Adapters**: Initial support for Lark (Feishu) Sheets and CSV via Universal IR.
+- **Self-Update**: Added `blink-md upgrade` command for automated CLI updates.
+- **Global Installers**: Created `scripts/install.sh` and `scripts/install.ps1` with interactive path selection.
+- **Enhanced Help**: Added detailed command descriptions and usage examples to `--help`.
+
+### Changed
+- **Branding**: Updated repository description and topics for better discoverability.
+- **Version Sync**: Synchronized all workspace package versions to 0.3.1.
+- **File Integrity**: Standardized on LF line endings and ensured POSIX-compliant trailing newlines across the project.
+
 ## [0.3.0] - 2026-06-13
 
 ### Added
@@ -58,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Preliminary Markdown export functionality.
 - TUI for browsing Notion workspaces.
 
+[0.3.1]: https://github.com/billlzzz26/blink-md/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/billzzz26/notion-rs/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/billzzz26/notion-rs/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/billzzz26/notion-rs/releases/tag/v0.1.0

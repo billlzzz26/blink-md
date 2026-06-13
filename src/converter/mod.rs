@@ -168,6 +168,7 @@ where
 }
 
 pub mod github_markdown;
+pub mod lark_sheets;
 pub mod markdown;
 pub mod notion;
 

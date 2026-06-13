@@ -4,8 +4,24 @@ use clap::{Parser, Subcommand};
 mod cli;
 
 #[derive(Parser)]
-#[command(name = "notion-rs")]
+#[command(name = "blink-md")]
+#[command(version)]
 #[command(about = concat!("Notion API CLI & TUI (Target: ", env!("BUILD_TARGET_OS"), ", Env: ", env!("BUILD_ENVIRONMENT"), ")"))]
+#[command(after_help = "EXAMPLES:
+    # Launch interactive TUI
+    blink-md tui
+
+    # Search for pages
+    blink-md search \"Meeting Notes\"
+
+    # Convert Markdown to Notion-flavored JSON
+    blink-md convert -i README.md -o page.json --to notion
+
+    # Sync local directory to Notion database
+    blink-md sync --dir ./docs --notion-db 1234567890abcdef
+
+    # Upgrade to the latest version
+    blink-md upgrade")]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -73,6 +89,8 @@ enum Commands {
         old: std::path::PathBuf,
         new: std::path::PathBuf,
     },
+    /// Upgrade blink-md to the latest version
+    Upgrade,
     /// Start MCP server
     McpServe,
 }
@@ -390,6 +408,9 @@ async fn main() -> anyhow::Result<()> {
         Commands::Diff { old, new } => {
             cli::diff::run_diff(old, new).await?;
         }
+        Commands::Upgrade => {
+            handle_upgrade().await?;
+        }
         Commands::McpServe => {
             cli::mcp::run_mcp_server().await?;
         }
@@ -439,4 +460,19 @@ fn print_search_results(results: Vec<serde_json::Value>) {
 
         println!("{:<40} | {:<36} | {:<10}", title, id, obj_type);
     }
+}
+
+async fn handle_upgrade() -> anyhow::Result<()> {
+    println!("Checking for updates...");
+    let status = self_update::backends::github::Update::configure()
+        .repo_owner("billlzzz26")
+        .repo_name("blink-md")
+        .bin_name("blink-md")
+        .show_download_progress(true)
+        .current_version(env!("CARGO_PKG_VERSION"))
+        .build()?
+        .update()?;
+
+    println!("Update status: {}", status.version());
+    Ok(())
 }

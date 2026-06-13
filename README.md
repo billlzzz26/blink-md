@@ -3,7 +3,7 @@
 [![Crates.io](https://img.shields.io/crates/v/blink-md.svg)](https://crates.io/crates/blink-md)
 [![Build Status](https://github.com/billlzzz26/blink-md/actions/workflows/rust.yml/badge.svg)](https://github.com/billlzzz26/blink-md/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](https://github.com/billlzzz26/blink-md/releases/tag/v0.3.0)
+[![Version](https://img.shields.io/badge/version-0.3.1-blue.svg)](https://github.com/billlzzz26/blink-md/releases/tag/v0.3.1)
 
 **blink-md** is a high-performance, platform-agnostic document sync and conversion engine built in Rust. It serves as a bridge between structured SaaS documents (Notion, Lark, Google Docs) and standard file formats (Markdown, HTML, PDF), ensuring **100% visual fidelity and lossless transformation**.
 

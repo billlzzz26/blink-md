@@ -1,6 +1,6 @@
 [package]
 name = "mmd-mcp-server"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "MCP server for Mermaid diagram rendering using mermaid-rs-renderer"
 
