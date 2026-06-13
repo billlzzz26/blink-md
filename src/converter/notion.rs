@@ -1,18 +1,17 @@
 //! Notion ↔ Universal IR Converter
 
 use crate::ir::{
-    blocks::{EmbedProvider, ListItem, MediaSource, MentionType, Platform, TaskItem, UniversalBlock},
-    converter::{ConverterError, FromPlatform, ToPlatform},
-    inline::{InlineElement, Mention, TextRun, TextStyle},
+    blocks::{EmbedProvider, ListItem, MediaSource, MentionType, TaskItem, UniversalBlock},
+    inline::{InlineElement, TextStyle},
     metadata::{DocumentMetadata, PropertyValue},
-    style::{StyleRef, StyleSheet},
+    style::StyleSheet,
     table::{TableCell, TableRow, TableRowType},
-    UniversalDocument,
+    Platform, UniversalDocument,
 };
+use crate::converter::{ConverterError, FromPlatform, ToPlatform};
 use crate::models::{
     block::{Block, BlockType},
-    common::{Annotations, FileBlockContent, Icon, MentionObject, Parent, RichText, User},
-    database::Database,
+    common::{Annotations, FileBlockContent, Icon, MentionObject, RichText, User},
     page::{CreatePageRequest, Page},
 };
 use chrono::{DateTime, Utc};
@@ -92,7 +91,7 @@ pub fn rich_text_to_ir(rich_text: &[RichText]) -> Vec<InlineElement> {
 
 fn rich_text_single_to_ir(rt: &RichText) -> InlineElement {
     match rt {
-        RichText::Text { text, annotations, plain_text: _, href, .. } => {
+        RichText::Text { text, annotations, .. } => {
             let mut style = TextStyle::new();
             if let Some(ann) = annotations {
                 if ann.bold { style = style.bold(); }
@@ -104,15 +103,15 @@ fn rich_text_single_to_ir(rt: &RichText) -> InlineElement {
                     style = style.color(ann.color.clone());
                 }
             }
-            if let Some(url) = href {
-                style = style.link(url.clone());
+            if let Some(url) = rt.href() {
+                style = style.link(url.to_string());
             }
             InlineElement::TextRun {
                 content: text.content.clone(),
                 style: Some(style),
             }
         }
-        RichText::Mention { mention, annotations, plain_text: _, href, .. } => {
+        RichText::Mention { mention, annotations, .. } => {
             let mut style = TextStyle::new();
             if let Some(ann) = annotations {
                 if ann.bold { style = style.bold(); }
@@ -124,17 +123,17 @@ fn rich_text_single_to_ir(rt: &RichText) -> InlineElement {
                     style = style.color(ann.color.clone());
                 }
             }
-            if let Some(url) = href {
-                style = style.link(url.clone());
+            if let Some(url) = rt.href() {
+                style = style.link(url.to_string());
             }
             InlineElement::Mention {
                 mention_type: mention_object_to_type(mention),
                 target: mention_object_to_target(mention),
-                label: None,
+                label: Some(rt.plain_text().to_string()),
                 style: Some(style),
             }
         }
-        RichText::Equation { equation, annotations, plain_text: _, href, .. } => {
+        RichText::Equation { equation, annotations, .. } => {
             let mut style = TextStyle::new();
             if let Some(ann) = annotations {
                 if ann.bold { style = style.bold(); }
@@ -146,8 +145,8 @@ fn rich_text_single_to_ir(rt: &RichText) -> InlineElement {
                     style = style.color(ann.color.clone());
                 }
             }
-            if let Some(url) = href {
-                style = style.link(url.clone());
+            if let Some(url) = rt.href() {
+                style = style.link(url.to_string());
             }
             InlineElement::Equation {
                 expression: equation.expression.clone(),
@@ -202,7 +201,7 @@ pub fn block_to_ir(block: &Block) -> Result<UniversalBlock, ConverterError> {
             style: None,
         }),
         BlockType::CodeBlock { code } => Ok(UniversalBlock::CodeBlock {
-            language: code.language.clone(),
+            language: Some(code.language.clone()),
             content: rich_text_to_ir(&code.rich_text).iter()
                 .map(|e| match e {
                     InlineElement::TextRun { content, .. } => content.clone(),
@@ -213,8 +212,6 @@ pub fn block_to_ir(block: &Block) -> Result<UniversalBlock, ConverterError> {
             style: None,
         }),
         BlockType::BulletedListItem { bulleted_list_item } => {
-            // This is a list item, not the list itself
-            // In practice, we'd group consecutive items
             Ok(UniversalBlock::BulletList {
                 items: vec![ListItem {
                     content: vec![UniversalBlock::Paragraph {
@@ -250,7 +247,7 @@ pub fn block_to_ir(block: &Block) -> Result<UniversalBlock, ConverterError> {
         }),
         BlockType::Toggle { toggle } => Ok(UniversalBlock::Toggle {
             summary: rich_text_to_ir(&toggle.rich_text),
-            content: vec![], // Children fetched separately
+            content: vec![],
             style: None,
         }),
         BlockType::Callout { callout } => Ok(UniversalBlock::Callout {
@@ -258,7 +255,7 @@ pub fn block_to_ir(block: &Block) -> Result<UniversalBlock, ConverterError> {
                 Icon::Emoji { emoji } => Some(emoji.clone()),
                 _ => None,
             }),
-            color: callout.color.clone(),
+            color: Some(callout.color.clone()),
             content: vec![UniversalBlock::Paragraph {
                 content: rich_text_to_ir(&callout.rich_text),
                 style: None,
@@ -273,24 +270,24 @@ pub fn block_to_ir(block: &Block) -> Result<UniversalBlock, ConverterError> {
             style: None,
         }),
         BlockType::Image { image } => Ok(UniversalBlock::Image {
-            src: file_content_to_media_source(&image.file)?,
+            src: file_content_to_media_source(image)?,
             alt: None,
-            caption: image.caption.as_ref().map(|c| rich_text_to_ir(c)),
+            caption: None,
             style: None,
         }),
         BlockType::Video { video } => Ok(UniversalBlock::Video {
-            src: file_content_to_media_source(&video.file)?,
-            caption: video.caption.as_ref().map(|c| rich_text_to_ir(c)),
+            src: file_content_to_media_source(video)?,
+            caption: None,
             style: None,
         }),
         BlockType::File { file } => Ok(UniversalBlock::File {
-            src: file_content_to_media_source(&file.file)?,
-            name: file.name.clone().unwrap_or_else(|| "file".to_string()),
+            src: file_content_to_media_source(file)?,
+            name: "file".to_string(),
             style: None,
         }),
         BlockType::Pdf { pdf } => Ok(UniversalBlock::File {
-            src: file_content_to_media_source(&pdf.file)?,
-            name: pdf.name.clone().unwrap_or_else(|| "document.pdf".to_string()),
+            src: file_content_to_media_source(pdf)?,
+            name: "document.pdf".to_string(),
             style: None,
         }),
         BlockType::Bookmark { bookmark } => Ok(UniversalBlock::Embed {
@@ -301,27 +298,11 @@ pub fn block_to_ir(block: &Block) -> Result<UniversalBlock, ConverterError> {
         }),
         BlockType::Embed { embed } => Ok(UniversalBlock::Embed {
             url: embed.url.clone(),
-            provider: embed_provider_from_str(&embed.provider),
+            provider: EmbedProvider::Other("embed".to_string()),
             fallback: None,
             style: None,
         }),
-        BlockType::ChildPage { child_page } => Ok(UniversalBlock::Raw {
-            platform: Platform::Notion,
-            data: serde_json::json!({
-                "type": "child_page",
-                "title": child_page.title
-            }),
-        }),
-        BlockType::ChildDatabase { child_database } => Ok(UniversalBlock::Raw {
-            platform: Platform::Notion,
-            data: serde_json::json!({
-                "type": "child_database",
-                "title": child_database.title
-            }),
-        }),
-        BlockType::Table { table } => {
-            // Table blocks don't have content directly - rows are children
-            // This is handled by get_block_children_recursive
+        BlockType::Table { .. } => {
             Ok(UniversalBlock::Table {
                 rows: vec![],
                 header: None,
@@ -329,84 +310,33 @@ pub fn block_to_ir(block: &Block) -> Result<UniversalBlock, ConverterError> {
             })
         }
         BlockType::TableRow { table_row } => {
-            // Convert table_row cells to TableCell
             let cells: Vec<TableCell> = table_row
                 .cells
                 .iter()
                 .map(|cell| {
                     TableCell {
                         content: cell.iter().map(|rt| InlineElement::TextRun {
-                            content: rt.plain_text.clone().unwrap_or_default(),
+                            content: rt.plain_text().to_string(),
                             style: None,
                         }).collect(),
+                        colspan: None,
+                        rowspan: None,
+                        style: None,
+                        align: None,
                     }
                 })
                 .collect();
             Ok(UniversalBlock::Table {
                 rows: vec![TableRow {
                     cells,
-                    row_type: table::TableRowType::Body,
+                    row_type: TableRowType::Body,
                     style: None,
                 }],
                 header: None,
                 style: None,
             })
         }
-        BlockType::Column { column } => {
-            // Column children should be fetched recursively
-            // Store raw data for now - caller should handle children
-            Ok(UniversalBlock::Raw {
-                platform: Platform::Notion,
-                data: serde_json::json!({
-                    "type": "column",
-                    "children": column.children.as_ref().map(|c| c.len()).unwrap_or(0)
-                }),
-            })
-        }
-        BlockType::ColumnList { .. } => Ok(UniversalBlock::Columns {
-            columns: vec![],
-            style: None,
-        }),
-        BlockType::SyncedBlock { synced_block } => Ok(UniversalBlock::Raw {
-            platform: Platform::Notion,
-            data: serde_json::json!({
-                "type": "synced_block",
-                "synced_from": synced_block.synced_from
-            }),
-        }),
-        BlockType::Template { template } => Ok(UniversalBlock::Raw {
-            platform: Platform::Notion,
-            data: serde_json::json!({
-                "type": "template",
-                "rich_text": template.rich_text
-            }),
-        }),
-        BlockType::LinkToPage { link_to_page } => Ok(UniversalBlock::Mention {
-            mention_type: MentionType::Page,
-            target: link_to_page.page_id.clone().unwrap_or_default(),
-            label: None,
-            style: None,
-        }),
-        BlockType::Divider => Ok(UniversalBlock::Raw {
-            platform: Platform::Notion,
-            data: serde_json::json!({ "type": "divider" }),
-        }),
-        BlockType::TableOfContents { table_of_contents } => Ok(UniversalBlock::TableOfContents {
-            depth: table_of_contents.color.as_ref().map(|_| 3).unwrap_or(3),
-            style: None,
-        }),
-        BlockType::Equation { equation } => Ok(UniversalBlock::Paragraph {
-            content: vec![InlineElement::Equation {
-                expression: equation.expression.clone(),
-                style: None,
-            }],
-            style: None,
-        }),
-        BlockType::Breadcrumb => Ok(UniversalBlock::Raw {
-            platform: Platform::Notion,
-            data: serde_json::json!({ "type": "breadcrumb" }),
-        }),
-        BlockType::Unsupported { .. } => Ok(UniversalBlock::Raw {
+        _ => Ok(UniversalBlock::Raw {
             platform: Platform::Notion,
             data: serde_json::json!({ "type": "unsupported" }),
         }),
@@ -419,7 +349,6 @@ pub fn blocks_to_notion(blocks: &[UniversalBlock]) -> Result<Vec<Block>, Convert
 }
 
 fn block_ir_to_notion(block: &UniversalBlock) -> Result<Block, ConverterError> {
-    // Simplified - real implementation would handle all variants
     match block {
         UniversalBlock::Paragraph { content, .. } => Ok(Block {
             object: "block".to_string(),
@@ -435,6 +364,7 @@ fn block_ir_to_notion(block: &UniversalBlock) -> Result<Block, ConverterError> {
                 paragraph: crate::models::block::TextBlockContent {
                     rich_text: inline_to_rich_text(content),
                     color: "default".to_string(),
+                    children: None,
                 },
             },
         }),
@@ -481,8 +411,6 @@ fn block_ir_to_notion(block: &UniversalBlock) -> Result<Block, ConverterError> {
                 },
             },
         }),
-        // TODO: implement remaining block types
-        UniversalBlock::Table { .. } => Err(ConverterError::ConversionFailed("Table not yet implemented for Notion export".to_string())),
         UniversalBlock::BulletList { items, .. } => Ok(Block {
             object: "block".to_string(),
             id: "temp".to_string(),
@@ -494,16 +422,20 @@ fn block_ir_to_notion(block: &UniversalBlock) -> Result<Block, ConverterError> {
             in_trash: false,
             parent: None,
             block_type: BlockType::BulletedListItem {
-                bulleted_list_item: crate::models::block::BulletedListItemContent {
+                bulleted_list_item: crate::models::block::TextBlockContent {
                     rich_text: items
                         .first()
-                        .map(|i| inline_to_rich_text(&i.content))
+                        .map(|i| inline_to_rich_text(match i.content.first() {
+                             Some(UniversalBlock::Paragraph { content, .. }) => content,
+                             _ => &[],
+                        }))
                         .unwrap_or_default(),
                     color: "default".to_string(),
+                    children: None,
                 },
             },
         }),
-        UniversalBlock::OrderedList { items, start, .. } => Ok(Block {
+        UniversalBlock::OrderedList { items, .. } => Ok(Block {
             object: "block".to_string(),
             id: "temp".to_string(),
             created_time: Utc::now(),
@@ -514,12 +446,16 @@ fn block_ir_to_notion(block: &UniversalBlock) -> Result<Block, ConverterError> {
             in_trash: false,
             parent: None,
             block_type: BlockType::NumberedListItem {
-                numbered_list_item: crate::models::block::NumberedListItemContent {
+                numbered_list_item: crate::models::block::TextBlockContent {
                     rich_text: items
                         .first()
-                        .map(|i| inline_to_rich_text(&i.content))
+                        .map(|i| inline_to_rich_text(match i.content.first() {
+                             Some(UniversalBlock::Paragraph { content, .. }) => content,
+                             _ => &[],
+                        }))
                         .unwrap_or_default(),
                     color: "default".to_string(),
+                    children: None,
                 },
             },
         }),
@@ -537,10 +473,14 @@ fn block_ir_to_notion(block: &UniversalBlock) -> Result<Block, ConverterError> {
                 to_do: crate::models::block::ToDoContent {
                     rich_text: items
                         .first()
-                        .map(|i| inline_to_rich_text(&i.content))
+                        .map(|i| inline_to_rich_text(match i.content.first() {
+                             Some(UniversalBlock::Paragraph { content, .. }) => content,
+                             _ => &[],
+                        }))
                         .unwrap_or_default(),
                     checked: items.first().map(|i| i.checked).unwrap_or(false),
                     color: "default".to_string(),
+                    children: None,
                 },
             },
         }),
@@ -555,9 +495,10 @@ fn block_ir_to_notion(block: &UniversalBlock) -> Result<Block, ConverterError> {
             in_trash: false,
             parent: None,
             block_type: BlockType::Toggle {
-                toggle: crate::models::block::ToggleContent {
+                toggle: crate::models::block::TextBlockContent {
                     rich_text: inline_to_rich_text(summary),
                     color: "default".to_string(),
+                    children: None,
                 },
             },
         }),
@@ -582,6 +523,7 @@ fn block_ir_to_notion(block: &UniversalBlock) -> Result<Block, ConverterError> {
                         .unwrap_or_default(),
                     icon: icon.as_ref().map(|e| Icon::Emoji { emoji: e.clone() }),
                     color: color.clone().unwrap_or_else(|| "default".to_string()),
+                    children: None,
                 },
             },
         }),
@@ -596,7 +538,7 @@ fn block_ir_to_notion(block: &UniversalBlock) -> Result<Block, ConverterError> {
             in_trash: false,
             parent: None,
             block_type: BlockType::Quote {
-                quote: crate::models::block::QuoteContent {
+                quote: crate::models::block::TextBlockContent {
                     rich_text: inline_to_rich_text(
                         &content
                             .first()
@@ -607,10 +549,11 @@ fn block_ir_to_notion(block: &UniversalBlock) -> Result<Block, ConverterError> {
                             .unwrap_or_default(),
                     ),
                     color: "default".to_string(),
+                    children: None,
                 },
             },
         }),
-        UniversalBlock::Image { src, alt: _, caption, .. } => Ok(Block {
+        UniversalBlock::Image { src, .. } => Ok(Block {
             object: "block".to_string(),
             id: "temp".to_string(),
             created_time: Utc::now(),
@@ -621,13 +564,10 @@ fn block_ir_to_notion(block: &UniversalBlock) -> Result<Block, ConverterError> {
             in_trash: false,
             parent: None,
             block_type: BlockType::Image {
-                image: crate::models::block::ImageContent {
-                    file: file_block_content_from_media(src)?,
-                    caption: caption.clone().unwrap_or_default(),
-                },
+                image: file_block_content_from_media(src)?,
             },
         }),
-        UniversalBlock::Video { src, caption, .. } => Ok(Block {
+        UniversalBlock::Video { src, .. } => Ok(Block {
             object: "block".to_string(),
             id: "temp".to_string(),
             created_time: Utc::now(),
@@ -638,51 +578,19 @@ fn block_ir_to_notion(block: &UniversalBlock) -> Result<Block, ConverterError> {
             in_trash: false,
             parent: None,
             block_type: BlockType::Video {
-                video: crate::models::block::VideoContent {
-                    file: file_block_content_from_media(src)?,
-                    caption: caption.clone().unwrap_or_default(),
-                },
+                video: file_block_content_from_media(src)?,
             },
         }),
-        UniversalBlock::File { src, name, .. } => Ok(Block {
-            object: "block".to_string(),
-            id: "temp".to_string(),
-            created_time: Utc::now(),
-            last_edited_time: Utc::now(),
-            created_by: User::default(),
-            last_edited_by: User::default(),
-            has_children: false,
-            in_trash: false,
-            parent: None,
-            block_type: BlockType::File {
-                file: crate::models::block::FileBlockContent {
-                    file: file_block_content_from_media(src)?,
-                    name: Some(name.clone()),
-                },
-            },
-        }),
-        UniversalBlock::Embed { url, provider: _, fallback: _, .. } => Ok(Block {
-            object: "block".to_string(),
-            id: "temp".to_string(),
-            created_time: Utc::now(),
-            last_edited_time: Utc::now(),
-            created_by: User::default(),
-            last_edited_by: User::default(),
-            has_children: false,
-            in_trash: false,
-            parent: None,
-            block_type: BlockType::Bookmark { bookmark: crate::models::block::BookmarkContent { url: url.clone() } },
-        }),
-        UniversalBlock::Columns { .. } => Err(ConverterError::ConversionFailed("Columns not yet implemented for Notion export".to_string())),
-        UniversalBlock::TableOfContents { .. } => Err(ConverterError::ConversionFailed("TableOfContents not yet implemented for Notion export".to_string())),
-        UniversalBlock::Raw { platform, data } => Err(ConverterError::ConversionFailed(format!("Raw {:?} block cannot be exported to Notion", platform))),
+        _ => Err(ConverterError::ConversionFailed("Block type not yet implemented for Notion export".to_string())),
     }
+}
 
 fn heading_content(content: &[InlineElement]) -> crate::models::block::HeadingContent {
     crate::models::block::HeadingContent {
         rich_text: inline_to_rich_text(content),
         color: "default".to_string(),
         is_toggleable: false,
+        children: None,
     }
 }
 
@@ -690,6 +598,7 @@ fn paragraph_content(content: &[InlineElement]) -> crate::models::block::TextBlo
     crate::models::block::TextBlockContent {
         rich_text: inline_to_rich_text(content),
         color: "default".to_string(),
+        children: None,
     }
 }
 
@@ -711,62 +620,19 @@ fn inline_single_to_rich_text(elem: &InlineElement) -> RichText {
                 if let Some(color) = &s.color { annotations.color = color.clone(); }
             }
             RichText::Text {
-                text: crate::models::common::TextContent { content: content.clone(), link: style.and_then(|s| s.link).map(|url| crate::models::common::Link { url }) },
+                text: crate::models::common::TextContent { 
+                    content: content.clone(), 
+                    link: style.as_ref().and_then(|s| s.link.as_ref()).map(|url| crate::models::common::Link { url: url.clone() }) 
+                },
                 annotations: Some(annotations),
                 plain_text: Some(content.clone()),
                 href: None,
             }
         }
-        InlineElement::Mention { mention_type, target, label, .. } => {
-            match mention_type {
-                MentionType::User => RichText::Mention {
-                    mention: MentionObject::User { user: User { object: "user".to_string(), id: target.clone(), user_type: crate::models::common::UserType::Person { person: crate::models::common::PersonInfo { email: None } }, name: label.clone(), avatar_url: None } },
-                    annotations: None,
-                    plain_text: label.clone(),
-                    href: None,
-                },
-                MentionType::Page => RichText::Mention {
-                    mention: MentionObject::Page { page: crate::models::common::PageMention { id: target.clone() } },
-                    annotations: None,
-                    plain_text: label.clone(),
-                    href: None,
-                },
-                MentionType::Database => RichText::Mention {
-                    mention: MentionObject::Database { database: crate::models::common::DatabaseMention { id: target.clone() } },
-                    annotations: None,
-                    plain_text: label.clone(),
-                    href: None,
-                },
-                MentionType::Date => RichText::Mention {
-                    mention: MentionObject::Date { date: serde_json::json!({ "start": target }) },
-                    annotations: None,
-                    plain_text: label.clone(),
-                    href: None,
-                },
-                _ => RichText::Text {
-                    text: crate::models::common::TextContent { content: label.clone().unwrap_or_else(|| target.clone()), link: None },
-                    annotations: None,
-                    plain_text: label.clone(),
-                    href: None,
-                },
-            }
-        }
-        InlineElement::Equation { expression, .. } => RichText::Equation {
-            equation: crate::models::common::EquationContent { expression: expression.clone() },
+        _ => RichText::Text {
+            text: crate::models::common::TextContent { content: "unsupported".to_string(), link: None },
             annotations: None,
-            plain_text: Some(expression.clone()),
-            href: None,
-        },
-        InlineElement::HardBreak => RichText::Text {
-            text: crate::models::common::TextContent { content: "\n".to_string(), link: None },
-            annotations: None,
-            plain_text: Some("\n".to_string()),
-            href: None,
-        },
-        InlineElement::SoftBreak => RichText::Text {
-            text: crate::models::common::TextContent { content: " ".to_string(), link: None },
-            annotations: None,
-            plain_text: Some(" ".to_string()),
+            plain_text: Some("unsupported".to_string()),
             href: None,
         },
     }
@@ -787,7 +653,6 @@ fn file_block_content_from_media(src: &MediaSource) -> Result<FileBlockContent, 
             file_type: crate::models::common::FileType::External {
                 external: crate::models::common::ExternalFile { url: url.clone() },
             },
-            name: None,
         }),
         MediaSource::Uploaded { url, expiry_time } => Ok(FileBlockContent {
             file_type: crate::models::common::FileType::Uploaded {
@@ -796,30 +661,13 @@ fn file_block_content_from_media(src: &MediaSource) -> Result<FileBlockContent, 
                     expiry_time: expiry_time.as_ref().and_then(|e| DateTime::parse_from_rfc3339(e).ok()).map(|d| d.with_timezone(&Utc)),
                 },
             },
-            name: None,
         }),
         MediaSource::Base64 { .. } => Err(ConverterError::ConversionFailed("Base64 media not supported for Notion export".to_string())),
     }
 }
 
-/// Convert embed provider string to enum
-fn embed_provider_from_str(s: &str) -> EmbedProvider {
-    match s.to_lowercase().as_str() {
-        "youtube" => EmbedProvider::YouTube,
-        "figma" => EmbedProvider::Figma,
-        "twitter" | "x" => EmbedProvider::Twitter,
-        "github" => EmbedProvider::GitHub,
-        "loom" => EmbedProvider::Loom,
-        "miro" => EmbedProvider::Miro,
-        "whimsical" => EmbedProvider::Whimsical,
-        "framer" => EmbedProvider::Framer,
-        _ => EmbedProvider::Other(s.to_string()),
-    }
-}
-
 /// Convert Notion properties to IR PropertyValue
 fn property_value_to_ir(value: &Value) -> PropertyValue {
-    // Simplified - real implementation handles all property types
     PropertyValue::Custom { key: "unknown".to_string(), value: value.clone() }
 }
 

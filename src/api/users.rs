@@ -14,16 +14,13 @@ impl NotionClient {
     }
 
     pub async fn list_users(&self) -> Result<Vec<User>> {
-        // Notion returns a paginated list with object: "list"
-        #[derive(serde::Deserialize)]
-        struct ListResponse {
-            results: Vec<User>,
-            // next_cursor: Option<String>,
-            // has_more: bool,
-        }
-        let resp: ListResponse = self
-            .request(reqwest::Method::GET, "/users", None::<&()>)
-            .await?;
-        Ok(resp.results)
+        self.collect_all(|cursor| async move {
+            let mut path = "/users".to_string();
+            if let Some(c) = cursor {
+                path = format!("{}?start_cursor={}", path, c);
+            }
+            self.request(reqwest::Method::GET, &path, None::<&()>).await
+        })
+        .await
     }
 }

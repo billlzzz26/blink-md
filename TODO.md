@@ -80,22 +80,22 @@
 - [x] Roundtrip tests: Notion → IR → Notion (serialization equality) <!-- id: 3.3 -->
 
 ### 1.4 Markdown (CommonMark + GFM) ↔ IR Converter (`src/converter/markdown.rs`)
-- [ ] `MarkdownFromPlatform` — Markdown → Universal IR <!-- id: 4.1 -->
-  - [ ] Use `pulldown-cmark` with all Options <!-- id: 4.1 -->
-  - [ ] Parse: headings, paragraphs, code blocks, blockquotes, lists (bullet/ordered/task), tables <!-- id: 4.1 -->
-  - [ ] Parse GFM: task lists, strikethrough, tables, autolinks <!-- id: 4.1 -->
-  - [ ] Parse Notion-flavored extensions: `<callout>`, `<details>`, `<columns>`, `<mention-*>` <!-- id: 4.1 -->
-- [ ] `MarkdownToPlatform` — Universal IR → Markdown <!-- id: 4.2 -->
-  - [ ] Emit CommonMark + GFM <!-- id: 4.2 -->
-  - [ ] Emit Notion-flavored tags for platform extensions <!-- id: 4.2 -->
-  - [ ] Handle inline styles: bold, italic, strikethrough, code, underline, color, links <!-- id: 4.2 -->
-- [ ] Roundtrip tests: Markdown → IR → Markdown (semantic equality) <!-- id: 4.3 -->
+- [x] `MarkdownFromPlatform` — Markdown → Universal IR <!-- id: 4.1 -->
+  - [x] Use `pulldown-cmark` with all Options <!-- id: 4.1 -->
+  - [x] Parse: headings, paragraphs, code blocks, blockquotes, lists (bullet/ordered/task), tables <!-- id: 4.1 -->
+  - [x] Parse GFM: task lists, strikethrough, tables, autolinks <!-- id: 4.1 -->
+  - [x] Parse Notion-flavored extensions: `<callout>`, `<details>`, `<columns>`, `<mention-*>` <!-- id: 4.1 -->
+- [x] `MarkdownToPlatform` — Universal IR → Markdown <!-- id: 4.2 -->
+  - [x] Emit CommonMark + GFM <!-- id: 4.2 -->
+  - [x] Emit Notion-flavored tags for platform extensions <!-- id: 4.2 -->
+  - [x] Handle inline styles: bold, italic, strikethrough, code, underline, color, links <!-- id: 4.2 -->
+- [x] Roundtrip tests: Markdown → IR → Markdown (semantic equality) <!-- id: 4.3 -->
 
 ### 1.5 Roundtrip Test Infrastructure (`tests/ir_roundtrip.rs`)
-- [ ] Test framework: `roundtrip_test<F, T>()` <!-- id: 5.1 -->
-- [ ] Notion → IR → Notion test cases (sample pages, databases) <!-- id: 5.1 -->
-- [ ] Markdown → IR → Markdown test cases (complex documents) <!-- id: 5.1 -->
-- [ ] Cross-platform: Notion → IR → Markdown → IR → Notion (lossless) <!-- id: 5.1 -->
+- [x] Test framework: `roundtrip_test<F, T>()` <!-- id: 5.1 -->
+- [x] Notion → IR → Notion test cases (sample pages, databases) <!-- id: 5.1 -->
+- [x] Markdown → IR → Markdown test cases (complex documents) <!-- id: 5.1 -->
+- [x] Cross-platform: Notion → IR → Markdown → IR → Notion (lossless) <!-- id: 5.1 -->
 
 ---
 
@@ -147,11 +147,11 @@
 ## Phase 3: Notion API v0.2.0 Features (Parallel, Week 1-3)
 
 ### 3.1 File Uploads (3-step per Notion spec) — `src/api/files.rs`
-- [ ] `create_file_upload(filename, content_type)` → `FileUpload { id, upload_url, expiry_time }` <!-- id: 7.1 -->
-- [ ] `upload_file_bytes(upload_url, bytes)` — PUT to upload_url <!-- id: 7.1 -->
-- [ ] `complete_file_upload(file_upload_id)` → `FileBlockContent` <!-- id: 7.1 -->
-- [ ] Convenience: `upload_file_from_path(path)` — all 3 steps <!-- id: 7.1 -->
-- [ ] Support: multipart (current), external URL, base64 <!-- id: 7.1 -->
+- [x] `create_file_upload(filename, content_type)` → `FileUpload { id, upload_url, expiry_time }` <!-- id: 7.1 -->
+- [x] `upload_file_bytes(upload_url, bytes)` — PUT to upload_url <!-- id: 7.1 -->
+- [x] `complete_file_upload(file_upload_id)` → `FileBlockContent` <!-- id: 7.1 -->
+- [x] Convenience: `upload_file_from_path(path)` — all 3 steps <!-- id: 7.1 -->
+- [x] Support: multipart (current), external URL, base64 <!-- id: 7.1 -->
 
 ### 3.2 Page Markdown Endpoints — `src/api/pages.rs`
 - [ ] `get_page_markdown(page_id)` → `String` (GET /v1/pages/{id}/markdown) <!-- id: 7.2 -->
@@ -172,9 +172,9 @@
 - [ ] Update `Webhook` model with `events: Vec<WebhookEventType>` <!-- id: 7.4 -->
 
 ### 3.5 Pagination Helpers — `src/client.rs`
-- [ ] `Paginated` trait with `next_page()`, `has_more()`, `start_cursor()` <!-- id: 7.5 -->
-- [ ] Implement for: `query_data_source`, `search`, `list_users`, `list_comments`, `get_block_children`, `list_webhooks` <!-- id: 7.5 -->
-- [ ] Auto-pagination: `collect_all_pages()` convenience method <!-- id: 7.5 -->
+- [x] `Paginated` trait with `next_page()`, `has_more()`, `start_cursor()` <!-- id: 7.5 -->
+- [x] Implement for: `query_data_source`, `search`, `list_users`, `list_comments`, `get_block_children`, `list_webhooks` <!-- id: 7.5 -->
+- [x] Auto-pagination: `collect_all_pages()` convenience method <!-- id: 7.5 -->
 
 ### 3.6 Search Enhancements — `src/api/search.rs`
 - [ ] `sort` parameter: `SortDirection` (asc/desc), `SortTimestamp` (last_edited_time, created_time) <!-- id: 7.6 -->
@@ -192,19 +192,19 @@
 ## Phase 4: MCP Server (Week 3-4)
 
 ### 4.1 MCP Server Implementation — `src/cli/mcp.rs`
-- [ ] Replace placeholder with full `pmcp` server <!-- id: 8.1 -->
-- [ ] Load `NOTION_API_TOKEN` from env at startup <!-- id: 8.1 -->
-- [ ] Health check endpoint <!-- id: 8.1 -->
+- [x] Replace placeholder with full `pmcp` server <!-- id: 8.1 -->
+- [x] Load `NOTION_API_TOKEN` from env at startup <!-- id: 8.1 -->
+- [x] Health check endpoint <!-- id: 8.1 -->
 
 ### 4.2 MCP Tools (Notion Capabilities)
-- [ ] `notion_search` | Search pages/databases | `client.search()` <!-- id: 8.2 -->
-- [ ] `notion_get_page` | Get page by ID | `client.get_page()` <!-- id: 8.2 -->
+- [x] `notion_search` | Search pages/databases | `client.search()` <!-- id: 8.2 -->
+- [x] `notion_get_page` | Get page by ID | `client.get_page()` <!-- id: 8.2 -->
 - [ ] `notion_get_page_markdown` | Get page as markdown | `client.get_page_markdown()` <!-- id: 8.2 -->
-- [ ] `notion_create_page` | Create page in database/page | `client.create_page()` <!-- id: 8.2 -->
+- [x] `notion_create_page` | Create page in database/page | `client.create_page()` <!-- id: 8.2 -->
 - [ ] `notion_update_page` | Update page properties | `client.update_page()` <!-- id: 8.2 -->
 - [ ] `notion_query_database` | Query data source | `client.query_data_source()` <!-- id: 8.2 -->
-- [ ] `notion_list_users` | List workspace users | `client.list_users()` <!-- id: 8.2 -->
-- [ ] `notion_get_block_children` | Get block children | `client.get_block_children()` <!-- id: 8.2 -->
+- [x] `notion_list_users` | List workspace users | `client.list_users()` <!-- id: 8.2 -->
+- [x] `notion_get_block_children` | Get block children | `client.get_block_children()` <!-- id: 8.2 -->
 - [ ] `notion_append_blocks` | Append blocks to page | `client.append_block_children()` <!-- id: 8.2 -->
 - [ ] `notion_upload_file` | Upload file to Notion | `client.upload_file()` <!-- id: 8.2 -->
 - [ ] `notion_create_webhook` | Create webhook | `client.create_webhook()` <!-- id: 8.2 -->

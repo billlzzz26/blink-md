@@ -7,10 +7,6 @@ mod cli;
 #[command(name = "notion-rs")]
 #[command(about = "Notion API CLI & TUI (2026-03-11)")]
 struct Cli {
-    /// Notion API token (can also set NOTION_TOKEN env var)
-    #[arg(long)]
-    token: Option<String>,
-
     #[command(subcommand)]
     command: Commands,
 }
@@ -202,10 +198,11 @@ enum CommentAction {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
-    let token = cli
-        .token
-        .or_else(|| std::env::var("NOTION_TOKEN").ok())
-        .unwrap_or_default();
+    let token = std::env::var("NOTION_TOKEN").map_err(|_| {
+        anyhow::anyhow!(
+            "NOTION_TOKEN environment variable not set. Please set it to your Notion API token."
+        )
+    })?;
     let client = NotionClient::new(&token);
 
     match cli.command {
@@ -232,6 +229,7 @@ async fn main() -> anyhow::Result<()> {
                             "property": "object",
                             "value": "page"
                         })),
+                        None,
                         None,
                         None,
                     )
@@ -369,22 +367,19 @@ async fn main() -> anyhow::Result<()> {
             }
         },
         Commands::Search { query } => {
-            let results = client.search(query, None, None, None).await?;
+            let results = client.search(query, None, None, None, None).await?;
             print_search_results(results.results);
         }
         Commands::Tui => {
             cli::run_tui(client).await?;
         }
         Commands::Convert {
-            input: _,
-            output: _,
-            from: _,
-            to: _,
+            input,
+            output,
+            from,
+            to,
         } => {
-            // cli::convert::run_convert(input, output, from, to).await?;
-            println!(
-                "The 'convert' command is being rewritten for Universal IR. Please stay tuned!"
-            );
+            cli::convert::run_convert(input, output, from, to).await?;
         }
         Commands::Sync { dir, notion_db } => {
             let db = notion_db

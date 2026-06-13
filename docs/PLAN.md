@@ -19,8 +19,8 @@
 เป้าหมาย: สร้างการเชื่อมต่อที่สมบูรณ์ระหว่าง Platform-specific JSON และ Universal IR
 
 ### 2.1 Notion Adapter Enhancement
-- [ ] พัฒนา Recursive child block fetching แบบ lossless
-- [ ] แมพ Notion Blocks ทั้งหมด (รวมถึงพวก Column, Callout, Toggle) เข้ากับ IR
+- [x] พัฒนา Recursive child block fetching แบบ lossless
+- [x] แมพ Notion Blocks ทั้งหมด (รวมถึงพวก Column, Callout, Toggle) เข้ากับ IR
 - [ ] ระบบ ID Mapping สำหรับการทำ Sync แบบ bidirectional
 
 ### 2.2 Markdown Adapter (GFM)
@@ -45,6 +45,6 @@
 ## PHASE 5: VALIDATION & SYNC ENHANCEMENT
 เป้าหมาย: รับประกันความถูกต้อง 100%
 
-- [ ] พัฒนาชุดทดสอบ Roundtrip (Notion -> IR -> Markdown -> IR -> Notion)
+- [x] พัฒนาชุดทดสอบ Roundtrip (Notion -> IR -> Markdown -> IR -> Notion)
 - [ ] ระบบเปรียบเทียบความต่าง (Diff Engine) สำหรับ Universal Document
-- [ ] ฟีเจอร์ Sync แบบ Debounced และ multi-threaded
+- [x] ฟีเจอร์ Sync แบบ Debounced และ multi-threaded

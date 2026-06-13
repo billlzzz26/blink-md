@@ -17,16 +17,20 @@ struct SearchRequest {
 }
 
 impl NotionClient {
+    /// Search for pages and databases in Notion.
+    ///
+    /// Supports text query, sorting, filtering by object type, and pagination.
     pub async fn search(
         &self,
         query: Option<String>,
         filter: Option<serde_json::Value>,
+        sort: Option<serde_json::Value>,
         start_cursor: Option<String>,
         page_size: Option<u32>,
     ) -> Result<crate::models::common::List<serde_json::Value>> {
         let body = SearchRequest {
             query,
-            sort: None,
+            sort,
             filter,
             start_cursor,
             page_size,

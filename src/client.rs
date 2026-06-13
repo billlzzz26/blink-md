@@ -146,4 +146,29 @@ impl NotionClient {
     pub(crate) fn http(&self) -> &HttpClient {
         &self.http
     }
+
+    /// Helper to collect all pages from a paginated API endpoint.
+    ///
+    /// Takes a closure that performs the single page request with a cursor.
+    pub async fn collect_all<T, F, Fut>(&self, mut fetch_page: F) -> Result<Vec<T>>
+    where
+        F: FnMut(Option<String>) -> Fut,
+        Fut: std::future::Future<Output = Result<crate::models::common::List<T>>>,
+    {
+        let mut all_results = Vec::new();
+        let mut cursor = None;
+
+        loop {
+            let list = fetch_page(cursor).await?;
+            all_results.extend(list.results);
+
+            if list.has_more {
+                cursor = list.next_cursor;
+            } else {
+                break;
+            }
+        }
+
+        Ok(all_results)
+    }
 }

@@ -167,6 +167,9 @@ where
     Ok(())
 }
 
+pub mod markdown;
+pub mod notion;
+
 /// Roundtrip with comparison (for testing)
 pub fn roundtrip_compare<F, T>(input: F::Input) -> Result<(), ConverterError>
 where

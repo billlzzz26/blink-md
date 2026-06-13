@@ -1,7 +1,7 @@
 use anyhow::Result;
-use blink_md::api::markdown::ToMarkdown;
-use blink_md::api::universal_parser::markdown_to_universal;
-use blink_md::models::universal_mapper::universal_to_notion_type;
+use blink_md::converter::{FromPlatform, ToPlatform};
+use blink_md::converter::markdown::MarkdownConverter;
+use blink_md::converter::notion::NotionToPlatform;
 use std::path::PathBuf;
 
 pub async fn run_convert(
@@ -10,7 +10,7 @@ pub async fn run_convert(
     from: Option<String>,
     to: Option<String>,
 ) -> Result<()> {
-    let content = tokio::fs::read_to_string(&input).await.unwrap_or_default();
+    let content = tokio::fs::read_to_string(&input).await?;
     let from_fmt = from.unwrap_or_else(|| {
         input
             .extension()
@@ -19,55 +19,30 @@ pub async fn run_convert(
             .to_string()
     });
 
-    let universal_blocks = match from_fmt.as_str() {
-        "markdown" | "md" => markdown_to_universal(&content)?,
-        _ => anyhow::bail!("Unsupported source format for universal mapping"),
+    let doc = match from_fmt.as_str() {
+        "markdown" | "md" => MarkdownConverter::from_platform(content)?,
+        _ => anyhow::bail!("Unsupported source format: {}", from_fmt),
     };
 
-    let output_str = match to.as_deref() {
-        Some("json") | None => serde_json::to_string_pretty(&universal_blocks)?,
-        Some("markdown") => {
-            // Convert universal back to notion blocks first to reuse ToMarkdown trait
-            let mut md = String::new();
-            for ub in universal_blocks {
-                let nb_type = universal_to_notion_type(&ub);
-                // Create a dummy notion block to use to_markdown
-                let nb = blink_md::models::block::Block {
-                    object: "block".to_string(),
-                    id: "temp".to_string(),
-                    created_time: chrono::Utc::now(),
-                    last_edited_time: chrono::Utc::now(),
-                    created_by: dummy_user(),
-                    last_edited_by: dummy_user(),
-                    has_children: false,
-                    in_trash: false,
-                    parent: None,
-                    block_type: nb_type,
-                };
-                md.push_str(&nb.to_markdown(0));
-                md.push('\n');
-            }
-            md
+    let to_fmt = to.unwrap_or_else(|| {
+        output
+            .extension()
+            .and_then(|e| e.to_str())
+            .unwrap_or("json")
+            .to_string()
+    });
+
+    let output_str = match to_fmt.as_str() {
+        "json" => serde_json::to_string_pretty(&doc)?,
+        "markdown" | "md" => MarkdownConverter::to_platform(&doc)?,
+        "notion" => {
+            let request = NotionToPlatform::to_platform(&doc)?;
+            serde_json::to_string_pretty(&request)?
         }
-        _ => anyhow::bail!("Unsupported target format"),
+        _ => anyhow::bail!("Unsupported target format: {}", to_fmt),
     };
 
     tokio::fs::write(&output, output_str).await?;
-    println!("Converted {:?} -> {:?}", input, output);
+    println!("Converted {:?} -> {:?} (using Universal IR)", input, output);
     Ok(())
-}
-
-fn dummy_user() -> blink_md::models::common::User {
-    blink_md::models::common::User {
-        object: "user".to_string(),
-        id: "dummy".to_string(),
-        name: None,
-        avatar_url: None,
-        user_type: blink_md::models::common::UserType::Bot {
-            bot: blink_md::models::common::BotInfo {
-                owner: None,
-                workspace_name: None,
-            },
-        },
-    }
 }

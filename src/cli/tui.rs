@@ -76,6 +76,8 @@ struct App {
     search_selected: usize,
 
     detail_text: String,
+    flattened_cache: Vec<TreeNode>,
+    needs_reflatten: bool,
 }
 
 #[derive(Clone)]
@@ -104,6 +106,8 @@ impl App {
             search_results: vec![],
             search_selected: 0,
             detail_text: String::new(),
+            flattened_cache: vec![],
+            needs_reflatten: true,
         }
     }
 
@@ -117,7 +121,7 @@ impl App {
     }
 
     async fn load_pages(&mut self) -> Result<()> {
-        let results = self.client.search(None, None, None, None).await?;
+        let results = self.client.search(None, None, None, None, None).await?;
         self.pages = results
             .results
             .into_iter()
@@ -143,37 +147,103 @@ impl App {
             })
             .collect();
         self.block_tree_selected = 0;
+        self.needs_reflatten = true;
         self.show_block_detail();
         self.current_page_id = Some(page_id.to_string());
         Ok(())
     }
 
     async fn toggle_expand(&mut self, index: usize) -> Result<()> {
-        if let Some(node) = self.block_tree.get_mut(index) {
-            if node.expanded {
+        let (block_id, is_expanded, has_children, indent) = {
+            let flat = self.get_flattened();
+            if index >= flat.len() {
+                return Ok(());
+            }
+            let node = &flat[index];
+            (
+                node.block.id.clone(),
+                node.expanded,
+                node.block.has_children,
+                node.indent,
+            )
+        };
+
+        if is_expanded {
+            if let Some(node) = self.find_node_mut(index) {
                 node.expanded = false;
                 node.children.clear();
-            } else {
-                if node.block.has_children {
-                    let list = self
-                        .client
-                        .get_block_children(&node.block.id, None, None)
-                        .await?;
-                    node.children = list
-                        .results
-                        .into_iter()
-                        .map(|b| TreeNode {
-                            indent: node.indent + 1,
-                            block: b,
-                            expanded: false,
-                            children: vec![],
-                        })
-                        .collect();
-                }
+                self.needs_reflatten = true;
+            }
+        } else if has_children {
+            let list = self.client.get_block_children(&block_id, None, None).await?;
+            let children: Vec<TreeNode> = list
+                .results
+                .into_iter()
+                .map(|b| TreeNode {
+                    indent: indent + 1,
+                    block: b,
+                    expanded: false,
+                    children: vec![],
+                })
+                .collect();
+
+            if let Some(node) = self.find_node_mut(index) {
+                node.children = children;
                 node.expanded = true;
+                self.needs_reflatten = true;
+            }
+        } else {
+            if let Some(node) = self.find_node_mut(index) {
+                node.expanded = true;
+                self.needs_reflatten = true;
             }
         }
         Ok(())
+    }
+
+    fn find_node_mut(&mut self, target_idx: usize) -> Option<&mut TreeNode> {
+        let mut current_idx = 0;
+        Self::find_node_recursive_mut(&mut self.block_tree, target_idx, &mut current_idx)
+    }
+
+    fn find_node_recursive_mut<'a>(
+        nodes: &'a mut [TreeNode],
+        target_idx: usize,
+        current_idx: &mut usize,
+    ) -> Option<&'a mut TreeNode> {
+        for node in nodes {
+            if *current_idx == target_idx {
+                return Some(node);
+            }
+            *current_idx += 1;
+            if node.expanded {
+                if let Some(found) =
+                    Self::find_node_recursive_mut(&mut node.children, target_idx, current_idx)
+                {
+                    return Some(found);
+                }
+            }
+        }
+        None
+    }
+
+    fn get_flattened(&mut self) -> &[TreeNode] {
+        if self.needs_reflatten {
+            let mut flat = vec![];
+            Self::flatten_recursive(&self.block_tree, &mut flat);
+            self.flattened_cache = flat;
+            self.needs_reflatten = false;
+        }
+        &self.flattened_cache
+    }
+
+    fn flatten_recursive(nodes: &[TreeNode], out: &mut Vec<TreeNode>) {
+        for node in nodes {
+            out.push(node.clone());
+            if node.expanded {
+                Self::flatten_recursive(&node.children, out);
+            }
+        }
     }
 
     fn flatten_tree<'a>(&'a self, nodes: &'a [TreeNode]) -> Vec<&'a TreeNode> {
@@ -212,8 +282,8 @@ impl App {
     }
 
     fn show_block_detail(&mut self) {
-        let flat = self.flatten_tree(&self.block_tree);
-        if let Some(node) = flat.get(self.block_tree_selected) {
+        let idx = self.block_tree_selected;
+        if let Some(node) = self.get_flattened().get(idx) {
             self.detail_text = format!(
                 "ID: {}\nType: {}\nHas children: {}\nTrashed: {}",
                 node.block.id,
@@ -233,6 +303,7 @@ impl App {
                     "property": "object",
                     "value": "database"
                 })),
+                None,
                 None,
                 None,
             )
@@ -255,7 +326,7 @@ impl App {
         }
         let results = self
             .client
-            .search(Some(self.search_query.clone()), None, None, None)
+            .search(Some(self.search_query.clone()), None, None, None, None)
             .await?;
         self.search_results = results.results;
         if !self.search_results.is_empty() {
@@ -267,11 +338,11 @@ impl App {
         Ok(())
     }
 
-    fn list_len(&self) -> usize {
+    fn list_len(&mut self) -> usize {
         match &self.tab {
             TabsState::Users => self.users.len(),
             TabsState::Pages => self.pages.len(),
-            TabsState::BlocksTree => self.flatten_tree(&self.block_tree).len(),
+            TabsState::BlocksTree => self.get_flattened().len(),
             TabsState::Databases => self.databases.len(),
             TabsState::Search => self.search_results.len(),
         }
@@ -440,7 +511,7 @@ where
     }
 }
 
-fn ui(f: &mut Frame, app: &App) {
+fn ui(f: &mut Frame, app: &mut App) {
     let [tabs_area, main_area] =
         Layout::vertical([Constraint::Length(3), Constraint::Fill(1)]).areas(f.area());
 
@@ -502,7 +573,7 @@ fn ui(f: &mut Frame, app: &App) {
             })
             .collect(),
         TabsState::BlocksTree => {
-            let flat = app.flatten_tree(&app.block_tree);
+            let flat = app.get_flattened();
             flat.iter()
                 .map(|node| {
                     let prefix =

@@ -1,43 +1,66 @@
 use crate::client::NotionClient;
 use crate::error::Result;
 use crate::models::common::FileBlockContent;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize)]
-struct UploadResponse {
-    file: FileBlockContent,
+#[derive(Debug, Serialize)]
+struct CreateFileUploadRequest {
+    name: String,
+    content_type: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct FileUpload {
+    pub id: String,
+    pub upload_url: String,
+    pub expiry_time: String,
 }
 
 impl NotionClient {
-    /// Upload a file to Notion (used for image, video, etc.)
-    /// file_path: path on disk
-    /// returns the FileBlockContent which can be used in block creation
-    pub async fn upload_file(&self, file_path: &str) -> Result<FileBlockContent> {
-        use std::path::Path;
-        let file_bytes = tokio::fs::read(file_path).await?;
-        let file_name = Path::new(file_path)
+    /// Step 1: Create a file upload session
+    pub async fn create_file_upload(&self, name: &str, content_type: &str) -> Result<FileUpload> {
+        let body = CreateFileUploadRequest {
+            name: name.to_string(),
+            content_type: content_type.to_string(),
+        };
+        self.request(reqwest::Method::POST, "/files/upload", Some(&body))
+            .await
+    }
+
+    /// Step 2: Upload the actual file bytes to the provided URL
+    pub async fn upload_file_bytes(&self, upload_url: &str, bytes: Vec<u8>) -> Result<()> {
+        let client = reqwest::Client::new();
+        client
+            .put(upload_url)
+            .body(bytes)
+            .send()
+            .await?
+            .error_for_status()?;
+        Ok(())
+    }
+
+    /// Step 3: Complete the file upload
+    pub async fn complete_file_upload(&self, file_upload_id: &str) -> Result<FileBlockContent> {
+        let path = format!("/files/upload/{}/complete", file_upload_id);
+        self.request(reqwest::Method::POST, &path, None::<&()>)
+            .await
+    }
+
+    /// Convenience method to perform all 3 steps of a file upload
+    pub async fn upload_file(
+        &self,
+        path: &std::path::Path,
+        content_type: &str,
+    ) -> Result<FileBlockContent> {
+        let name = path
             .file_name()
-            .and_then(|s| s.to_str())
-            .unwrap_or("file");
+            .and_then(|n| n.to_str())
+            .unwrap_or("file")
+            .to_string();
+        let bytes = tokio::fs::read(path).await?;
 
-        let part = reqwest::multipart::Part::bytes(file_bytes).file_name(file_name.to_string());
-
-        let form = reqwest::multipart::Form::new().part("file", part);
-
-        let url = format!("{}/files", self.base_url());
-        let response = self.http().post(&url).multipart(form).send().await?;
-
-        if response.status().is_success() {
-            let upload_resp: UploadResponse = response.json().await?;
-            Ok(upload_resp.file)
-        } else {
-            let status_code = response.status().as_u16();
-            let error_msg = response.text().await.unwrap_or_default();
-            Err(crate::error::NotionError::Api {
-                code: "upload_error".into(),
-                message: error_msg,
-                status: status_code,
-            })
-        }
+        let upload = self.create_file_upload(&name, content_type).await?;
+        self.upload_file_bytes(&upload.upload_url, bytes).await?;
+        self.complete_file_upload(&upload.id).await
     }
 }

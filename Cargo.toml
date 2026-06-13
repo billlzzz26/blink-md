@@ -57,6 +57,8 @@ docx-rs = "0.4"
 google-docs1 = "7"
 yup-oauth2 = "12.1"
 syntect = { version = "5", features = ["default"] }
+async-trait = "0.1"
+mcp-core = { path = "src/mcp/core" }
 
 pmcp = { workspace = true, optional = true }
 

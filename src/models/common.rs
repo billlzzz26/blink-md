@@ -22,6 +22,23 @@ pub struct User {
     pub avatar_url: Option<String>,
 }
 
+impl Default for User {
+    fn default() -> Self {
+        Self {
+            object: "user".to_string(),
+            id: "dummy".to_string(),
+            user_type: UserType::Bot {
+                bot: BotInfo {
+                    owner: None,
+                    workspace_name: None,
+                },
+            },
+            name: None,
+            avatar_url: None,
+        }
+    }
+}
+
 /// The type discriminator for [`User`].
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[serde(tag = "type", rename_all = "snake_case")]
@@ -118,6 +135,14 @@ impl RichText {
             RichText::Equation { plain_text, .. } => plain_text.as_deref().unwrap_or(""),
         }
     }
+
+    pub fn href(&self) -> Option<&str> {
+        match self {
+            RichText::Text { href, .. } => href.as_deref(),
+            RichText::Mention { href, .. } => href.as_deref(),
+            RichText::Equation { href, .. } => href.as_deref(),
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
@@ -153,6 +178,19 @@ pub struct Annotations {
     pub code: bool,
     /// Color identifier (e.g. `"default"`, `"blue_background"`).
     pub color: String,
+}
+
+impl Default for Annotations {
+    fn default() -> Self {
+        Self {
+            bold: false,
+            italic: false,
+            strikethrough: false,
+            underline: false,
+            code: false,
+            color: "default".to_string(),
+        }
+    }
 }
 
 /// A mention target inside rich text.

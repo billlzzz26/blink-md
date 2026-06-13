@@ -121,4 +121,20 @@ impl NotionClient {
         let path = format!("/data_sources/{}", data_source_id);
         self.request(reqwest::Method::GET, &path, None::<&()>).await
     }
+
+    pub async fn list_data_sources(&self) -> Result<Vec<DataSource>> {
+        self.collect_all(|cursor| async move {
+            let mut path = "/data_sources".to_string();
+            if let Some(c) = cursor {
+                path = format!("{}?start_cursor={}", path, c);
+            }
+            self.request::<crate::models::common::List<DataSource>>(
+                reqwest::Method::GET,
+                &path,
+                None::<&()>,
+            )
+            .await
+        })
+        .await
+    }
 }
