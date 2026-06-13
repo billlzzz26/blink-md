@@ -196,7 +196,7 @@ mod search_tests {
             .await;
 
         let results = client
-            .search(Some("hello".to_string()), None, None, None)
+            .search(Some("hello".to_string()), None, None, None, None)
             .await
             .unwrap();
         assert_eq!(results.results.len(), 1);

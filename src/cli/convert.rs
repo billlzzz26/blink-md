@@ -1,7 +1,7 @@
 use anyhow::Result;
-use blink_md::converter::{FromPlatform, ToPlatform};
 use blink_md::converter::markdown::MarkdownConverter;
 use blink_md::converter::notion::NotionToPlatform;
+use blink_md::converter::{FromPlatform, ToPlatform};
 use std::path::PathBuf;
 
 pub async fn run_convert(

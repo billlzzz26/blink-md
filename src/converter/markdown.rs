@@ -2,11 +2,11 @@
 //!
 //! Implementation of FromPlatform and ToPlatform traits for Markdown (CommonMark + GFM).
 
-use crate::converter::{ConverterError, FromPlatform, ToPlatform};
-use crate::ir::{Platform, UniversalDocument, UniversalBlock, DocumentMetadata, StyleSheet};
-use crate::ir::inline::{InlineElement, TextStyle};
-use crate::ir::blocks::{ListItem, TaskItem};
 use crate::api::markdown::parse_markdown;
+use crate::converter::{ConverterError, FromPlatform, ToPlatform};
+use crate::ir::blocks::{ListItem, TaskItem};
+use crate::ir::inline::{InlineElement, TextStyle};
+use crate::ir::{DocumentMetadata, Platform, StyleSheet, UniversalBlock, UniversalDocument};
 
 pub struct MarkdownConverter;
 
@@ -16,7 +16,7 @@ impl FromPlatform for MarkdownConverter {
 
     fn from_platform(input: Self::Input) -> Result<UniversalDocument, ConverterError> {
         let notion_blocks = parse_markdown(&input);
-        
+
         let mut universal_blocks = Vec::new();
         for block in notion_blocks {
             universal_blocks.push(bridge_notion_block_to_universal(block));
@@ -46,7 +46,7 @@ impl ToPlatform for MarkdownConverter {
 
 fn bridge_notion_block_to_universal(block: crate::models::block::Block) -> UniversalBlock {
     use crate::models::block::BlockType as NBT;
-    
+
     match block.block_type {
         NBT::Paragraph { paragraph } => UniversalBlock::Paragraph {
             content: bridge_rich_text_to_inline(paragraph.rich_text),
@@ -126,10 +126,15 @@ fn bridge_notion_block_to_universal(block: crate::models::block::Block) -> Unive
     }
 }
 
-fn bridge_rich_text_to_inline(rich_texts: Vec<crate::models::common::RichText>) -> Vec<InlineElement> {
-    rich_texts.into_iter().map(|rt| {
-        match rt {
-            crate::models::common::RichText::Text { text, annotations, .. } => {
+fn bridge_rich_text_to_inline(
+    rich_texts: Vec<crate::models::common::RichText>,
+) -> Vec<InlineElement> {
+    rich_texts
+        .into_iter()
+        .map(|rt| match rt {
+            crate::models::common::RichText::Text {
+                text, annotations, ..
+            } => {
                 let mut style = TextStyle::default();
                 if let Some(ann) = annotations {
                     style.bold = Some(ann.bold);
@@ -152,8 +157,8 @@ fn bridge_rich_text_to_inline(rich_texts: Vec<crate::models::common::RichText>) 
                 content: "[Unsupported RichText]".to_string(),
                 style: Some(TextStyle::default()),
             },
-        }
-    }).collect()
+        })
+        .collect()
 }
 
 fn render_universal_block(block: &UniversalBlock, indent: usize, out: &mut String) {
@@ -205,29 +210,38 @@ fn render_universal_block(block: &UniversalBlock, indent: usize, out: &mut Strin
 
 fn render_inline(content: &[InlineElement], out: &mut String) {
     for element in content {
-        match element {
-            InlineElement::TextRun { content, style } => {
-                if let Some(s) = style {
-                    if s.bold == Some(true) { out.push_str("**"); }
-                    if s.italic == Some(true) { out.push_str("*"); }
-                    if s.code == Some(true) { out.push_str("`") }
-                    if let Some(link) = &s.link {
-                        out.push('[');
-                        out.push_str(content);
-                        out.push_str("](");
-                        out.push_str(link);
-                        out.push(')');
-                    } else {
-                        out.push_str(content);
-                    }
-                    if s.code == Some(true) { out.push_str("`") }
-                    if s.italic == Some(true) { out.push_str("*"); }
-                    if s.bold == Some(true) { out.push_str("**"); }
+        if let InlineElement::TextRun { content, style } = element {
+            if let Some(s) = style {
+                if s.bold == Some(true) {
+                    out.push_str("**");
+                }
+                if s.italic == Some(true) {
+                    out.push('*');
+                }
+                if s.code == Some(true) {
+                    out.push('`');
+                }
+                if let Some(link) = &s.link {
+                    out.push('[');
+                    out.push_str(content);
+                    out.push_str("](");
+                    out.push_str(link);
+                    out.push(')');
                 } else {
                     out.push_str(content);
                 }
+                if s.code == Some(true) {
+                    out.push('`');
+                }
+                if s.italic == Some(true) {
+                    out.push('*');
+                }
+                if s.bold == Some(true) {
+                    out.push_str("**");
+                }
+            } else {
+                out.push_str(content);
             }
-            _ => {}
         }
     }
 }
@@ -240,18 +254,21 @@ mod tests {
     fn test_markdown_to_universal_ir() {
         let md = "# Heading 1\nHello **bold**";
         let doc = MarkdownConverter::from_platform(md.to_string()).unwrap();
-        
+
         assert_eq!(doc.blocks.len(), 2);
-        
+
         match &doc.blocks[0] {
             UniversalBlock::Heading { level, .. } => assert_eq!(*level, 1),
             _ => panic!("Expected heading"),
         }
-        
+
         match &doc.blocks[1] {
             UniversalBlock::Paragraph { content, .. } => {
                 assert_eq!(content.len(), 2);
-                if let InlineElement::TextRun { style: Some(style), .. } = &content[1] {
+                if let InlineElement::TextRun {
+                    style: Some(style), ..
+                } = &content[1]
+                {
                     assert_eq!(style.bold, Some(true));
                 } else {
                     panic!("Expected text run with bold style");
@@ -287,7 +304,7 @@ mod tests {
             ],
             styles: StyleSheet::default(),
         };
-        
+
         let md = MarkdownConverter::to_platform(&doc).unwrap();
         assert_eq!(md, "# Title\n**Body**");
     }

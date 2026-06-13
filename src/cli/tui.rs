@@ -175,7 +175,10 @@ impl App {
                 self.needs_reflatten = true;
             }
         } else if has_children {
-            let list = self.client.get_block_children(&block_id, None, None).await?;
+            let list = self
+                .client
+                .get_block_children(&block_id, None, None)
+                .await?;
             let children: Vec<TreeNode> = list
                 .results
                 .into_iter()

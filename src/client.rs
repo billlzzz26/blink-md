@@ -143,6 +143,7 @@ impl NotionClient {
         &self.base_url
     }
 
+    #[allow(dead_code)]
     pub(crate) fn http(&self) -> &HttpClient {
         &self.http
     }

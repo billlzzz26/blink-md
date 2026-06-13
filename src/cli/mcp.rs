@@ -22,10 +22,30 @@ pub async fn run_mcp_server() -> Result<()> {
         .name("notion-universal-mcp")
         .version("0.3.0")
         .capabilities(ServerCapabilities::tools_only())
-        .tool("notion_search", SearchTool { client: client.clone() })
-        .tool("notion_get_page", GetPageTool { client: client.clone() })
-        .tool("notion_create_page", CreatePageTool { client: client.clone() })
-        .tool("notion_get_block_children", GetBlocksTool { client: client.clone() })
+        .tool(
+            "notion_search",
+            SearchTool {
+                client: client.clone(),
+            },
+        )
+        .tool(
+            "notion_get_page",
+            GetPageTool {
+                client: client.clone(),
+            },
+        )
+        .tool(
+            "notion_create_page",
+            CreatePageTool {
+                client: client.clone(),
+            },
+        )
+        .tool(
+            "notion_get_block_children",
+            GetBlocksTool {
+                client: client.clone(),
+            },
+        )
         .build()?;
 
     println!("Notion MCP Server starting...");
@@ -50,10 +70,13 @@ impl ToolHandler for SearchTool {
     async fn handle(&self, args: Value, _extra: RequestHandlerExtra) -> McpResult<Value> {
         let input: SearchInput = serde_json::from_value(args)
             .map_err(|e| McpError::validation(format!("Invalid args: {}", e)))?;
-        
-        let results = self.client.search(input.query, None, None, None, None).await
+
+        let results = self
+            .client
+            .search(input.query, None, None, None, None)
+            .await
             .map_err(|e| McpError::internal(e.to_string()))?;
-        
+
         Ok(serde_json::to_value(results).unwrap())
     }
 
@@ -82,10 +105,13 @@ impl ToolHandler for GetPageTool {
     async fn handle(&self, args: Value, _extra: RequestHandlerExtra) -> McpResult<Value> {
         let input: GetPageInput = serde_json::from_value(args)
             .map_err(|e| McpError::validation(format!("Invalid args: {}", e)))?;
-        
-        let page = self.client.get_page(&input.page_id).await
+
+        let page = self
+            .client
+            .get_page(&input.page_id)
+            .await
             .map_err(|e| McpError::internal(e.to_string()))?;
-        
+
         Ok(serde_json::to_value(page).unwrap())
     }
 
@@ -117,13 +143,16 @@ impl ToolHandler for CreatePageTool {
     async fn handle(&self, args: Value, _extra: RequestHandlerExtra) -> McpResult<Value> {
         let input: CreatePageInput = serde_json::from_value(args)
             .map_err(|e| McpError::validation(format!("Invalid args: {}", e)))?;
-        
+
         let parent = json!({ input.parent_type: input.parent_id });
         let children = input.children.and_then(|v| serde_json::from_value(v).ok());
-        
-        let page = self.client.create_page(parent, input.properties, children).await
+
+        let page = self
+            .client
+            .create_page(parent, input.properties, children)
+            .await
             .map_err(|e| McpError::internal(e.to_string()))?;
-        
+
         Ok(serde_json::to_value(page).unwrap())
     }
 
@@ -154,10 +183,13 @@ impl ToolHandler for GetBlocksTool {
     async fn handle(&self, args: Value, _extra: RequestHandlerExtra) -> McpResult<Value> {
         let input: GetBlocksInput = serde_json::from_value(args)
             .map_err(|e| McpError::validation(format!("Invalid args: {}", e)))?;
-        
-        let list = self.client.get_block_children(&input.block_id, None, None).await
+
+        let list = self
+            .client
+            .get_block_children(&input.block_id, None, None)
+            .await
             .map_err(|e| McpError::internal(e.to_string()))?;
-        
+
         Ok(serde_json::to_value(list).unwrap())
     }
 

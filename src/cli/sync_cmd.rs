@@ -3,11 +3,11 @@ use blink_md::api::markdown::parse_markdown;
 use blink_md::NotionClient;
 use notify::{Event, RecursiveMode, Watcher};
 use serde_json::json;
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::time::Duration;
 use tokio::sync::mpsc;
 use tokio::time::Instant;
-use std::collections::HashMap;
 
 pub async fn start_sync(local_dir: PathBuf, client: NotionClient, notion_db: String) -> Result<()> {
     let (tx, mut rx) = mpsc::channel(100);
@@ -35,7 +35,7 @@ pub async fn start_sync(local_dir: PathBuf, client: NotionClient, notion_db: Str
             _ = tokio::time::sleep(Duration::from_millis(100)) => {
                 let now = Instant::now();
                 let mut to_sync = vec![];
-                
+
                 pending_syncs.retain(|path, &mut deadline| {
                     if now >= deadline {
                         to_sync.push(path.clone());
