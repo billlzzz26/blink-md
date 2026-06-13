@@ -1,14 +1,21 @@
 {
   "name": "One Dark",
-  "description": "Atom's iconic dark syntax theme",
-  "colors": {
-    "primary": [171, 178, 191],
-    "accent": [97, 175, 239],
-    "surface": [40, 44, 52],
-    "primary_text": [171, 178, 191],
-    "accent_text": [40, 44, 52],
-    "stone_gray": [92, 99, 112],
-    "error": [224, 108, 117],
-    "success": [152, 195, 121]
-  }
+  "foreground": "#ABB2BF",
+  "background": "#282C34",
+  "black": "#282C34",
+  "red": "#E06C75",
+  "green": "#98C379",
+  "yellow": "#D19A66",
+  "blue": "#61AFEF",
+  "purple": "#C678DD",
+  "cyan": "#56B6C2",
+  "white": "#ABB2BF",
+  "brightBlack": "#5C6370",
+  "brightRed": "#E06C75",
+  "brightGreen": "#98C379",
+  "brightYellow": "#D19A66",
+  "brightBlue": "#61AFEF",
+  "brightPurple": "#C678DD",
+  "brightCyan": "#56B6C2",
+  "brightWhite": "#FFFFFF"
 }

@@ -1,14 +1,21 @@
 {
   "name": "Node.js",
-  "description": "Official Node.js green theme",
-  "colors": {
-    "primary": [63, 131, 78],
-    "accent": [87, 195, 58],
-    "surface": [255, 255, 255],
-    "primary_text": [63, 131, 78],
-    "accent_text": [255, 255, 255],
-    "stone_gray": [128, 128, 128],
-    "error": [204, 0, 0],
-    "success": [63, 131, 78]
-  }
+  "foreground": "#3F834E",
+  "background": "#FFFFFF",
+  "black": "#000000",
+  "red": "#CC0000",
+  "green": "#3F834E",
+  "yellow": "#C4A000",
+  "blue": "#3465A4",
+  "purple": "#75507B",
+  "cyan": "#06989A",
+  "white": "#D3D7CF",
+  "brightBlack": "#555753",
+  "brightRed": "#EF2929",
+  "brightGreen": "#8AE234",
+  "brightYellow": "#FCE94F",
+  "brightBlue": "#729FCF",
+  "brightPurple": "#AD7FA8",
+  "brightCyan": "#34E2E2",
+  "brightWhite": "#EEEEEC"
 }

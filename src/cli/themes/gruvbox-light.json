@@ -1,14 +1,21 @@
 {
   "name": "Gruvbox Light",
-  "description": "Retro groove color scheme (light variant)",
-  "colors": {
-    "primary": [60, 56, 54],
-    "accent": [180, 90, 20],
-    "surface": [251, 241, 199],
-    "primary_text": [60, 56, 54],
-    "accent_text": [251, 241, 199],
-    "stone_gray": [146, 131, 116],
-    "error": [204, 36, 29],
-    "success": [152, 151, 26]
-  }
+  "foreground": "#3C3836",
+  "background": "#FBF1C7",
+  "black": "#FBF1C7",
+  "red": "#CC241D",
+  "green": "#98971A",
+  "yellow": "#D79921",
+  "blue": "#458588",
+  "purple": "#B16286",
+  "cyan": "#689D6A",
+  "white": "#7C6F64",
+  "brightBlack": "#928374",
+  "brightRed": "#9D0006",
+  "brightGreen": "#79740E",
+  "brightYellow": "#B57614",
+  "brightBlue": "#076678",
+  "brightPurple": "#8F3F71",
+  "brightCyan": "#427B58",
+  "brightWhite": "#3C3836"
 }

@@ -1,14 +1,21 @@
 {
   "name": "Notion",
-  "description": "Official Notion color palette",
-  "colors": {
-    "primary": [55, 53, 47],
-    "accent": [35, 131, 226],
-    "surface": [255, 255, 255],
-    "primary_text": [55, 53, 47],
-    "accent_text": [255, 255, 255],
-    "stone_gray": [155, 154, 151],
-    "error": [212, 76, 71],
-    "success": [68, 131, 97]
-  }
+  "foreground": "#37352F",
+  "background": "#FFFFFF",
+  "black": "#37352F",
+  "red": "#D44C47",
+  "green": "#448361",
+  "yellow": "#CB912F",
+  "blue": "#2383E2",
+  "purple": "#9065B0",
+  "cyan": "#337EA9",
+  "white": "#FFFFFF",
+  "brightBlack": "#9B9A97",
+  "brightRed": "#FF7369",
+  "brightGreen": "#63B586",
+  "brightYellow": "#EAB543",
+  "brightBlue": "#52A9FF",
+  "brightPurple": "#B189D6",
+  "brightCyan": "#5FB0D6",
+  "brightWhite": "#F7F6F3"
 }

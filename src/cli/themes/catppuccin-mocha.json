@@ -1,14 +1,21 @@
 {
   "name": "Catppuccin Mocha",
-  "description": "Soothing pastel theme for high contrast",
-  "colors": {
-    "primary": [205, 214, 244],
-    "accent": [245, 194, 231],
-    "surface": [30, 30, 46],
-    "primary_text": [205, 214, 244],
-    "accent_text": [30, 30, 46],
-    "stone_gray": [108, 112, 134],
-    "error": [243, 139, 168],
-    "success": [166, 227, 161]
-  }
+  "foreground": "#CDD6F4",
+  "background": "#1E1E2E",
+  "black": "#45475A",
+  "red": "#F38BA8",
+  "green": "#A6E3A1",
+  "yellow": "#F9E2AF",
+  "blue": "#89B4FA",
+  "purple": "#F5C2E7",
+  "cyan": "#94E2D5",
+  "white": "#BAC2DE",
+  "brightBlack": "#585B70",
+  "brightRed": "#F38BA8",
+  "brightGreen": "#A6E3A1",
+  "brightYellow": "#F9E2AF",
+  "brightBlue": "#89B4FA",
+  "brightPurple": "#F5C2E7",
+  "brightCyan": "#94E2D5",
+  "brightWhite": "#A6ADC8"
 }

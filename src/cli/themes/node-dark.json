@@ -1,14 +1,21 @@
 {
   "name": "Node.js Dark",
-  "description": "Official Node.js green theme (dark variant)",
-  "colors": {
-    "primary": [87, 195, 58],
-    "accent": [87, 195, 58],
-    "surface": [30, 30, 30],
-    "primary_text": [255, 255, 255],
-    "accent_text": [30, 30, 30],
-    "stone_gray": [128, 128, 128],
-    "error": [255, 85, 85],
-    "success": [87, 195, 58]
-  }
+  "foreground": "#FFFFFF",
+  "background": "#1E1E1E",
+  "black": "#1E1E1E",
+  "red": "#FF5555",
+  "green": "#57C33A",
+  "yellow": "#F1FA8C",
+  "blue": "#6272A4",
+  "purple": "#BD93F9",
+  "cyan": "#8BE9FD",
+  "white": "#F8F8F2",
+  "brightBlack": "#44475A",
+  "brightRed": "#FF6E6E",
+  "brightGreen": "#69FF94",
+  "brightYellow": "#FFFFA5",
+  "brightBlue": "#D6ACFF",
+  "brightPurple": "#D6ACFF",
+  "brightCyan": "#A4FFFF",
+  "brightWhite": "#FFFFFF"
 }

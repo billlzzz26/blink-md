@@ -1,14 +1,21 @@
 {
   "name": "Gruvbox Dark",
-  "description": "Retro groove color scheme",
-  "colors": {
-    "primary": [235, 219, 178],
-    "accent": [251, 173, 59],
-    "surface": [40, 40, 40],
-    "primary_text": [235, 219, 178],
-    "accent_text": [40, 40, 40],
-    "stone_gray": [146, 131, 116],
-    "error": [251, 73, 52],
-    "success": [184, 187, 38]
-  }
+  "foreground": "#EBDBB2",
+  "background": "#282828",
+  "black": "#282828",
+  "red": "#CC241D",
+  "green": "#98971A",
+  "yellow": "#D79921",
+  "blue": "#458588",
+  "purple": "#B16286",
+  "cyan": "#689D6A",
+  "white": "#A89984",
+  "brightBlack": "#928374",
+  "brightRed": "#FB4934",
+  "brightGreen": "#B8BB26",
+  "brightYellow": "#FABD2F",
+  "brightBlue": "#83A598",
+  "brightPurple": "#D3869B",
+  "brightCyan": "#8EC07C",
+  "brightWhite": "#EBDBB2"
 }

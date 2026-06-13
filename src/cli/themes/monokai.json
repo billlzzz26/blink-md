@@ -1,14 +1,21 @@
 {
   "name": "Monokai",
-  "description": "Classic vibrant color scheme",
-  "colors": {
-    "primary": [248, 248, 242],
-    "accent": [249, 38, 114],
-    "surface": [39, 40, 34],
-    "primary_text": [248, 248, 242],
-    "accent_text": [39, 40, 34],
-    "stone_gray": [117, 113, 94],
-    "error": [249, 38, 114],
-    "success": [166, 226, 46]
-  }
+  "foreground": "#F8F8F2",
+  "background": "#272822",
+  "black": "#272822",
+  "red": "#F92672",
+  "green": "#A6E22E",
+  "yellow": "#E6DB74",
+  "blue": "#66D9EF",
+  "purple": "#AE81FF",
+  "cyan": "#A1EFE4",
+  "white": "#F8F8F2",
+  "brightBlack": "#75715E",
+  "brightRed": "#F92672",
+  "brightGreen": "#A6E22E",
+  "brightYellow": "#E6DB74",
+  "brightBlue": "#66D9EF",
+  "brightPurple": "#AE81FF",
+  "brightCyan": "#A1EFE4",
+  "brightWhite": "#F8F8F2"
 }

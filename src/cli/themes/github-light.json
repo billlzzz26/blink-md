@@ -1,14 +1,21 @@
 {
   "name": "GitHub Light",
-  "description": "GitHub's official light theme",
-  "colors": {
-    "primary": [36, 41, 46],
-    "accent": [9, 105, 218],
-    "surface": [255, 255, 255],
-    "primary_text": [36, 41, 46],
-    "accent_text": [255, 255, 255],
-    "stone_gray": [106, 115, 125],
-    "error": [203, 37, 39],
-    "success": [44, 156, 61]
-  }
+  "foreground": "#24292F",
+  "background": "#FFFFFF",
+  "black": "#24292F",
+  "red": "#CF222E",
+  "green": "#1A7F37",
+  "yellow": "#9A6700",
+  "blue": "#0969DA",
+  "purple": "#8250DF",
+  "cyan": "#1B7C83",
+  "white": "#6E7781",
+  "brightBlack": "#57606A",
+  "brightRed": "#A40E26",
+  "brightGreen": "#116329",
+  "brightYellow": "#4D2D00",
+  "brightBlue": "#0550AE",
+  "brightPurple": "#6639BA",
+  "brightCyan": "#023B40",
+  "brightWhite": "#959DA5"
 }

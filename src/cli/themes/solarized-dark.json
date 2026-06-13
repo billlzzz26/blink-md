@@ -1,14 +1,21 @@
 {
   "name": "Solarized Dark",
-  "description": "Precision colors for machines and people",
-  "colors": {
-    "primary": [133, 153, 0],
-    "accent": [38, 139, 210],
-    "surface": [0, 43, 54],
-    "primary_text": [131, 148, 150],
-    "accent_text": [0, 43, 54],
-    "stone_gray": [88, 110, 117],
-    "error": [220, 50, 47],
-    "success": [133, 153, 0]
-  }
+  "foreground": "#839496",
+  "background": "#002B36",
+  "black": "#073642",
+  "red": "#DC322F",
+  "green": "#859900",
+  "yellow": "#B58900",
+  "blue": "#268BD2",
+  "purple": "#D33682",
+  "cyan": "#2AA198",
+  "white": "#EEE8D5",
+  "brightBlack": "#002B36",
+  "brightRed": "#CB4B16",
+  "brightGreen": "#586E75",
+  "brightYellow": "#657B83",
+  "brightBlue": "#839496",
+  "brightPurple": "#6C71C4",
+  "brightCyan": "#93A1A1",
+  "brightWhite": "#FDF6E3"
 }

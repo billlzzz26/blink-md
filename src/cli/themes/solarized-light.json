@@ -1,14 +1,21 @@
 {
   "name": "Solarized Light",
-  "description": "Precision colors for machines and people (light variant)",
-  "colors": {
-    "primary": [88, 110, 117],
-    "accent": [38, 139, 210],
-    "surface": [253, 246, 227],
-    "primary_text": [101, 123, 131],
-    "accent_text": [253, 246, 227],
-    "stone_gray": [147, 161, 161],
-    "error": [220, 50, 47],
-    "success": [88, 110, 117]
-  }
+  "foreground": "#657B83",
+  "background": "#FDF6E2",
+  "black": "#073642",
+  "red": "#DC322F",
+  "green": "#859900",
+  "yellow": "#B58900",
+  "blue": "#268BD2",
+  "purple": "#D33682",
+  "cyan": "#2AA198",
+  "white": "#EEE8D5",
+  "brightBlack": "#002B36",
+  "brightRed": "#CB4B16",
+  "brightGreen": "#586E75",
+  "brightYellow": "#657B83",
+  "brightBlue": "#839496",
+  "brightPurple": "#6C71C4",
+  "brightCyan": "#93A1A1",
+  "brightWhite": "#FDF6E3"
 }
