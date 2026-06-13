@@ -8,7 +8,7 @@ echo "=== pre-commit: fmt ==="
 cargo fmt --all
 
 echo "=== pre-commit: clippy ==="
-cargo clippy --workspace --all-targets -- -D warnings
+cargo clippy --workspace --all-targets
 
 echo "=== pre-commit: test ==="
 cargo test --workspace

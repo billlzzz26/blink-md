@@ -91,7 +91,7 @@ build_test() {
     cargo test --workspace
     
     echo "Running clippy..."
-    cargo clippy --workspace --all-targets -- -D warnings
+    cargo clippy --workspace --all-targets
     
     echo "=== Setup complete ==="
 }

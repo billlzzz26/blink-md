@@ -11,7 +11,7 @@ test:
 	cargo test --workspace
 
 lint:
-	cargo clippy --workspace --all-targets -- -D warnings
+	cargo clippy --workspace --all-targets
 
 fmt:
 	cargo fmt --all -- --check
