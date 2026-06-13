@@ -321,27 +321,49 @@ pub fn block_to_ir(block: &Block) -> Result<UniversalBlock, ConverterError> {
         }),
         BlockType::Table { table } => {
             // Table blocks don't have content directly - rows are children
+            // This is handled by get_block_children_recursive
             Ok(UniversalBlock::Table {
                 rows: vec![],
                 header: None,
                 style: None,
             })
         }
-        BlockType::TableRow { table_row } => Ok(UniversalBlock::Raw {
-            platform: Platform::Notion,
-            data: serde_json::json!({
-                "type": "table_row",
-                "cells": table_row.cells
-            }),
-        }),
-        BlockType::Column { column } => Ok(UniversalBlock::Raw {
-            platform: Platform::Notion,
-            data: serde_json::json!({
-                "type": "column",
-                "children": column.children
-            }),
-        }),
-        BlockType::ColumnList { column_list } => Ok(UniversalBlock::Columns {
+        BlockType::TableRow { table_row } => {
+            // Convert table_row cells to TableCell
+            let cells: Vec<TableCell> = table_row
+                .cells
+                .iter()
+                .map(|cell| {
+                    TableCell {
+                        content: cell.iter().map(|rt| InlineElement::TextRun {
+                            content: rt.plain_text.clone().unwrap_or_default(),
+                            style: None,
+                        }).collect(),
+                    }
+                })
+                .collect();
+            Ok(UniversalBlock::Table {
+                rows: vec![TableRow {
+                    cells,
+                    row_type: table::TableRowType::Body,
+                    style: None,
+                }],
+                header: None,
+                style: None,
+            })
+        }
+        BlockType::Column { column } => {
+            // Column children should be fetched recursively
+            // Store raw data for now - caller should handle children
+            Ok(UniversalBlock::Raw {
+                platform: Platform::Notion,
+                data: serde_json::json!({
+                    "type": "column",
+                    "children": column.children.as_ref().map(|c| c.len()).unwrap_or(0)
+                }),
+            })
+        }
+        BlockType::ColumnList { .. } => Ok(UniversalBlock::Columns {
             columns: vec![],
             style: None,
         }),
@@ -459,9 +481,202 @@ fn block_ir_to_notion(block: &UniversalBlock) -> Result<Block, ConverterError> {
                 },
             },
         }),
-        _ => Err(ConverterError::ConversionFailed(format!("Block type not yet implemented: {:?}", block))),
+        // TODO: implement remaining block types
+        UniversalBlock::Table { .. } => Err(ConverterError::ConversionFailed("Table not yet implemented for Notion export".to_string())),
+        UniversalBlock::BulletList { items, .. } => Ok(Block {
+            object: "block".to_string(),
+            id: "temp".to_string(),
+            created_time: Utc::now(),
+            last_edited_time: Utc::now(),
+            created_by: User::default(),
+            last_edited_by: User::default(),
+            has_children: !items.is_empty(),
+            in_trash: false,
+            parent: None,
+            block_type: BlockType::BulletedListItem {
+                bulleted_list_item: crate::models::block::BulletedListItemContent {
+                    rich_text: items
+                        .first()
+                        .map(|i| inline_to_rich_text(&i.content))
+                        .unwrap_or_default(),
+                    color: "default".to_string(),
+                },
+            },
+        }),
+        UniversalBlock::OrderedList { items, start, .. } => Ok(Block {
+            object: "block".to_string(),
+            id: "temp".to_string(),
+            created_time: Utc::now(),
+            last_edited_time: Utc::now(),
+            created_by: User::default(),
+            last_edited_by: User::default(),
+            has_children: !items.is_empty(),
+            in_trash: false,
+            parent: None,
+            block_type: BlockType::NumberedListItem {
+                numbered_list_item: crate::models::block::NumberedListItemContent {
+                    rich_text: items
+                        .first()
+                        .map(|i| inline_to_rich_text(&i.content))
+                        .unwrap_or_default(),
+                    color: "default".to_string(),
+                },
+            },
+        }),
+        UniversalBlock::TaskList { items, .. } => Ok(Block {
+            object: "block".to_string(),
+            id: "temp".to_string(),
+            created_time: Utc::now(),
+            last_edited_time: Utc::now(),
+            created_by: User::default(),
+            last_edited_by: User::default(),
+            has_children: !items.is_empty(),
+            in_trash: false,
+            parent: None,
+            block_type: BlockType::ToDo {
+                to_do: crate::models::block::ToDoContent {
+                    rich_text: items
+                        .first()
+                        .map(|i| inline_to_rich_text(&i.content))
+                        .unwrap_or_default(),
+                    checked: items.first().map(|i| i.checked).unwrap_or(false),
+                    color: "default".to_string(),
+                },
+            },
+        }),
+        UniversalBlock::Toggle { summary, .. } => Ok(Block {
+            object: "block".to_string(),
+            id: "temp".to_string(),
+            created_time: Utc::now(),
+            last_edited_time: Utc::now(),
+            created_by: User::default(),
+            last_edited_by: User::default(),
+            has_children: true,
+            in_trash: false,
+            parent: None,
+            block_type: BlockType::Toggle {
+                toggle: crate::models::block::ToggleContent {
+                    rich_text: inline_to_rich_text(summary),
+                    color: "default".to_string(),
+                },
+            },
+        }),
+        UniversalBlock::Callout { icon, color, content, .. } => Ok(Block {
+            object: "block".to_string(),
+            id: "temp".to_string(),
+            created_time: Utc::now(),
+            last_edited_time: Utc::now(),
+            created_by: User::default(),
+            last_edited_by: User::default(),
+            has_children: !content.is_empty(),
+            in_trash: false,
+            parent: None,
+            block_type: BlockType::Callout {
+                callout: crate::models::block::CalloutContent {
+                    rich_text: content
+                        .first()
+                        .map(|c| match c {
+                            UniversalBlock::Paragraph { content, .. } => inline_to_rich_text(content),
+                            _ => vec![],
+                        })
+                        .unwrap_or_default(),
+                    icon: icon.as_ref().map(|e| Icon::Emoji { emoji: e.clone() }),
+                    color: color.clone().unwrap_or_else(|| "default".to_string()),
+                },
+            },
+        }),
+        UniversalBlock::Quote { content, .. } => Ok(Block {
+            object: "block".to_string(),
+            id: "temp".to_string(),
+            created_time: Utc::now(),
+            last_edited_time: Utc::now(),
+            created_by: User::default(),
+            last_edited_by: User::default(),
+            has_children: false,
+            in_trash: false,
+            parent: None,
+            block_type: BlockType::Quote {
+                quote: crate::models::block::QuoteContent {
+                    rich_text: inline_to_rich_text(
+                        &content
+                            .first()
+                            .map(|c| match c {
+                                UniversalBlock::Paragraph { content, .. } => content.clone(),
+                                _ => vec![],
+                            })
+                            .unwrap_or_default(),
+                    ),
+                    color: "default".to_string(),
+                },
+            },
+        }),
+        UniversalBlock::Image { src, alt: _, caption, .. } => Ok(Block {
+            object: "block".to_string(),
+            id: "temp".to_string(),
+            created_time: Utc::now(),
+            last_edited_time: Utc::now(),
+            created_by: User::default(),
+            last_edited_by: User::default(),
+            has_children: false,
+            in_trash: false,
+            parent: None,
+            block_type: BlockType::Image {
+                image: crate::models::block::ImageContent {
+                    file: file_block_content_from_media(src)?,
+                    caption: caption.clone().unwrap_or_default(),
+                },
+            },
+        }),
+        UniversalBlock::Video { src, caption, .. } => Ok(Block {
+            object: "block".to_string(),
+            id: "temp".to_string(),
+            created_time: Utc::now(),
+            last_edited_time: Utc::now(),
+            created_by: User::default(),
+            last_edited_by: User::default(),
+            has_children: false,
+            in_trash: false,
+            parent: None,
+            block_type: BlockType::Video {
+                video: crate::models::block::VideoContent {
+                    file: file_block_content_from_media(src)?,
+                    caption: caption.clone().unwrap_or_default(),
+                },
+            },
+        }),
+        UniversalBlock::File { src, name, .. } => Ok(Block {
+            object: "block".to_string(),
+            id: "temp".to_string(),
+            created_time: Utc::now(),
+            last_edited_time: Utc::now(),
+            created_by: User::default(),
+            last_edited_by: User::default(),
+            has_children: false,
+            in_trash: false,
+            parent: None,
+            block_type: BlockType::File {
+                file: crate::models::block::FileBlockContent {
+                    file: file_block_content_from_media(src)?,
+                    name: Some(name.clone()),
+                },
+            },
+        }),
+        UniversalBlock::Embed { url, provider: _, fallback: _, .. } => Ok(Block {
+            object: "block".to_string(),
+            id: "temp".to_string(),
+            created_time: Utc::now(),
+            last_edited_time: Utc::now(),
+            created_by: User::default(),
+            last_edited_by: User::default(),
+            has_children: false,
+            in_trash: false,
+            parent: None,
+            block_type: BlockType::Bookmark { bookmark: crate::models::block::BookmarkContent { url: url.clone() } },
+        }),
+        UniversalBlock::Columns { .. } => Err(ConverterError::ConversionFailed("Columns not yet implemented for Notion export".to_string())),
+        UniversalBlock::TableOfContents { .. } => Err(ConverterError::ConversionFailed("TableOfContents not yet implemented for Notion export".to_string())),
+        UniversalBlock::Raw { platform, data } => Err(ConverterError::ConversionFailed(format!("Raw {:?} block cannot be exported to Notion", platform))),
     }
-}
 
 fn heading_content(content: &[InlineElement]) -> crate::models::block::HeadingContent {
     crate::models::block::HeadingContent {
@@ -562,6 +777,28 @@ fn file_content_to_media_source(file: &FileBlockContent) -> Result<MediaSource, 
     match &file.file_type {
         crate::models::common::FileType::External { external } => Ok(MediaSource::External { url: external.url.clone() }),
         crate::models::common::FileType::Uploaded { file } => Ok(MediaSource::Uploaded { url: file.url.clone(), expiry_time: file.expiry_time.map(|t| t.to_string()) }),
+    }
+}
+
+/// Convert MediaSource to FileBlockContent
+fn file_block_content_from_media(src: &MediaSource) -> Result<FileBlockContent, ConverterError> {
+    match src {
+        MediaSource::External { url } => Ok(FileBlockContent {
+            file_type: crate::models::common::FileType::External {
+                external: crate::models::common::ExternalFile { url: url.clone() },
+            },
+            name: None,
+        }),
+        MediaSource::Uploaded { url, expiry_time } => Ok(FileBlockContent {
+            file_type: crate::models::common::FileType::Uploaded {
+                file: crate::models::common::UploadedFile {
+                    url: url.clone(),
+                    expiry_time: expiry_time.as_ref().and_then(|e| DateTime::parse_from_rfc3339(e).ok()).map(|d| d.with_timezone(&Utc)),
+                },
+            },
+            name: None,
+        }),
+        MediaSource::Base64 { .. } => Err(ConverterError::ConversionFailed("Base64 media not supported for Notion export".to_string())),
     }
 }
 
