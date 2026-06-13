@@ -80,6 +80,7 @@ cargo build --release
 ---
 
 ## 🚀 Quick Start
+For detailed instructions in **English** and **ภาษาไทย**, please see our [Quick Start Guide](docs/QUICKSTART.md).
 
 ### 1. Configure Credentials
 Set your Notion API token (or other platform keys) in your environment:

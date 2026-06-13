@@ -167,6 +167,7 @@ where
     Ok(())
 }
 
+pub mod github_markdown;
 pub mod markdown;
 pub mod notion;
 

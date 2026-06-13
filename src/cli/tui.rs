@@ -76,6 +76,8 @@ struct App {
     search_selected: usize,
 
     detail_text: String,
+    status_message: String,
+    is_loading: bool,
     flattened_cache: Vec<TreeNode>,
     needs_reflatten: bool,
 }
@@ -106,50 +108,84 @@ impl App {
             search_results: vec![],
             search_selected: 0,
             detail_text: String::new(),
+            status_message: String::from("Ready"),
+            is_loading: false,
             flattened_cache: vec![],
             needs_reflatten: true,
         }
     }
 
+    fn set_status(&mut self, msg: &str) {
+        self.status_message = msg.to_string();
+    }
+
     async fn load_users(&mut self) -> Result<()> {
-        self.users = self.client.list_users().await?;
-        if !self.users.is_empty() {
-            self.users_selected = 0;
-            self.show_user_detail();
+        self.is_loading = true;
+        self.set_status("Loading users...");
+        let res = self.client.list_users().await;
+        self.is_loading = false;
+        match res {
+            Ok(users) => {
+                self.users = users;
+                if !self.users.is_empty() {
+                    self.users_selected = 0;
+                    self.show_user_detail();
+                }
+                self.set_status("Users loaded");
+            }
+            Err(e) => self.set_status(&format!("Error: {}", e)),
         }
         Ok(())
     }
 
     async fn load_pages(&mut self) -> Result<()> {
-        let results = self.client.search(None, None, None, None, None).await?;
-        self.pages = results
-            .results
-            .into_iter()
-            .filter_map(|v| serde_json::from_value::<Page>(v).ok())
-            .collect();
-        if !self.pages.is_empty() {
-            self.pages_selected = 0;
-            self.show_page_detail();
+        self.is_loading = true;
+        self.set_status("Loading pages...");
+        let res = self.client.search(None, None, None, None, None).await;
+        self.is_loading = false;
+        match res {
+            Ok(results) => {
+                self.pages = results
+                    .results
+                    .into_iter()
+                    .filter_map(|v| serde_json::from_value::<Page>(v).ok())
+                    .collect();
+                if !self.pages.is_empty() {
+                    self.pages_selected = 0;
+                    self.show_page_detail();
+                }
+                self.set_status("Pages loaded");
+            }
+            Err(e) => self.set_status(&format!("Error: {}", e)),
         }
         Ok(())
     }
 
     async fn load_block_tree(&mut self, page_id: &str) -> Result<()> {
-        let list = self.client.get_block_children(page_id, None, None).await?;
-        self.block_tree = list
-            .results
-            .into_iter()
-            .map(|b| TreeNode {
-                indent: 0,
-                block: b,
-                expanded: false,
-                children: vec![],
-            })
-            .collect();
-        self.block_tree_selected = 0;
-        self.needs_reflatten = true;
-        self.show_block_detail();
-        self.current_page_id = Some(page_id.to_string());
+        self.is_loading = true;
+        self.set_status("Loading blocks...");
+        let res = self.client.get_block_children(page_id, None, None).await;
+        self.is_loading = false;
+        match res {
+            Ok(list) => {
+                self.block_tree = list
+                    .results
+                    .into_iter()
+                    .map(|b| TreeNode {
+                        indent: 0,
+                        block: b,
+                        expanded: false,
+                        children: vec![],
+                    })
+                    .collect();
+                self.block_tree_selected = 0;
+                self.needs_reflatten = true;
+                self.show_block_detail();
+                self.current_page_id = Some(page_id.to_string());
+                self.set_status("Blocks loaded");
+            }
+            Err(e) => self.set_status(&format!("Error: {}", e)),
+        }
         Ok(())
     }
 
@@ -298,7 +334,9 @@ impl App {
     }
 
     async fn load_databases(&mut self) -> Result<()> {
-        let results = self
+        self.is_loading = true;
+        self.set_status("Loading databases...");
+        let res = self
             .client
             .search(
                 None,
@@ -310,15 +348,22 @@ impl App {
                 None,
                 None,
             )
-            .await?;
-        self.databases = results
-            .results
-            .into_iter()
-            .filter_map(|v| serde_json::from_value(v).ok())
-            .collect();
-        if !self.databases.is_empty() {
-            self.db_selected = 0;
-            self.detail_text = format!("Database ID: {}", self.databases[0].id);
+            .await;
+        self.is_loading = false;
+        match res {
+            Ok(results) => {
+                self.databases = results
+                    .results
+                    .into_iter()
+                    .filter_map(|v| serde_json::from_value(v).ok())
+                    .collect();
+                if !self.databases.is_empty() {
+                    self.db_selected = 0;
+                    self.detail_text = format!("Database ID: {}", self.databases[0].id);
+                }
+                self.set_status("Databases loaded");
+            }
+            Err(e) => self.set_status(&format!("Error: {}", e)),
         }
         Ok(())
     }
@@ -327,16 +372,25 @@ impl App {
         if self.search_query.is_empty() {
             return Ok(());
         }
-        let results = self
+        self.is_loading = true;
+        self.set_status("Searching...");
+        let res = self
             .client
             .search(Some(self.search_query.clone()), None, None, None, None)
-            .await?;
-        self.search_results = results.results;
-        if !self.search_results.is_empty() {
-            self.search_selected = 0;
-            self.detail_text = format!("Found {} results", self.search_results.len());
-        } else {
-            self.detail_text = "No results".into();
+            .await;
+        self.is_loading = false;
+        match res {
+            Ok(results) => {
+                self.search_results = results.results;
+                if !self.search_results.is_empty() {
+                    self.search_selected = 0;
+                    self.detail_text = format!("Found {} results", self.search_results.len());
+                } else {
+                    self.detail_text = "No results".into();
+                }
+                self.set_status("Search complete");
+            }
+            Err(e) => self.set_status(&format!("Error: {}", e)),
         }
         Ok(())
     }
@@ -515,8 +569,12 @@ where
 }
 
 fn ui(f: &mut Frame, app: &mut App) {
-    let [tabs_area, main_area] =
-        Layout::vertical([Constraint::Length(3), Constraint::Fill(1)]).areas(f.area());
+    let [tabs_area, main_area, footer_area] = Layout::vertical([
+        Constraint::Length(3),
+        Constraint::Fill(1),
+        Constraint::Length(1),
+    ])
+    .areas(f.area());
 
     let theme = crate::cli::theme::Theme::notion();
     let titles: Vec<Line> = TabsState::titles()
@@ -533,11 +591,13 @@ fn ui(f: &mut Frame, app: &mut App) {
             Line::from(Span::styled(*t, style))
         })
         .collect();
+
+    let title_prefix = if app.is_loading { "⟳ " } else { "" };
     let tabs = Tabs::new(titles)
         .block(
             WidgetBlock::default()
                 .borders(Borders::ALL)
-                .title("notion-rs TUI"),
+                .title(format!("{}notion-rs TUI", title_prefix)),
         )
         .select(app.tab.index())
         .highlight_style(
@@ -642,4 +702,15 @@ fn ui(f: &mut Frame, app: &mut App) {
         .style(detail_style)
         .wrap(ratatui::widgets::Wrap { trim: true });
     f.render_widget(detail_para, detail_area);
+
+    // Footer
+    let footer_text = format!(
+        " [q]uit | [tab] next tab | [j/k] move | [enter] select | Status: {}",
+        app.status_message
+    );
+    let footer = Paragraph::new(Line::from(Span::styled(
+        footer_text,
+        Style::default().fg(theme.stone_gray),
+    )));
+    f.render_widget(footer, footer_area);
 }
