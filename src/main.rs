@@ -5,7 +5,7 @@ mod cli;
 
 #[derive(Parser)]
 #[command(name = "notion-rs")]
-#[command(about = "Notion API CLI & TUI (2026-03-11)")]
+#[command(about = concat!("Notion API CLI & TUI (Target: ", env!("BUILD_TARGET_OS"), ", Env: ", env!("BUILD_ENVIRONMENT"), ")"))]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
