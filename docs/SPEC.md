@@ -1,38 +1,40 @@
 # SPECIFICATION: High-Fidelity Universal IR & Cross-Platform Sync
 
 ## 1. PROJECT OBJECTIVE
-สร้างระบบจัดการและแปลงเอกสารแบบ platform-agnostic ที่รับประกันความถูกต้องของข้อมูล (Lossless) และความสมบูรณ์ของการแสดงผล (Visual Fidelity) 100% โดยผู้ใช้ไม่ต้องตรวจสอบซ้ำ
+Create a platform-agnostic document conversion and sync engine that preserves source structure, rich text, ordering, and platform-specific metadata through a Universal Intermediate Representation (IR).
 
 ## 2. CORE CONCEPTS
 
 ### 2.1 Universal Identity (The "Key")
-- ทุกเอกสารไม่ว่าจะมาจาก Notion (Page ID), Google Docs (Doc ID), หรือ Lark (File Token) จะถูกแมพเข้ากับ Universal Key ในระบบ
-- ระบบ ID Resolution ต้องสามารถระบุความสัมพันธ์ระหว่างต้นทางและปลายทางได้อย่างแม่นยำเพื่อป้องกันข้อมูลซ้ำซ้อนหรือการอัปเดตผิดพลาด
+- Every document source, such as Notion Page ID, Google Docs Doc ID, Lark File Token, or local file path, should map to a stable identity in the conversion pipeline.
+- ID resolution must distinguish source identity from target identity to avoid duplicate or conflicting updates.
 
 ### 2.2 Universal Intermediate Representation (IR)
-- IR Hub ทำหน้าที่เป็น "ศูนย์กลางความจริง" (Single Source of Truth)
-- รองรับ Block Types ทั้งหมด (เช่น Lark 48 types) โดยใช้แนวทาง Dynamic Mapping
-- บล็อกที่ไม่สามารถแมพได้โดยตรงจะถูกเก็บไว้ในรูปแบบ Raw Data (JSONB) เพื่อรักษาข้อมูลเดิมไว้ครบถ้วน (No Information Loss)
+- IR is the central conversion model for source adapters and target emitters.
+- Block types are represented as typed variants, with `Raw` data preserving platform-specific fields that cannot be mapped directly.
+- Inline elements preserve text, links, mentions, styles, and code spans.
+- Styles and metadata stay attached to documents and blocks during conversion.
 
 ### 2.3 Structural Grammar & Syntax
-- การแปลงต้องเคารพ Grammar และ Syntax ของแต่ละแพลตฟอร์มอย่างเคร่งครัด
-- Notion: เคารพข้อจำกัด H1-H3 และการจัดเรียงบล็อกแบบลำดับชั้น
-- Markdown: ใช้ GitHub Flavored Markdown (GFM) เป็นมาตรฐาน
-- UI: แสดงผลผ่าน TUI/Preview โดยอ้างอิงจาก IR ที่ถูก Normalized แล้ว
+- Source adapters parse platform-specific structures into normalized IR.
+- Target emitters generate platform-specific syntax from IR.
+- Roundtrip tests validate that conversion preserves semantic structure and visible content.
 
-## 3. TECHNICAL REQUIREMENTS
+## 3. CURRENT IMPLEMENTATION SCOPE
+- CLI orchestration for search, TUI, convert, sync, diff, upgrade, and MCP server modes.
+- Notion API client and common page/database/block operations.
+- Notion ↔ IR and Markdown/GFM ↔ IR conversion.
+- Local file conversion and sync workflows.
+- MCP servers for Jules, Markdown, and Mermaid workflows.
 
-### 3.1 Persistence Layer (PostgreSQL)
-- ใช้ relational schema สำหรับโครงสร้างหลัก (Hierarchy, Ordering)
-- ใช้ JSONB สำหรับ Flexible Metadata, Styles, และ Platform-specific attributes
-- LexoRank implementation สำหรับลำดับบล็อกที่แม่นยำ
+## 4. PLANNED EXTENSIONS
+- Relational persistence or local cache for offline-first sync.
+- HTML, Google Docs, Lark/Feishu API, PDF, Docx, and Sheets/Excel adapters.
+- Webhooks, data sources, file upload polish, and advanced search filters.
+- TUI preview/edit workflows with conflict resolution.
 
-### 3.2 Conversion Logic
-- Source Adapter: ทำหน้าที่ดึงข้อมูลและทำ Parse ให้เป็น Universal IR
-- Target Emitter: ทำหน้าที่ Generate เอกสารตาม Syntax ของแพลตฟอร์มปลายทาง
-- Validation Gate: ตรวจสอบความสมบูรณ์ของข้อมูลหลังการแปลงทุกครั้ง
-
-## 4. INTERFACES
-- CLI: สำหรับการสั่งงานแบบ Orchestration
-- TUI: สำหรับการจัดการและ Preview ข้อมูลใน IR Store
-- MCP: สำหรับการเชื่อมต่อกับ AI Agents เพื่อทำ Agentic Document Manipulation
+## 5. INTERFACES
+- CLI: orchestration and local workflows.
+- TUI: browsing, status, help, and future preview/edit flows.
+- MCP: AI-agent document manipulation.
+- Tests: unit, integration, roundtrip, package hygiene, and CI release gates.

@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **Android CI**: switched `self_update` to rustls so Android cross builds no longer depend on native-tls/OpenSSL sysroot.
+- **Package hygiene**: added a package gate that blocks local agent data, secrets, and internal conductor docs from `cargo package`.
+- **MSRV CI**: made the MSRV check fail loudly instead of masking failures.
+- **Release CI**: Windows release artifacts now use PowerShell `Compress-Archive` instead of creating a gzip tarball with a `.zip` extension.
+- **Release CI**: crates.io publish now fails the release workflow instead of being ignored.
+
+### Removed
+- Removed tracked local agent configuration/examples and obsolete Gemini docs from the repository.
+- Removed tracked Jules anti-slop backup file.
+
+### Changed
+- Added `.qwen/` to `.gitignore` and package exclusion.
+
 ## [0.3.1] - 2026-06-13
 
 ### Added
@@ -74,6 +90,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TUI for browsing Notion workspaces.
 
 [0.3.1]: https://github.com/billlzzz26/blink-md/compare/v0.3.0...v0.3.1
-[0.3.0]: https://github.com/billzzz26/notion-rs/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/billzzz26/notion-rs/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/billzzz26/notion-rs/releases/tag/v0.1.0
+[0.3.0]: https://github.com/billlzzz26/blink-md/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/billlzzz26/blink-md/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/billlzzz26/blink-md/releases/tag/v0.1.0

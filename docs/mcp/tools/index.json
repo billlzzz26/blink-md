@@ -1,0 +1,426 @@
+{
+  "lark-mcp-server": {
+    "tools": [
+      {
+        "name": "csv_to_ir",
+        "description": "Convert CSV data to Universal IR",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "csv_data": {
+              "type": "string",
+              "description": "CSV formatted string data"
+            }
+          },
+          "required": ["csv_data"]
+        },
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "document": {
+              "type": "object",
+              "description": "UniversalDocument JSON"
+            },
+            "block_count": {
+              "type": "integer",
+              "description": "Number of blocks in the document"
+            }
+          }
+        }
+      },
+      {
+        "name": "ir_to_csv",
+        "description": "Convert Universal IR to CSV",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "ir_json": {
+              "type": "object",
+              "description": "UniversalDocument JSON"
+            }
+          },
+          "required": ["ir_json"]
+        },
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "csv": {
+              "type": "string",
+              "description": "CSV formatted string data"
+            }
+          }
+        }
+      },
+      {
+        "name": "list_lark_platforms",
+        "description": "List Lark/Feishu Sheets capabilities",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "lark_sheets_support": {
+              "type": "boolean"
+            },
+            "csv_import_export": {
+              "type": "boolean"
+            },
+            "formats": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "notion-mcp-server": {
+    "tools": [
+      {
+        "name": "get_notion_page_blocks",
+        "description": "Fetch a Notion page with its child blocks",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "notion_token": {
+              "type": "string",
+              "description": "Notion integration token"
+            },
+            "page_id": {
+              "type": "string",
+              "description": "Notion page ID"
+            }
+          },
+          "required": ["notion_token", "page_id"]
+        },
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "page": {
+              "type": "object",
+              "description": "Notion page object"
+            },
+            "blocks": {
+              "type": "array",
+              "description": "Array of block objects"
+            },
+            "block_count": {
+              "type": "integer"
+            }
+          }
+        }
+      },
+      {
+        "name": "convert_md_to_ir",
+        "description": "Convert Markdown to Universal IR",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "string",
+              "description": "Markdown content"
+            }
+          },
+          "required": ["content"]
+        },
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "document": {
+              "type": "object",
+              "description": "UniversalDocument JSON"
+            },
+            "block_count": {
+              "type": "integer"
+            }
+          }
+        }
+      },
+      {
+        "name": "convert_ir_to_md",
+        "description": "Convert Universal IR to Markdown",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "ir_json": {
+              "type": "object",
+              "description": "UniversalDocument JSON"
+            }
+          },
+          "required": ["ir_json"]
+        },
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "markdown": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "list_platforms",
+        "description": "List supported conversion platforms",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "platforms": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "source_formats": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "target_formats": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "jules-mcp-server": {
+    "tools": [
+      {
+        "name": "start_new_jules_task",
+        "description": "Start a new Jules task",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "repo_name": {
+              "type": "string",
+              "description": "Repository name (owner/repo)"
+            },
+            "user_task_description": {
+              "type": "string",
+              "description": "Task description"
+            }
+          },
+          "required": ["repo_name", "user_task_description"]
+        }
+      },
+      {
+        "name": "list_jules_sessions",
+        "description": "List all Jules sessions",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      },
+      {
+        "name": "list_jules_repos",
+        "description": "List all Jules repos",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      },
+      {
+        "name": "pull_jules_changes",
+        "description": "Pull changes from a Jules session",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "session_id": {
+              "type": "string",
+              "description": "Jules session ID"
+            }
+          },
+          "required": ["session_id"]
+        }
+      },
+      {
+        "name": "hermes_query",
+        "description": "Send a query to Hermes agent",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "prompt": {
+              "type": "string",
+              "description": "The prompt to send"
+            },
+            "yolo": {
+              "type": "boolean",
+              "description": "Enable YOLO mode (auto-approve)"
+            }
+          },
+          "required": ["prompt"]
+        }
+      },
+      {
+        "name": "hermes_list_skills",
+        "description": "List all Hermes skills",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      },
+      {
+        "name": "hermes_cron_status",
+        "description": "Get Hermes cron job status",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      },
+      {
+        "name": "check_dependencies",
+        "description": "Check if required CLI tools are installed",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "mmd-mcp-server": {
+    "tools": [
+      {
+        "name": "render_mermaid_svg",
+        "description": "Render a Mermaid diagram to SVG",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "diagram": {
+              "type": "string",
+              "description": "Mermaid diagram source code"
+            }
+          },
+          "required": ["diagram"]
+        },
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "format": {
+              "type": "string",
+              "enum": ["svg"]
+            },
+            "content": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "render_mermaid_png",
+        "description": "Render a Mermaid diagram to PNG (base64)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "diagram": {
+              "type": "string",
+              "description": "Mermaid diagram source code"
+            }
+          },
+          "required": ["diagram"]
+        },
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "format": {
+              "type": "string",
+              "enum": ["svg"]
+            },
+            "content": {
+              "type": "string"
+            },
+            "note": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "list_diagram_types",
+        "description": "List supported Mermaid diagram types",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "diagram_types": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "directions": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "md-mcp-server": {
+    "tools": [
+      {
+        "name": "parse_markdown",
+        "description": "Parse Notion-flavored Markdown into blocks",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "string",
+              "description": "Markdown content to parse"
+            }
+          },
+          "required": ["content"]
+        },
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "blocks": {
+              "type": "array"
+            },
+            "count": {
+              "type": "integer"
+            }
+          }
+        }
+      },
+      {
+        "name": "to_markdown",
+        "description": "Convert a block to Notion-flavored Markdown",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "block": {
+              "type": "object",
+              "description": "Block JSON object"
+            }
+          },
+          "required": ["block"]
+        },
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "markdown": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    ]
+  }
+}

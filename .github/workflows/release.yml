@@ -55,13 +55,12 @@ jobs:
 
       - name: Package binary (Windows)
         if: runner.os == 'Windows'
-        shell: bash
+        shell: pwsh
         run: |
-          mkdir -p dist
-          cp target/${{ matrix.target }}/release/${{ matrix.binary }} dist/
-          cd dist
-          tar -czf ${{ matrix.artifact }}.zip ${{ matrix.binary }}
-          certutil -hashfile ${{ matrix.artifact }}.zip SHA256 > ${{ matrix.artifact }}.zip.sha256
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Copy-Item "target/${{ matrix.target }}/release/${{ matrix.binary }}" "dist/"
+          Compress-Archive -Path "dist/${{ matrix.binary }}" -DestinationPath "dist/${{ matrix.artifact }}.zip" -Force
+          certutil -hashfile "dist/${{ matrix.artifact }}.zip" SHA256 > "dist/${{ matrix.artifact }}.zip.sha256"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
@@ -99,4 +98,3 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - name: Publish blink-md
         run: cargo publish -p blink-md --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        continue-on-error: true

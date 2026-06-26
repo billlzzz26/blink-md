@@ -1,6 +1,6 @@
 [package]
 name = "blink-md"
-version = "0.3.1"
+version = "0.4.1"
 edition = "2021"
 description = "High-performance Notion document sync and conversion engine with Universal IR support for Markdown, Lark, Sheets, and more."
 license = "MIT"
@@ -10,10 +10,10 @@ documentation = "https://docs.rs/blink-md"
 readme = "README.md"
 keywords = ["notion", "markdown", "tui", "mcp", "lark"]
 categories = ["command-line-utilities", "asynchronous", "parsing"]
-exclude = ["conductor/*", ".gemini/*", ".git/*"]
+exclude = ["conductor/*", "docs/mcp/conductor/*", ".gemini/*", ".qwen/*", ".git/*"]
 
 [workspace]
-members = [".", "src/mcp/core", "src/mcp/jules", "src/mcp/mmd", "src/mcp/md"]
+members = [".", "src/mcp/core", "src/mcp/jules", "src/mcp/mmd", "src/mcp/md", "src/mcp/notion", "src/mcp/lark"]
 resolver = "2"
 
 [workspace.dependencies]
@@ -22,7 +22,8 @@ serde_json = "1.0"
 tokio = { version = "1.52", features = ["full"] }
 anyhow = "1.0"
 thiserror = "2.0"
-pmcp = "2.9"
+pmcp = "2.10"
+chrono = { version = "0.4", features = ["serde"] }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
@@ -43,7 +44,7 @@ needless_pass_by_value = "allow"
 reqwest = { version = "0.13", features = ["json", "multipart"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
-chrono = { version = "0.4.45", features = ["serde"] }
+chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1.23", features = ["serde", "v4"] }
 tokio = { workspace = true }
 thiserror = { workspace = true }
@@ -70,7 +71,7 @@ mcp-core = { version = "0.2.1", path = "src/mcp/core" }
 pmcp = { workspace = true, optional = true }
 unicode-width = "0.1"
 unicode-segmentation = "1.12"
-self_update = "0.41"
+self_update = { version = "0.41", default-features = false, features = ["rustls"] }
 csv = "1.3"
 feishu-sdk = "0.1"
 

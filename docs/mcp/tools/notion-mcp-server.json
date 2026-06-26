@@ -1,0 +1,101 @@
+{
+  "server_name": "notion-mcp-server",
+  "version": "0.1.0",
+  "tools": [
+    {
+      "name": "get_notion_page_blocks",
+      "description": "Fetch a Notion page with its child blocks",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "notion_token": {
+            "type": "string",
+            "description": "Notion integration token"
+          },
+          "page_id": {
+            "type": "string",
+            "description": "Notion page ID"
+          }
+        },
+        "required": ["notion_token", "page_id"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "page": { "type": "object" },
+          "blocks": {
+            "type": "array",
+            "description": "Array of block objects"
+          },
+          "block_count": { "type": "integer" }
+        }
+      }
+    },
+    {
+      "name": "convert_md_to_ir",
+      "description": "Convert Markdown to Universal IR",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "Markdown content"
+          }
+        },
+        "required": ["content"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "document": { "type": "object" },
+          "block_count": { "type": "integer" }
+        }
+      }
+    },
+    {
+      "name": "convert_ir_to_md",
+      "description": "Convert Universal IR to Markdown",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "ir_json": {
+            "type": "object",
+            "description": "UniversalDocument JSON"
+          }
+        },
+        "required": ["ir_json"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "markdown": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "list_platforms",
+      "description": "List supported conversion platforms",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "platforms": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "source_formats": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "target_formats": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    }
+  ]
+}

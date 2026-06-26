@@ -1,7 +1,7 @@
-.PHONY: all check test lint fmt clean build release setup hooks bench doc
+.PHONY: all check test lint fmt clean build release setup hooks bench doc package-check
 
 # Default: run all quality checks
-all: fmt lint test check
+all: fmt lint test check package-check
 
 # Quality gates
 check:
@@ -34,6 +34,10 @@ clean:
 doc:
 	cargo doc --workspace --no-deps --open
 
+# Package hygiene
+package-check:
+	python scripts/check-package-hygiene.py
+
 # Benchmarks
 bench:
 	cargo bench --workspace
@@ -53,5 +57,5 @@ mcp-test:
 	cargo test -p jules-mcp-server -p md-mcp-server -p mmd-mcp-server
 
 # Full CI simulation
-ci: fmt lint test check
+ci: fmt lint test check package-check
 	@echo "=== CI simulation passed ==="

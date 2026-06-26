@@ -1,0 +1,44 @@
+name: Release changesets
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'changeset.config.json'
+      - '.changeset/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      published: ${{ steps.changeset.outputs.published }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: changesets/action@v0
+        id: changeset
+        with:
+          publish: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish:
+    needs: version
+    if: needs.version.outputs.published == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: changesets/action@v0
+        with:
+          publish: true
+          # npm token for publishing packages
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

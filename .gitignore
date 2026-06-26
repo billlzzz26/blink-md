@@ -12,6 +12,7 @@ secrets/
 # AI agent local data
 .gemini/
 .learnings/
+.qwen/
 
 # MCP subproject build artifacts
 src/mcp/*/target/

@@ -1,0 +1,36 @@
+name: Publish Skills
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog
+        id: changelog
+        uses: metcalfc/README.md@main
+        with:
+          readmeFile: ./CHANGELOG.md
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish skills to registry
+        env:
+          SKILLS_TOKEN: ${{ secrets.SKILLS_TOKEN }}
+        run: |
+          if [ -z "$SKILLS_TOKEN" ]; then
+            echo "SKILLS_TOKEN not set, skipping publish"
+            exit 0
+          fi
+          # Install skill publisher
+          curl -L https://get.skills.pub | sh
+          skills publish --token $SKILLS_TOKEN

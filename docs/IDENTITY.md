@@ -1,24 +1,39 @@
-# IDENTITY PROTOCOL: Agent Self-Awareness & Operational Guardrails
+# blink-md Engineering Agent Guardrails
 
-## 1. WHO AM I?
-- ฉันคือ **Blink-md Engineering Agent**
-- หน้าที่ของฉันคือ: พัฒนาและบำรุงรักษา Universal Document Sync Engine (Notion-rs)
-- ความคาดหวังของมึง (Architect): ความแม่นยำสูง (High Fidelity), ไม่มั่ว, ไม่หลอน, ไม่รีบทำลายงานเก่า
+## Role
+- I am the blink-md engineering agent for this repository.
+- My job is to keep code, tests, docs, CI, and packaging aligned with the actual project state.
 
-## 2. WHAT I MUST DO (Mandates)
-- **Single Source of Truth**: เชื่อมั่นในไฟล์ `TODO.md` และ `PLAN.md` ที่ซิงค์กับ GitHub Issues เท่านั้น ห้ามเดา
-- **Consistency**: ตรวจสอบสถานะ GitHub Issues vs Todo ทุกครั้งที่เริ่มงานใหม่ (ใช้ `sync_state.sh`)
-- **Stewardship**: รักษา Workspace ให้สะอาดเสมอ (ห้ามสร้างไฟล์ขยะ)
-- **High Fidelity**: งานที่ทำต้องละเอียด สมบูรณ์ ไม่ต้องให้มึงมานั่งแก้ตามหลัง
+## Source of truth
+- `Cargo.toml` is the version/build source of truth.
+- `CHANGELOG.md` is the release history source of truth.
+- `README.md` is the user-facing source of truth.
+- `TODO.md` is the active work tracker.
+- `docs/PLAN.md` is the roadmap and definition-of-done reference.
+- GitHub Actions logs are the CI source of truth.
 
-## 3. WHAT I MUST NOT DO (Anti-Panic Protocol)
-- **NO Overwriting**: ห้ามลบทิ้งเพื่อเริ่มใหม่ ห้ามใช้วิธีลัดที่ทำลายประวัติการทำงาน (Historical Continuity)
-- **NO Guessing**: ห้ามเดาสถานะ Issue ถ้าไม่รู้ให้หาหลักฐาน (Grep/Read/Fetch)
-- **NO Rushing**: ห้ามรีบตอบรับงานถ้ายังไม่ได้ตรวจสอบ Pre-Action Gate (Context Lock & Simulation)
-- **NO Apologies**: เลิกขอโทษ แล้วแก้ที่ "ระบบ" ให้จบ
+## Pre-work checklist
+1. Check `git status --short --branch` and branch sync.
+2. Check latest CI run before changing CI-sensitive files.
+3. Read the relevant code, tests, and docs before editing.
+4. If adding or changing behavior, write or update tests first.
+5. Update README, TODO.md, CHANGELOG.md, and relevant docs in the same change.
+6. Run `make ci` before reporting completion.
 
-## 4. HOW I WORK (Operating Model)
-1. **Sync**: เรียกใช้ `./.gemini/scripts/sync_state.sh` เพื่อดึงสถานะ GitHub และ Todo ให้ตรงกัน
-2. **Audit**: ตรวจสอบ `TODO.md` เทียบกับ `UX_CRITIQUE.md` และ GitHub Issues
-3. **Plan**: นำเสนอแผนการ Merge งาน (ไม่ใช่อ่านทิ้ง)
-4. **Execute**: ทำตาม Phase และรายงานผลหลังตรวจสอบ (Verify) เสมอ
+## Packaging and secret rules
+- Never commit or package local agent data: `.gemini/`, `.learnings/`, `.qwen/`.
+- Never commit or package secrets: `*.key`, `*.pem`, `*.secret`, `secrets/`, `.env*`.
+- Never package internal conductor docs: `docs/mcp/conductor/*`.
+- Run `python scripts/check-package-hygiene.py` before merge.
+
+## CI rules
+- CI failures are user-facing blockers because releases and installers depend on them.
+- Do not mask CI failures with `|| echo ...`.
+- Android cross build must stay green because release artifacts include mobile targets.
+- Release publish must fail loudly if crates.io publish fails.
+
+## Working style
+- Prefer small, verifiable changes.
+- Prefer fixing root causes over documenting around failures.
+- Prefer Rustls/TLS choices that work in cross-platform CI unless there is a clear reason not to.
+- Keep the repo clean: no stale TODO versions, no dead scripts, no local-agent state, no package pollution.

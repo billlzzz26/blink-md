@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Agent(smart-file-manager)"
-    ]
-  },
-  "$version": 4
-}
