@@ -22,7 +22,13 @@ jobs:
           tool: cargo-llvm-cov
 
       - name: Generate coverage
-        run: cargo llvm-cov --workspace --all-features --codecov --token ${{ secrets.CODECOV_TOKEN }}
+        run: cargo llvm-cov --workspace --all-features --lcov --output-path lcov.info
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   check:
     name: Check coverage threshold
@@ -39,4 +45,4 @@ jobs:
           tool: cargo-llvm-cov
 
       - name: Check coverage
-        run: cargo llvm-cov --workspace --all-features --check-clippy -- --skip docs
+        run: cargo llvm-cov --workspace --all-features --check -- --skip docs
