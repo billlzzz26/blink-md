@@ -12,6 +12,7 @@ secrets/
 # AI agent local data
 .gemini/
 .learnings/
+.qwen/
 
 # MCP subproject build artifacts
 src/mcp/*/target/
@@ -33,3 +34,4 @@ Thumbs.db
 
 # Project-specific
 .cavekit/
+docs/mcp/conductor/

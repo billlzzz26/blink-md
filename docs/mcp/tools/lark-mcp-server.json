@@ -1,0 +1,75 @@
+{
+  "server_name": "lark-mcp-server",
+  "version": "0.1.0",
+  "tools": [
+    {
+      "name": "csv_to_ir",
+      "description": "Convert CSV data to Universal IR",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "csv_data": {
+            "type": "string",
+            "description": "CSV formatted string data"
+          }
+        },
+        "required": ["csv_data"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "type": "object",
+            "description": "UniversalDocument JSON"
+          },
+          "block_count": {
+            "type": "integer",
+            "description": "Number of blocks in the document"
+          }
+        }
+      }
+    },
+    {
+      "name": "ir_to_csv",
+      "description": "Convert Universal IR to CSV",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "ir_json": {
+            "type": "object",
+            "description": "UniversalDocument JSON"
+          }
+        },
+        "required": ["ir_json"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "csv": {
+            "type": "string",
+            "description": "CSV formatted string data"
+          }
+        }
+      }
+    },
+    {
+      "name": "list_lark_platforms",
+      "description": "List Lark/Feishu Sheets capabilities",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "lark_sheets_support": { "type": "boolean" },
+          "csv_import_export": { "type": "boolean" },
+          "formats": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    }
+  ]
+}

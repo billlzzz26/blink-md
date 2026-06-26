@@ -1,0 +1,73 @@
+{
+  "server_name": "mmd-mcp-server",
+  "version": "0.1.0",
+  "tools": [
+    {
+      "name": "render_mermaid_svg",
+      "description": "Render a Mermaid diagram to SVG",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "diagram": {
+            "type": "string",
+            "description": "Mermaid diagram source code"
+          }
+        },
+        "required": ["diagram"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "format": {
+            "type": "string",
+            "enum": ["svg"]
+          },
+          "content": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "render_mermaid_png",
+      "description": "Render a Mermaid diagram to PNG (base64)",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "diagram": {
+            "type": "string",
+            "description": "Mermaid diagram source code"
+          }
+        },
+        "required": ["diagram"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "format": { "type": "string" },
+          "content": { "type": "string" },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "list_diagram_types",
+      "description": "List supported Mermaid diagram types",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "diagram_types": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "directions": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "blink-md",
+  "version": "0.4.1",
+  "description": "High-performance Notion document sync and conversion engine",
+  "bin": {
+    "blink-md": "./install.js"
+  },
+  "scripts": {
+    "install": "node install.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/billlzzz26/blink-md"
+  },
+  "keywords": ["notion", "markdown", "converter", "sync"],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}

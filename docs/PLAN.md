@@ -1,50 +1,49 @@
-# IMPLEMENTATION PLAN: High-Fidelity Infrastructure
+# blink-md Plan — v0.3.1
 
-## PHASE 0: INFRASTRUCTURE & MCP (v0.3.0) — COMPLETE
-- [x] Workspace restructure: `src/mcp/{core,jules,md,mmd}`
-- [x] mcp-core v0.2.0 — shared pmcp utilities (SchemaBuilder, run_cli_command)
-- [x] jules-mcp-server v0.3.0 — 8 tools (Jules/Hermes bridge)
-- [x] md-mcp-server v0.2.0 — 2 tools (parse_markdown, to_markdown)
-- [x] mermaid-rs-renderer v0.2.2 — from crates.io, 4 integration tests
-- [x] Shared workspace dependencies & lints
-- [x] TUI Theme system (15 JSON themes)
-- [x] SyntaxHighlighter (syntect) — prepared
+## Current state
+- Version: 0.3.1
+- Main branch: clean delivery baseline for cross-platform release artifacts, Thai TUI hardening, Universal Data Adapters, self-update, installers, and CLI help polish.
+- Source of truth: `TODO.md` for work status, `CHANGELOG.md` for released changes, `README.md` for user-facing guidance.
+- Quality gates: `make ci` plus GitHub Actions CI and Cross-Platform Build.
 
-## PHASE 1: IR STORE & SCHEMA STABILIZATION — COMPLETE
-- [x] บล็อกข้อมูลโครงสร้างพื้นฐาน (Relational + JSONB)
-- [x] ออกแบบ Universal IR Types (Blocks, Inlines, Styles)
-- [x] พัฒนาฐานข้อมูล PostgreSQL รองรับ LexoRank
+## Completed in v0.3.1
+- Workspace MCP servers: `src/mcp/core`, `src/mcp/jules`, `src/mcp/md`, `src/mcp/mmd`.
+- Universal IR foundation for Notion and Markdown conversion.
+- Markdown roundtrip tests and converter coverage.
+- TUI theme system with 15 JSON themes and syntect-based syntax highlighting.
+- Thai TUI hardening with grapheme-aware input and visual-width handling.
+- Lark/Feishu Sheets and CSV adapters through Universal IR.
+- Self-update command and global installers.
+- Release workflow for Linux, macOS Intel/ARM, and Windows artifacts.
+- Package hygiene guard to keep local agent data, secrets, and internal conductor docs out of `cargo package`.
 
-## PHASE 2: UNIVERSAL CONVERTERS (CURRENT)
-เป้าหมาย: สร้างการเชื่อมต่อที่สมบูรณ์ระหว่าง Platform-specific JSON และ Universal IR
+## Active engineering focus
+1. Keep CI green across stable CI, cross-platform release builds, and package hygiene.
+2. Finish remaining platform adapters behind Universal IR:
+   - GitHub Markdown/GFM
+   - HTML
+   - Lark/Feishu API
+   - Google Docs
+   - PDF
+   - Docx
+   - Sheets/Excel
+3. Finish remaining Notion API surface:
+   - page markdown endpoints
+   - data source CRUD
+   - webhooks
+   - search sort/filter
+   - block position updates
+   - file upload polish
+4. Improve TUI from browse-only to preview/edit workflows:
+   - preview page as Markdown through IR
+   - edit with `$EDITOR`
+   - convert back and push to Notion
+   - better status/help surfaces
 
-### 2.1 Notion Adapter Enhancement
-- [x] พัฒนา Recursive child block fetching แบบ lossless
-- [x] แมพ Notion Blocks ทั้งหมด (รวมถึงพวก Column, Callout, Toggle) เข้ากับ IR
-- [ ] ระบบ ID Mapping สำหรับการทำ Sync แบบ bidirectional
-
-### 2.2 Markdown Adapter (GFM)
-- [ ] พัฒนา Parser (From Markdown) และ Emitter (To Markdown)
-- [ ] รองรับ Notion-flavored markdown extensions
-- [ ] จัดการเรื่อง Escaping characters และ Rich text formatting ให้ตรงตามมาตรฐาน
-
-## PHASE 3: UX & TUI REFINEMENT
-เป้าหมาย: สร้าง Interface ที่สะท้อนความถูกต้องของข้อมูลจาก IR Store
-
-- [x] พัฒนา TUI Theme ตาม DESIGN.md (Accent Blue, Primary Text)
-- [ ] ระบบ Preview โหมด ที่เรนเดอร์ข้อมูลจาก Universal IR โดยตรง
-- [ ] ระบบสถานะและการแจ้งเตือน (Status Message) เมื่อเกิดข้อผิดพลาดในการแปลง
-
-## PHASE 4: EXTENDED PLATFORMS & MCP
-เป้าหมาย: ขยายการรองรับแพลตฟอร์มอื่นและการเชื่อมต่อกับ AI
-
-- [ ] พัฒนา Adapter สำหรับ Lark (Handle 48 block types)
-- [ ] พัฒนา Adapter สำหรับ Google Docs
-- [x] พัฒนา MCP Server เต็มรูปแบบ (jules, md, mmd)
-
-## PHASE 5: VALIDATION & SYNC ENHANCEMENT
-เป้าหมาย: รับประกันความถูกต้อง 100%
-
-- [x] พัฒนาชุดทดสอบ Roundtrip (Notion -> IR -> Markdown -> IR -> Notion)
-- [ ] ระบบเปรียบเทียบความต่าง (Diff Engine) สำหรับ Universal Document
-- [x] ฟีเจอร์ Sync แบบ Debounced และ multi-threaded
+## Definition of done for every new feature
+- Code change is covered by tests that fail before the fix or feature exists.
+- `make ci` passes locally.
+- `scripts/check-package-hygiene.py` passes.
+- README, TODO.md, CHANGELOG.md, and relevant docs are updated before merge.
+- CI workflows are updated if the feature changes build, package, release, or cross-platform behavior.
+- Secrets and local agent state stay ignored and are never included in packages or commits.

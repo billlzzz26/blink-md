@@ -71,4 +71,4 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - uses: dtolnay/rust-toolchain@1.75.0
       - name: Check MSRV
-        run: cargo check --workspace || echo "MSRV check failed - may need dependency updates"
+        run: cargo check --workspace

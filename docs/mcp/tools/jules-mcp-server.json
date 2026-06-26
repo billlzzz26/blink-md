@@ -1,0 +1,104 @@
+{
+  "server_name": "jules-mcp-server",
+  "version": "0.2.0",
+  "tools": [
+    {
+      "name": "start_new_jules_task",
+      "description": "Start a new Jules task",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "repo_name": {
+            "type": "string",
+            "description": "Repository name (owner/repo)"
+          },
+          "user_task_description": {
+            "type": "string",
+            "description": "Task description"
+          }
+        },
+        "required": ["repo_name", "user_task_description"]
+      }
+    },
+    {
+      "name": "list_jules_sessions",
+      "description": "List all Jules sessions",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "list_jules_repos",
+      "description": "List all Jules repos",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "pull_jules_changes",
+      "description": "Pull changes from a Jules session",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "description": "Jules session ID"
+          }
+        },
+        "required": ["session_id"]
+      }
+    },
+    {
+      "name": "hermes_query",
+      "description": "Send a query to Hermes agent",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "The prompt to send"
+          },
+          "yolo": {
+            "type": "boolean",
+            "description": "Enable YOLO mode (auto-approve)",
+            "default": false
+          }
+        },
+        "required": ["prompt"]
+      }
+    },
+    {
+      "name": "hermes_list_skills",
+      "description": "List all Hermes skills",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "hermes_cron_status",
+      "description": "Get Hermes cron job status",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "check_dependencies",
+      "description": "Check if required CLI tools are installed",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string" },
+          "message": { "type": "string" }
+        }
+      }
+    }
+  ]
+}

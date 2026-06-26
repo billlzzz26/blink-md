@@ -1,0 +1,47 @@
+{
+  "server_name": "md-mcp-server",
+  "version": "0.1.0",
+  "tools": [
+    {
+      "name": "parse_markdown",
+      "description": "Parse Notion-flavored Markdown into blocks",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "Markdown content to parse"
+          }
+        },
+        "required": ["content"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "blocks": { "type": "array" },
+          "count": { "type": "integer" }
+        }
+      }
+    },
+    {
+      "name": "to_markdown",
+      "description": "Convert a block to Notion-flavored Markdown",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "block": {
+            "type": "object",
+            "description": "Block JSON object"
+          }
+        },
+        "required": ["block"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "markdown": { "type": "string" }
+        }
+      }
+    }
+  ]
+}

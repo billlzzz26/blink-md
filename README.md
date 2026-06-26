@@ -1,7 +1,7 @@
 # blink-md ⚡️
 
 [![Crates.io](https://img.shields.io/crates/v/blink-md.svg)](https://crates.io/crates/blink-md)
-[![Build Status](https://github.com/billlzzz26/blink-md/actions/workflows/rust.yml/badge.svg)](https://github.com/billlzzz26/blink-md/actions)
+[![Build Status](https://github.com/billlzzz26/blink-md/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/billlzzz26/blink-md/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Version](https://img.shields.io/badge/version-0.3.1-blue.svg)](https://github.com/billlzzz26/blink-md/releases/tag/v0.3.1)
 
@@ -26,11 +26,11 @@
 ## 📝 Description
 The modern document landscape is fragmented across proprietary platforms. **blink-md** solves the "vendor lock-in" and "format drift" problems by introducing a **Universal Intermediate Representation (IR)**. 
 
-Whether you are syncing a Notion database to a local Markdown folder, or converting a complex Google Doc into a clean, GitHub-flavored Markdown file, **blink-md** handles the structural mapping, rich-text annotations, and hierarchical nesting with cryptographic precision.
+Whether you are syncing a Notion database to a local Markdown folder, or converting a complex Google Doc into a clean, GitHub-flavored Markdown file, **blink-md** handles the structural mapping, rich-text annotations, and hierarchical nesting with lossless conversion.
 
 ### Why blink-md?
 - **Universal IR First**: We don't just convert format-to-format; we map everything to a platform-neutral model first.
-- **Relational Stability**: Integrated PostgreSQL document store for local caching and offline-first workflows.
+- **Offline-Friendly Pipeline**: Local file conversion and sync workflows are designed to be repeatable without losing source structure.
 - **Developer Centric**: Pure Rust, async-first, and easily extensible with new Platform Adapters.
 
 ---
@@ -53,8 +53,8 @@ blink-md acts as the central hub for your document ecosystem.
       (Lark)               /    |    \               (HTML/PDF)
       (GDocs)             /     |     \              (Docx)
                          v      v      v
-                 [ Relational Document Store ]
-                 [ Interactive TUI / Preview ]
+                 [ Local Files / CLI / TUI ]
+                 [ MCP Server / AI Agents ]
 ```
 
 ---
@@ -63,7 +63,6 @@ blink-md acts as the central hub for your document ecosystem.
 
 ### Prerequisites
 - **Rust**: [Install Rust](https://www.rust-lang.org/tools/install) (Edition 2021+)
-- **PostgreSQL** (Optional): Required for the Relational Document Store features.
 
 ### From Crates.io
 ```bash
@@ -130,19 +129,18 @@ async fn main() -> anyhow::Result<()> {
 |----------|-------------|---------|
 | `NOTION_TOKEN` | Your Notion Integration Token | - |
 | `NOTION_DB_ID` | Default Database ID for sync/query | - |
-| `DATABASE_URL` | PostgreSQL connection string | `postgres://localhost/blink_md` |
 | `LOG_LEVEL` | Logging verbosity (info, debug, trace) | `info` |
 
 ---
 
-## 🗺 Roadmap (v0.2.0)
-Track our detailed progress on the [GitHub Roadmap](https://github.com/billlzzz26/blink-md/projects/2).
+## 🗺 Roadmap (v0.3.1)
+Track detailed progress in `TODO.md` and `docs/PLAN.md`.
 
-- **Phase 2 (Active)**: 🎨 UX & TUI Refinement (Theming, Status Indicators, Error handling).
-- **Phase 3**: 🔄 Core Bidirectional Converters (Notion <-> IR <-> Markdown).
-- **Phase 4**: 🌐 Extended Platforms (GitHub, HTML, Google Docs).
-- **Phase 5**: 📎 Advanced API Features (File Uploads, Webhooks).
-- **Phase 6**: 🤖 Full MCP 2.9 Integration & Server mode.
+- **Current release**: v0.3.1 — cross-platform release artifacts, Thai TUI hardening, Universal Data Adapters, self-update, installers, and CLI help polish.
+- **Next engineering focus**: make every new feature update code, tests, docs, CI/package gates, and release notes together.
+- **Upcoming converter work**: GitHub Markdown/GFM, HTML, Lark/Feishu, Google Docs, PDF, Docx, and Sheets/Excel adapters behind Universal IR.
+- **Upcoming API work**: page markdown endpoints, data source CRUD, webhooks, search sort/filter, block position updates, and file upload polish.
+- **Upcoming UX work**: deeper TUI preview/edit flows and better status/help surfaces.
 
 ---
 
@@ -151,19 +149,21 @@ Track our detailed progress on the [GitHub Roadmap](https://github.com/billlzzz2
 ### Setup Environment
 ```bash
 # Run tests
-cargo test
+cargo test --workspace
 
 # Run with color check
-cargo check --color always
+cargo check --workspace --color always
 
 # Clean build artifacts
 cargo clean
 ```
 
 ### Quality Gates
-- All PRs must pass `cargo clippy` and `cargo fmt`.
+- All PRs must pass `make ci` locally before pushing.
+- `make ci` runs formatting, clippy, tests, `cargo check`, and package hygiene.
 - Integration tests require a valid `NOTION_TOKEN` or `wiremock` stubs.
-- Run `oh-my-product verify` for full compliance check.
+- Cross-platform Android release builds are covered by `.github/workflows/cross-platform.yml`.
+- `cargo package` must not include local agent data, secrets, or internal conductor docs.
 
 ---
 
@@ -192,4 +192,4 @@ Distributed under the MIT License. See `LICENSE` for more information.
 - **Email**: billzzz26@gmail.com
 
 ---
-*Built with ❤️ using Gemini CLI on Termux.*
+*Built with Rust for Notion, Markdown, Lark, Google Docs, and local document workflows.*

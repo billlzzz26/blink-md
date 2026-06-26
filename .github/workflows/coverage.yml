@@ -1,0 +1,42 @@
+name: Coverage
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  coverage:
+    name: Upload coverage to Codecov
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@v1
+        with:
+          tool: cargo-llvm-cov
+
+      - name: Generate coverage
+        run: cargo llvm-cov --workspace --all-features --codecov --token ${{ secrets.CODECOV_TOKEN }}
+
+  check:
+    name: Check coverage threshold
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@v1
+        with:
+          tool: cargo-llvm-cov
+
+      - name: Check coverage
+        run: cargo llvm-cov --workspace --all-features --check-clippy -- --skip docs
