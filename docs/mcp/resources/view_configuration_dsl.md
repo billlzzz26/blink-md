@@ -1,8 +1,25 @@
 # View Configuration DSL Specification
 
-The view configuration DSL is a text-based language for configuring
-database views. Directives are separated by semicolons or newlines.
-Property names must be double-quoted. Keywords are case-insensitive.
+Text-based language for database view configuration. Directives separated by `;` or newlines. Property names double-quoted. Keywords case-insensitive.
+
+## Overview
+
+The DSL compiles to Notion view API JSON structures. Used with `update_view` command via `--config` flag.
+
+## Structure Mapping
+
+```
+DSL Directive          Notion API Field
+------------         ---------------
+FILTER              view_type.filter
+SORT BY              view_type.sort
+GROUP BY            view_type.group_by
+SHOW/HIDE           view_type.properties
+CALENDAR BY         calendar.date
+TIMELINE BY         timeline.date/group_by
+COVER               gallery.cover
+CHART               (custom, not yet in API)
+```
 
 ## Directives
 
@@ -13,7 +30,7 @@ Syntax:
   FILTER "Property" operator value
 
 Operators:
-  = != > < >= <=          Comparison operators
+  = != > < >= <=          Numeric/date comparison
   CONTAINS                Text contains substring
   STARTS WITH             Text starts with prefix
   ENDS WITH               Text ends with suffix
@@ -24,7 +41,7 @@ Operators:
 Compound filters:
   AND                     Both conditions must be true
   OR                      Either condition can be true
-  ( )                     Group conditions
+  ( )                     Group conditions (required for AND/OR)
 
 Multiple FILTER directives are ANDed together.
 
@@ -144,7 +161,7 @@ Configure a chart view. Required for chart type.
 
 Syntax:
   CHART column|bar|line|donut|number
-    [AGGREGATE count|sum|average|min|max|... [ON "Property"]]
+    [AGGREGATE count|sum|average|min|max [ON "Property"]]
     [COLOR gray|blue|green|purple|orange|red|auto|colorful]
     [HEIGHT small|medium|large|extra_large]
     [SORT x_ascending|x_descending|y_ascending|y_descending]
@@ -191,3 +208,37 @@ Separate multiple directives with semicolons or newlines:
   GROUP BY "Status"
   SORT BY "Due Date" ASC
   FILTER "Priority" > 3
+
+## JSON Output Examples
+
+### Table View with Filter and Sort
+DSL:
+  FILTER "Status" = "Active"
+  SORT BY "Created" DESC
+  SHOW "Name", "Status", "Owner"
+
+Produces:
+```json
+{
+  "type": "table",
+  "table": { "properties": { "Name": {}, "Status": {}, "Owner": {} } },
+  "filter": { "property": "Status", "rich_text": { "equals": "Active" } },
+  "sort": [{ "property": "Created", "direction": "descending" }]
+}
+```
+
+### Board View
+DSL:
+  GROUP BY "Status"
+  FILTER "Priority" > 2
+  SHOW "Name", "Priority"
+
+Produces:
+```json
+{
+  "type": "board",
+  "board": { "group_by": { "property": "Status" } },
+  "filter": { "property": "Priority", "number": { "greater": 2 } },
+  "properties": { "Name": {}, "Priority": {} }
+}
+```
