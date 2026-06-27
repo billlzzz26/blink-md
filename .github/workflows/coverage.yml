@@ -10,6 +10,8 @@ jobs:
   coverage:
     name: Upload coverage to Codecov
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -33,6 +35,8 @@ jobs:
   check:
     name: Check coverage threshold
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 

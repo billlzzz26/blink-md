@@ -91,7 +91,7 @@ build_test() {
     cargo test --all-features
 
     echo "Running clippy..."
-    cargo clippy --all-targets --all-features
+    cargo clippy --all-targets --all-features -- -D warnings
     
     echo "=== Setup complete ==="
 }

@@ -24,10 +24,6 @@ pub fn build() -> Result<Server, Box<dyn std::error::Error>> {
         .tool("parse_markdown", tools::markdown::ParseMarkdownTool)
         .tool("to_markdown", tools::markdown::ToMarkdownTool)
         // Notion + Universal IR (stateless conversion)
-        .tool(
-            "get_notion_page_blocks",
-            tools::notion::GetNotionPageBlocksTool,
-        )
         .tool("convert_md_to_ir", tools::notion::ConvertMdToIrTool)
         .tool("convert_ir_to_md", tools::notion::ConvertIrToMdTool)
         .tool("list_platforms", tools::notion::ListPlatformsTool)
@@ -37,15 +33,20 @@ pub fn build() -> Result<Server, Box<dyn std::error::Error>> {
         .tool("list_lark_platforms", tools::lark::ListLarkPlatformsTool)
         // Mermaid
         .tool("render_mermaid_svg", tools::mermaid::RenderMermaidSvgTool)
-        .tool("render_mermaid_png", tools::mermaid::RenderMermaidPngTool)
         .tool("list_diagram_types", tools::mermaid::ListDiagramTypesTool);
 
     if let Ok(token) = std::env::var("NOTION_TOKEN") {
         use tools::notion_live::{
-            CreatePageTool, GetBlocksTool, GetPageTool, SearchTool, TrashTool,
+            CreatePageTool, GetBlocksTool, GetPageBlocksTool, GetPageTool, SearchTool, TrashTool,
         };
         let client = Arc::new(NotionClient::new(token));
         builder = builder
+            .tool(
+                "get_notion_page_blocks",
+                GetPageBlocksTool {
+                    client: client.clone(),
+                },
+            )
             .tool(
                 "notion_search",
                 SearchTool {

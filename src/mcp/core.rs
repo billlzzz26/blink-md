@@ -43,6 +43,15 @@ impl SchemaBuilder {
         self.insert(name, description, "string", false)
     }
 
+    /// Add an optional boolean parameter.
+    pub fn optional_bool_param(
+        self,
+        name: impl Into<String>,
+        description: impl Into<String>,
+    ) -> Self {
+        self.insert(name, description, "boolean", false)
+    }
+
     /// Add a required object parameter.
     pub fn object_param(self, name: impl Into<String>, description: impl Into<String>) -> Self {
         self.insert(name, description, "object", true)

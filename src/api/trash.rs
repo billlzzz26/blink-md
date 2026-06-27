@@ -92,8 +92,17 @@ impl NotionClient {
         .await
     }
 
-    /// Permanently delete a resource regardless of type.
+    /// Permanently delete a hard-deletable resource (views, webhooks).
+    ///
+    /// The Notion API has no permanent-delete for pages or blocks — they can
+    /// only be trashed/restored via `in_trash` — so those variants return
+    /// [`NotionError::Unsupported`]. Use [`trash`](NotionClient::trash) instead.
     pub async fn delete_permanently(&self, resource: Resource, id: &str) -> Result<Value> {
+        if resource.supports_restore() {
+            return Err(NotionError::Unsupported(
+                "pages and blocks cannot be permanently deleted; use trash() instead",
+            ));
+        }
         self.request(reqwest::Method::DELETE, &resource.path(id), None::<&()>)
             .await
     }

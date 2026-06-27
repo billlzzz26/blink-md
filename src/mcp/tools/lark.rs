@@ -30,10 +30,9 @@ impl ToolHandler for CsvToIrTool {
             serde_json::from_value(args).map_err(|e| invalid_args("Invalid arguments", e))?;
         let doc = LarkSheetAdapter::from_platform(input.csv_data)
             .map_err(|e| McpError::validation(format!("Conversion failed: {e}")))?;
-        Ok(json!({
-            "document": serde_json::to_value(&doc).unwrap_or_else(|_| json!({})),
-            "block_count": doc.blocks.len()
-        }))
+        let document = serde_json::to_value(&doc)
+            .map_err(|e| McpError::internal(format!("Serialization failed: {e}")))?;
+        Ok(json!({ "document": document, "block_count": doc.blocks.len() }))
     }
 
     fn metadata(&self) -> Option<ToolInfo> {

@@ -41,32 +41,10 @@ impl ToolHandler for RenderMermaidSvgTool {
     }
 }
 
-/// Render a Mermaid diagram to PNG (currently falls back to SVG with a note).
-pub struct RenderMermaidPngTool;
-
-#[async_trait]
-impl ToolHandler for RenderMermaidPngTool {
-    async fn handle(&self, args: Value, _extra: RequestHandlerExtra) -> McpResult<Value> {
-        let input: RenderMermaidInput =
-            serde_json::from_value(args).map_err(|e| invalid_args("Invalid arguments", e))?;
-        let svg = render_svg(&input.diagram)?;
-        Ok(json!({
-            "format": "svg",
-            "content": svg,
-            "note": "PNG rendering requires mermaid-rs-renderer with the 'png' feature"
-        }))
-    }
-
-    fn metadata(&self) -> Option<ToolInfo> {
-        Some(ToolInfo::new(
-            "render_mermaid_png",
-            Some("Render a Mermaid diagram to PNG (base64)".to_string()),
-            SchemaBuilder::new()
-                .param("diagram", "Mermaid diagram source code")
-                .build(),
-        ))
-    }
-}
+// NOTE: a `render_mermaid_png` tool was intentionally omitted. The underlying
+// `mermaid-rs-renderer` only produces SVG here, so a PNG tool would have to
+// return SVG under a false `format: "png"` contract. Re-add it once real PNG
+// rendering is available.
 
 /// List the Mermaid diagram types supported by the renderer.
 pub struct ListDiagramTypesTool;

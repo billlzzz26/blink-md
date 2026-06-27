@@ -34,7 +34,7 @@
 - [x] Single `blink-md-mcp` binary (feature `mcp`) bundling all tools.
 - [x] In-crate `src/mcp/core.rs` shared pmcp utilities (was `mcp-core`).
 - [x] Markdown, Notion/IR, Lark Sheets, and Mermaid tool groups.
-- [x] Live Notion tools (search/get/create/list/trash) shared with `blink-md mcp-serve`.
+- [x] Live Notion tools (search/get_page/create_page/get_block_children/trash) shared with `blink-md mcp-serve`.
 - [Note] Jules/Hermes bridge relocated to `tooling/jules` (outside the build).
 
 ### TUI

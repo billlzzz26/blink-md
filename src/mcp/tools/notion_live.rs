@@ -108,8 +108,20 @@ impl ToolHandler for CreatePageTool {
     async fn handle(&self, args: Value, _extra: RequestHandlerExtra) -> McpResult<Value> {
         let input: CreatePageInput =
             serde_json::from_value(args).map_err(|e| invalid_args("Invalid args", e))?;
+        if input.parent_type != "page_id" && input.parent_type != "database_id" {
+            return Err(McpError::validation(format!(
+                "parent_type must be 'page_id' or 'database_id', got '{}'",
+                input.parent_type
+            )));
+        }
         let parent = json!({ input.parent_type: input.parent_id });
-        let children = input.children.and_then(|v| serde_json::from_value(v).ok());
+        // Fail fast on malformed `children` instead of silently dropping it.
+        let children = match input.children {
+            Some(v) => {
+                Some(serde_json::from_value(v).map_err(|e| invalid_args("Invalid children", e))?)
+            }
+            None => None,
+        };
         let page = self
             .client
             .create_page(parent, input.properties, children)
@@ -126,6 +138,7 @@ impl ToolHandler for CreatePageTool {
                 .param("parent_id", "ID of the parent container")
                 .param("parent_type", "Type of parent ('page_id' or 'database_id')")
                 .object_param("properties", "Notion page properties JSON")
+                .optional_param("children", "Optional JSON array of initial child blocks")
                 .build(),
         ))
     }
@@ -165,6 +178,63 @@ impl ToolHandler for GetBlocksTool {
     }
 }
 
+/// Fetch a page together with *all* of its top-level child blocks.
+pub struct GetPageBlocksTool {
+    pub client: Arc<NotionClient>,
+}
+
+#[derive(Deserialize)]
+struct GetPageBlocksInput {
+    page_id: String,
+}
+
+#[async_trait]
+impl ToolHandler for GetPageBlocksTool {
+    async fn handle(&self, args: Value, _extra: RequestHandlerExtra) -> McpResult<Value> {
+        let input: GetPageBlocksInput =
+            serde_json::from_value(args).map_err(|e| invalid_args("Invalid args", e))?;
+
+        let page = self
+            .client
+            .get_page(&input.page_id)
+            .await
+            .map_err(internal)?;
+
+        // Page through every top-level block so results are not truncated.
+        let mut blocks = Vec::new();
+        let mut cursor = None;
+        loop {
+            let list = self
+                .client
+                .get_block_children(&input.page_id, cursor, None)
+                .await
+                .map_err(internal)?;
+            blocks.extend(list.results);
+            if list.has_more {
+                cursor = list.next_cursor;
+            } else {
+                break;
+            }
+        }
+
+        Ok(json!({
+            "page": serde_json::to_value(&page).map_err(internal)?,
+            "blocks": serde_json::to_value(&blocks).map_err(internal)?,
+            "block_count": blocks.len()
+        }))
+    }
+
+    fn metadata(&self) -> Option<ToolInfo> {
+        Some(ToolInfo::new(
+            "get_notion_page_blocks",
+            Some("Fetch a Notion page with all of its top-level child blocks".to_string()),
+            SchemaBuilder::new()
+                .param("page_id", "Notion page ID")
+                .build(),
+        ))
+    }
+}
+
 /// Move a Notion resource to the trash (or permanently delete it) through the
 /// unified trash lifecycle.
 pub struct TrashTool {
@@ -198,6 +268,14 @@ impl ToolHandler for TrashTool {
             serde_json::from_value(args).map_err(|e| invalid_args("Invalid args", e))?;
         let resource = parse_resource(&input.resource)?;
         let result = if input.restore {
+            // Reject unsupported restore targets up front as a validation error
+            // rather than surfacing the API error as an internal one.
+            if !resource.supports_restore() {
+                return Err(McpError::validation(format!(
+                    "resource '{}' cannot be restored (only pages and blocks support restore)",
+                    input.resource
+                )));
+            }
             self.client.restore(resource, &input.id).await
         } else {
             self.client.trash(resource, &input.id).await
@@ -216,7 +294,7 @@ impl ToolHandler for TrashTool {
             SchemaBuilder::new()
                 .param("resource", "Resource type: page, block, view, or webhook")
                 .param("id", "The resource ID")
-                .optional_param("restore", "Set to true to restore instead of trash")
+                .optional_bool_param("restore", "Set to true to restore instead of trash")
                 .build(),
         ))
     }

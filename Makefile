@@ -1,4 +1,4 @@
-.PHONY: all check test lint fmt clean build release setup hooks bench doc package-check mcp-build mcp-run
+.PHONY: all check test lint fmt fmt-fix clean build release setup hooks bench doc package-check mcp-build mcp-run ci
 
 # Default: run all quality checks
 all: fmt lint test check package-check
@@ -11,7 +11,7 @@ test:
 	cargo test --all-features
 
 lint:
-	cargo clippy --all-targets --all-features
+	cargo clippy --all-targets --all-features -- -D warnings
 
 fmt:
 	cargo fmt --all -- --check
