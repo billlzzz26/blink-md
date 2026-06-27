@@ -33,13 +33,21 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Build
-        run: cargo build --release --bin blink-md --target ${{ matrix.target }}
+        run: |
+          cargo build --release --bin blink-md --target ${{ matrix.target }}
+          cargo build --release --bin blink-md-mcp --features mcp --target ${{ matrix.target }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
           name: blink-md-${{ matrix.target }}
           path: target/${{ matrix.target }}/release/blink-md
+
+      - name: Upload MCP artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: blink-md-mcp-${{ matrix.target }}
+          path: target/${{ matrix.target }}/release/blink-md-mcp
 
   android:
     name: Build Android (aarch64)
@@ -55,13 +63,21 @@ jobs:
         run: cargo install cross --git https://github.com/cross-rs/cross
 
       - name: Build for Android
-        run: cross build --release --target aarch64-linux-android --bin blink-md
+        run: |
+          cross build --release --target aarch64-linux-android --bin blink-md
+          cross build --release --target aarch64-linux-android --bin blink-md-mcp --features mcp
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
           name: blink-md-aarch64-linux-android
           path: target/aarch64-linux-android/release/blink-md
+
+      - name: Upload MCP artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: blink-md-mcp-aarch64-linux-android
+          path: target/aarch64-linux-android/release/blink-md-mcp
 
   msrv:
     name: MSRV Check (1.75)
@@ -71,4 +87,4 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - uses: dtolnay/rust-toolchain@1.75.0
       - name: Check MSRV
-+        run: cargo check --all-features
+        run: cargo check --all-features

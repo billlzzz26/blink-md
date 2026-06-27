@@ -33,6 +33,22 @@ jobs:
             target: x86_64-pc-windows-msvc
             artifact: blink-md-windows-amd64
             binary: blink-md.exe
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact: blink-md-mcp-linux-amd64
+            binary: blink-md-mcp
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact: blink-md-mcp-darwin-amd64
+            binary: blink-md-mcp
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact: blink-md-mcp-darwin-arm64
+            binary: blink-md-mcp
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: blink-md-mcp-windows-amd64
+            binary: blink-md-mcp.exe
 
     steps:
       - uses: actions/checkout@v7
@@ -42,7 +58,7 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Build release
-        run: cargo build --release --target ${{ matrix.target }} -p blink-md
+        run: cargo build --release --target ${{ matrix.target }} -p blink-md --features mcp
 
       - name: Package binary (Unix)
         if: runner.os != 'Windows'
