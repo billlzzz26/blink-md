@@ -2,6 +2,7 @@
 name = "blink-md"
 version = "0.4.1"
 edition = "2021"
+default-run = "blink-md"
 description = "High-performance Notion document sync and conversion engine with Universal IR support for Markdown, Lark, Sheets, and more."
 license = "MIT"
 repository = "https://github.com/billlzzz26/blink-md"
