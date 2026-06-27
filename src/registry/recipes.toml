@@ -1,0 +1,165 @@
+# Workflow definitions for blink-md skill generation
+# Multi-step task sequences with real commands (block/markdown patterns)
+
+[[recipes]]
+name = "sync-docs"
+title = "Sync Documentation"
+description = "Two-way sync documentation between Notion, Markdown, and Mermaid."
+category = "productivity"
+services = ["notion", "md"]
+steps = [
+  "Export Notion page: `blink-md notion export --page-id PAGE_ID --format markdown`",
+  "Compare with local file: `blink-md diff --notion PATH --local ORIGINAL.md`",
+  "Sync changes: `blink-md sync --source notion --target markdown --page-id PAGE_ID`"
+]
+
+[[recipes]]
+name = "convert-markdown"
+title = "Convert Markdown"
+description = "Convert markdown to other formats using Universal IR."
+category = "utility"
+services = ["md", "mmd", "notion"]
+steps = [
+  "Parse markdown: `blink-md md parse README.md`",
+  "Convert to IR: `blink-md ir convert --input README.md --format ir`",
+  "Convert to Notion: `blink-md convert --from ir --to notion --output page.json`",
+  "Convert to Mermaid: `blink-md mmd generate --from ir --output diagram.mmd`"
+]
+
+[[recipes]]
+name = "collect-data"
+title = "Collect Data"
+description = "Collect data from Lark spreadsheet and convert to Notion database."
+category = "research"
+services = ["lark", "notion"]
+steps = [
+  "Export Lark sheet: `blink-md lark export --sheet-id SHEET_ID --format csv`",
+  "Convert to UniversalBlock: `blink-md ir import --source csv --target ir`",
+  "Create Notion database: `blink-md notion create-database --from ir --name DATA`",
+  "Sync regularly via crontab"
+]
+
+[[recipes]]
+name = "generate-diagrams"
+title = "Generate Architecture Diagrams"
+description = "Read code/docs and generate Mermaid architecture diagrams."
+category = "development"
+services = ["md", "mmd", "jules"]
+steps = [
+  "Extract structure from markdown",
+  "Generate Mermaid diagram",
+  "Use Jules for AI suggestions"
+]
+
+[[recipes]]
+name = "design-system-docs"
+title = "Design System Documentation"
+description = "Document design tokens and components in Notion and Markdown."
+category = "design"
+services = ["notion", "md"]
+steps = [
+  "Create design doc in Notion",
+  "Export as markdown",
+  "Sync with GitHub"
+]
+
+[[recipes]]
+name = "technical-spec"
+title = "Technical Specification"
+description = "Create and maintain technical specs across multiple platforms."
+category = "engineering"
+services = ["notion", "md", "mmd"]
+steps = [
+  "Create Notion spec doc",
+  "Add architecture diagrams",
+  "Link diagram to spec"
+]
+
+[[recipes]]
+name = "onboarding-docs"
+title = "Onboarding Documentation"
+description = "Generate onboarding docs for new team members."
+category = "productivity"
+services = ["notion", "md"]
+steps = [
+  "Create onboarding page in Notion",
+  "Add team structure",
+  "Link to resources"
+]
+
+[[recipes]]
+name = "meeting-notes"
+title = "Meeting Notes"
+description = "Create and sync meeting notes across platforms."
+category = "communication"
+services = ["notion", "md"]
+steps = [
+  "Create meeting note template",
+  "Take notes inline",
+  "Export for distribution"
+]
+
+[[recipes]]
+name = "project-tracker"
+title = "Project Tracking"
+description = "Sync project data between Lark and Notion."
+category = "productivity"
+services = ["lark", "notion"]
+steps = [
+  "Read Lark data",
+  "Compare with Notion",
+  "Update Notion",
+  "Schedule daily sync"
+]
+
+[[recipes]]
+name = "code-documentation"
+title = "Code Documentation"
+description = "Generate and sync code documentation."
+category = "development"
+services = ["md", "notion", "jules"]
+steps = [
+  "Extract code comments",
+  "Generate markdown docs",
+  "Create Notion page",
+  "Use Jules to improve docs"
+]
+
+[[recipes]]
+name = "blog-workflow"
+title = "Blog Publishing"
+description = "Convert Notion posts to markdown for blog publishing."
+category = "content"
+services = ["notion", "md"]
+steps = [
+  "Export Notion post",
+  "Clean up for blog",
+  "Optimize frontmatter",
+  "Publish"
+]
+
+[[recipes]]
+name = "export-archive"
+title = "Export Archive"
+description = "Export all Notion docs for offline archive."
+category = "productivity"
+services = ["notion", "md", "mmd"]
+steps = [
+  "List all pages in Notion workspace",
+  "Export each page",
+  "Convert to markdown",
+  "Generate mermaid for diagrams"
+]
+
+[[recipes]]
+name = "data-migration"
+title = "Data Migration"
+description = "Migrate data from one platform to another."
+category = "utility"
+services = ["lark", "notion", "md"]
+steps = [
+  "Export source data from Lark",
+  "Convert to IR format",
+  "Validate IR structure",
+  "Import to target platform"
+]

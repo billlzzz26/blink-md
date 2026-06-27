@@ -1,0 +1,53 @@
+# User role definitions for blink-md skill generation
+# Each persona maps block types to end-user use cases
+
+[[personas]]
+name = "technical-writer"
+title = "Technical Writer"
+description = "Write and maintain documentation across platforms"
+services = ["notion", "md", "mmd"]
+workflows = ["sync-docs", "convert-markdown", "publish-html"]
+instructions = [
+    "Use notion platform for collaborative editing",
+    "Convert to markdown for version control",
+    "Generate mermaid diagrams for architecture"
+]
+tips = [
+    "Keep headings consistent across platforms",
+    "Use callout blocks for important notes"
+]
+
+[[personas]]
+name = "researcher"
+title = "Researcher"
+description = "Collect and organize research data"
+services = ["notion", "lark"]
+workflows = ["collect-data", "sync-tables", "export-csv"]
+instructions = [
+    "Lark for data collection and spreadsheets",
+    "Notion for organizing research notes",
+    "Sync between platforms regularly"
+]
+
+[[personas]]
+name = "developer"
+title = "Developer"
+description = "Code documentation and automation"
+services = ["md", "mmd", "jules"]
+workflows = ["generate-diagrams", "sync-code-docs", "automate-tasks"]
+instructions = [
+    "Use markdown for README and docs",
+    "Mermaid for architecture diagrams",
+    "Jules for task automation"
+]
+
+[[personas]]
+name = "designer"
+title = "Designer"
+description = "Design documentation and assets"
+services = ["notion", "md"]
+workflows = ["design-docs", "sync-specs", "publish-assets"]
+instructions = [
+    "Notion for design specs and feedback",
+    "Markdown for design system docs"
+]
