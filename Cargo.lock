@@ -242,7 +242,7 @@ dependencies = [
  "google-docs1",
  "governor",
  "lopdf",
- "mcp-core",
+ "mermaid-rs-renderer",
  "notify",
  "pmcp",
  "pulldown-cmark",
@@ -258,8 +258,10 @@ dependencies = [
  "tokio",
  "tokio-retry",
  "tokio-util",
+ "tracing",
+ "tracing-subscriber",
  "unicode-segmentation",
- "unicode-width",
+ "unicode-width 0.1.14",
  "uuid",
  "wiremock",
  "yup-oauth2",
@@ -524,7 +526,7 @@ dependencies = [
  "encode_unicode",
  "libc",
  "once_cell",
- "unicode-width",
+ "unicode-width 0.2.2",
  "windows-sys 0.59.0",
 ]
 
@@ -1309,7 +1311,7 @@ version = "0.2.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cfe4fbac503b8d1f88e6676011885f34b7174f46e59956bba534ba83abded4df"
 dependencies = [
- "unicode-width",
+ "unicode-width 0.2.2",
 ]
 
 [[package]]
@@ -1843,7 +1845,7 @@ dependencies = [
  "console",
  "number_prefix",
  "portable-atomic",
- "unicode-width",
+ "unicode-width 0.2.2",
  "web-time",
 ]
 
@@ -2049,18 +2051,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "jules-mcp-server"
-version = "0.3.1"
-dependencies = [
- "async-trait",
- "mcp-core",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
-]
-
-[[package]]
 name = "kasuari"
 version = "0.4.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2108,19 +2098,6 @@ name = "lab"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bf36173d4167ed999940f804952e6b08197cae5ad5d572eb4db150ce8ad5d58f"
-
-[[package]]
-name = "lark-mcp-server"
-version = "0.4.1"
-dependencies = [
- "async-trait",
- "blink-md",
- "mcp-core",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
-]
 
 [[package]]
 name = "lazy_static"
@@ -2266,20 +2243,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mcp-core"
-version = "0.2.1"
-dependencies = [
- "anyhow",
- "async-trait",
- "pmcp",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
 name = "md-5"
 version = "0.10.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2287,19 +2250,6 @@ checksum = "d89e7ee0cfbedfc4da3340218492196241d89eefb6dab27de5df917a6d2e78cf"
 dependencies = [
  "cfg-if",
  "digest 0.10.7",
-]
-
-[[package]]
-name = "md-mcp-server"
-version = "0.2.1"
-dependencies = [
- "async-trait",
- "blink-md",
- "mcp-core",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
 ]
 
 [[package]]
@@ -2397,19 +2347,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mmd-mcp-server"
-version = "0.1.1"
-dependencies = [
- "async-trait",
- "mcp-core",
- "mermaid-rs-renderer",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
-]
-
-[[package]]
 name = "moxcms"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2499,20 +2436,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "42b8cfee0e339a0337359f3c88165702ac6e600dc01c0cc9579a92d62b08477a"
 dependencies = [
  "bitflags 2.13.0",
-]
-
-[[package]]
-name = "notion-mcp-server"
-version = "0.4.1"
-dependencies = [
- "async-trait",
- "blink-md",
- "chrono",
- "mcp-core",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
 ]
 
 [[package]]
@@ -3268,7 +3191,7 @@ dependencies = [
  "thiserror 2.0.18",
  "unicode-segmentation",
  "unicode-truncate",
- "unicode-width",
+ "unicode-width 0.2.2",
 ]
 
 [[package]]
@@ -3331,7 +3254,7 @@ dependencies = [
  "strum",
  "time",
  "unicode-segmentation",
- "unicode-width",
+ "unicode-width 0.2.2",
 ]
 
 [[package]]
@@ -4852,7 +4775,7 @@ checksum = "16b380a1238663e5f8a691f9039c73e1cdae598a30e9855f541d29b08b53e9a5"
 dependencies = [
  "itertools",
  "unicode-segmentation",
- "unicode-width",
+ "unicode-width 0.2.2",
 ]
 
 [[package]]
@@ -4860,6 +4783,12 @@ name = "unicode-vo"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1d386ff53b415b7fe27b50bb44679e2cc4660272694b7b6f3326d8480823a94"
+
+[[package]]
+name = "unicode-width"
+version = "0.1.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7dd6e30e90baa6f72411720665d41d89b9a3d039dc45b8faea1ddd07f617f6af"
 
 [[package]]
 name = "unicode-width"

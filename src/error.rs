@@ -39,6 +39,10 @@ pub enum NotionError {
     /// Resource not found.
     #[error("Not found")]
     NotFound,
+
+    /// The requested operation is not supported for this resource type.
+    #[error("Unsupported operation: {0}")]
+    Unsupported(&'static str),
 }
 
 /// A convenience type alias for `Result<T, NotionError>`.

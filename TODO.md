@@ -30,11 +30,12 @@
 - [x] Markdown/GFM ↔ IR conversion with roundtrip tests.
 - [x] Lark/Feishu Sheets and CSV adapters through Universal IR.
 
-### MCP workspace
-- [x] `src/mcp/core` shared pmcp utilities.
-- [x] `src/mcp/jules` Jules/Hermes bridge server.
-- [x] `src/mcp/md` Markdown MCP server.
-- [x] `src/mcp/mmd` Mermaid MCP server with integration tests.
+### MCP server (unified)
+- [x] Single `blink-md-mcp` binary (feature `mcp`) bundling all tools.
+- [x] In-crate `src/mcp/core.rs` shared pmcp utilities (was `mcp-core`).
+- [x] Markdown, Notion/IR, Lark Sheets, and Mermaid tool groups.
+- [x] Live Notion tools (search/get/create/list/trash) shared with `blink-md mcp-serve`.
+- [Note] Jules/Hermes bridge relocated to `tooling/jules` (outside the build).
 
 ### TUI
 - [x] Theme system with JSON themes and syntect highlighting.

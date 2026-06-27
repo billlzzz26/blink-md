@@ -1,10 +1,10 @@
 # blink-md Implementation Status — v0.3.1
 
 ## What is implemented
-- Workspace structure under `src/mcp/{core,jules,md,mmd}`.
-- `mcp-core` shared pmcp helpers and schema utilities.
-- Jules/Hermes bridge MCP server.
-- Markdown MCP server with parse/to-markdown tools.
+- Single-crate layout; the unified MCP server lives in-crate under `src/mcp/` (core, tools, server) behind the `mcp` feature.
+- In-crate `src/mcp/core.rs` shared pmcp helpers and schema utilities (was the `mcp-core` crate).
+- `blink-md-mcp` binary bundling Markdown, Notion/IR, Lark Sheets, and Mermaid tools, plus live Notion tools when `NOTION_TOKEN` is set.
+- Markdown parse/to-markdown tools.
 - Mermaid MCP server with integration tests.
 - Universal IR types for documents, blocks, inline elements, styles, tables, and metadata.
 - Notion ↔ IR conversion for pages, blocks, rich text, mentions, properties, and common Notion extensions.

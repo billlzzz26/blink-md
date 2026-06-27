@@ -412,7 +412,13 @@ async fn main() -> anyhow::Result<()> {
             handle_upgrade().await?;
         }
         Commands::McpServe => {
+            #[cfg(feature = "mcp")]
             cli::mcp::run_mcp_server().await?;
+            #[cfg(not(feature = "mcp"))]
+            anyhow::bail!(
+                "This build was compiled without the `mcp` feature. \
+                 Use the `blink-md-mcp` binary, or rebuild with `--features mcp`."
+            );
         }
     }
 

@@ -10,6 +10,7 @@ pub mod files;
 pub mod markdown;
 pub mod pages;
 pub mod search;
+pub mod trash;
 pub mod users;
 pub mod views;
 pub mod webhooks;

@@ -7,7 +7,7 @@
 - Quality gates: `make ci` plus GitHub Actions CI and Cross-Platform Build.
 
 ## Completed in v0.3.1
-- Workspace MCP servers: `src/mcp/core`, `src/mcp/jules`, `src/mcp/md`, `src/mcp/mmd`.
+- Unified MCP server: single `blink-md-mcp` binary (feature `mcp`) with in-crate `src/mcp/` modules (core, tools, server). The former per-platform servers were merged; Jules/Hermes tooling moved to `tooling/jules`.
 - Universal IR foundation for Notion and Markdown conversion.
 - Markdown roundtrip tests and converter coverage.
 - TUI theme system with 15 JSON themes and syntect-based syntax highlighting.

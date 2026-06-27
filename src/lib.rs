@@ -27,6 +27,8 @@ pub mod client;
 pub mod converter;
 pub mod error;
 pub mod ir;
+#[cfg(feature = "mcp")]
+pub mod mcp;
 pub mod models;
 pub mod sync;
 

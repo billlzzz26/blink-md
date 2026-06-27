@@ -50,8 +50,12 @@ impl NotionClient {
             .await
     }
 
+    /// Soft-delete a block by moving it to the trash (`in_trash = true`).
+    ///
+    /// Typed counterpart of the unified trash lifecycle in
+    /// [`crate::api::trash`]; undo it with
+    /// `client.restore(Resource::Block, id)`.
     pub async fn delete_block(&self, block_id: &str) -> Result<Block> {
-        // Trash the block (sets in_trash to true)
         let path = format!("/blocks/{}", block_id);
         let body = serde_json::json!({ "in_trash": true });
         self.request(reqwest::Method::PATCH, &path, Some(&body))

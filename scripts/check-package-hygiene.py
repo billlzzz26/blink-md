@@ -10,6 +10,7 @@ FORBIDDEN_PREFIXES = (
     ".gemini/",
     ".qwen/",
     "docs/mcp/conductor/",
+    "tooling/",
 )
 
 FORBIDDEN_SUFFIXES = (
