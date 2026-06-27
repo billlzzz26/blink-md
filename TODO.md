@@ -16,6 +16,14 @@
 
 ---
 
+## Completed — v0.4.1
+### MCP server (unified)
+- [x] Single `blink-md-mcp` binary (feature `mcp`) bundling all tools.
+- [x] In-crate `src/mcp/core.rs` shared pmcp utilities (was `mcp-core`).
+- [x] Markdown, Notion/IR, Lark Sheets, and Mermaid tool groups.
+- [x] Live Notion tools (search/get_page/create_page/get_block_children/trash) shared with `blink-md mcp-serve`.
+- [x] Jules/Hermes bridge relocated to `tooling/jules` (outside the build).
+
 ## Completed — v0.3.1
 ### Release and platform
 - [x] Cross-platform release workflow for Linux, macOS Intel, macOS ARM, and Windows.
@@ -29,13 +37,6 @@
 - [x] Notion ↔ IR conversion for pages, blocks, rich text, mentions, properties, and platform extensions.
 - [x] Markdown/GFM ↔ IR conversion with roundtrip tests.
 - [x] Lark/Feishu Sheets and CSV adapters through Universal IR.
-
-### MCP server (unified)
-- [x] Single `blink-md-mcp` binary (feature `mcp`) bundling all tools.
-- [x] In-crate `src/mcp/core.rs` shared pmcp utilities (was `mcp-core`).
-- [x] Markdown, Notion/IR, Lark Sheets, and Mermaid tool groups.
-- [x] Live Notion tools (search/get_page/create_page/get_block_children/trash) shared with `blink-md mcp-serve`.
-- [Note] Jules/Hermes bridge relocated to `tooling/jules` (outside the build).
 
 ### TUI
 - [x] Theme system with JSON themes and syntect highlighting.
