@@ -1870,7 +1870,6 @@ dependencies = [
  "console",
  "portable-atomic",
  "unicode-width 0.2.2",
- "unit-prefix",
  "web-time",
 ]
 
