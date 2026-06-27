@@ -71,4 +71,4 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - uses: dtolnay/rust-toolchain@1.75.0
       - name: Check MSRV
-        run: cargo check
++        run: cargo check --all-features
