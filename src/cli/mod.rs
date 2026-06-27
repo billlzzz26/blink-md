@@ -6,6 +6,7 @@ pub use tui::run_tui;
 
 pub mod convert;
 pub mod diff;
+#[cfg(feature = "mcp")]
 pub mod mcp;
 pub mod sync_cmd;
 pub mod theme;

@@ -31,9 +31,11 @@ impl NotionClient {
             .await
     }
 
+    /// Permanently delete a view (views do not support soft-delete).
+    ///
+    /// Delegates to the unified trash lifecycle in [`crate::api::trash`].
     pub async fn delete_view(&self, view_id: &str) -> Result<serde_json::Value> {
-        let path = format!("/views/{}", view_id);
-        self.request(reqwest::Method::DELETE, &path, None::<&()>)
+        self.delete_permanently(crate::api::trash::Resource::View, view_id)
             .await
     }
 }

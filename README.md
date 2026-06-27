@@ -148,15 +148,23 @@ Track detailed progress in `TODO.md` and `docs/PLAN.md`.
 
 ### Setup Environment
 ```bash
-# Run tests
-cargo test --workspace
+# Run tests (includes the optional `mcp` feature)
+cargo test --all-features
 
 # Run with color check
-cargo check --workspace --color always
+cargo check --all-features --color always
+
+# Build and run the unified MCP server
+cargo run --features mcp --bin blink-md-mcp
 
 # Clean build artifacts
 cargo clean
 ```
+
+> **Single crate**: `blink-md` builds as one crate with two binaries — the
+> `blink-md` CLI/TUI and the `blink-md-mcp` server (feature `mcp`), which bundles
+> all Notion/Markdown/Lark/Mermaid tools. Jules/Hermes agent tooling lives under
+> `tooling/` and is not part of the build.
 
 ### Quality Gates
 - All PRs must pass `make ci` locally before pushing.

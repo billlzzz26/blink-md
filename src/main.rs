@@ -93,6 +93,12 @@ enum Commands {
     Upgrade,
     /// Start MCP server
     McpServe,
+    /// Generate persona/recipe skill bundles from the registry
+    GenerateSkills {
+        /// Directory to write generated skills into
+        #[arg(long, default_value = "skills")]
+        output_dir: String,
+    },
 }
 
 #[derive(Subcommand)]
@@ -216,6 +222,19 @@ enum CommentAction {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
+
+    // Commands that don't require a Notion client are dispatched before the
+    // NOTION_TOKEN requirement so they work without credentials. The MCP server
+    // binds the Notion client server-side only when NOTION_TOKEN is present.
+    if let Commands::GenerateSkills { output_dir } = &cli.command {
+        let args = vec!["--output-dir".to_string(), output_dir.clone()];
+        return blink_md::sync::generate_skills::handle_generate_skills(&args).await;
+    }
+    #[cfg(feature = "mcp")]
+    if let Commands::McpServe = &cli.command {
+        return cli::mcp::run_mcp_server().await;
+    }
+
     let token = std::env::var("NOTION_TOKEN").map_err(|_| {
         anyhow::anyhow!(
             "NOTION_TOKEN environment variable not set. Please set it to your Notion API token."
@@ -412,7 +431,18 @@ async fn main() -> anyhow::Result<()> {
             handle_upgrade().await?;
         }
         Commands::McpServe => {
-            cli::mcp::run_mcp_server().await?;
+            // `mcp` builds dispatch this before the client is created; this arm
+            // only runs in builds without the feature.
+            #[cfg(feature = "mcp")]
+            unreachable!("mcp-serve is dispatched before client initialization");
+            #[cfg(not(feature = "mcp"))]
+            anyhow::bail!(
+                "This build was compiled without the `mcp` feature. \
+                 Use the `blink-md-mcp` binary, or rebuild with `--features mcp`."
+            );
+        }
+        Commands::GenerateSkills { .. } => {
+            unreachable!("generate-skills is dispatched before client initialization")
         }
     }
 

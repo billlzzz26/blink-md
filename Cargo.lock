@@ -242,7 +242,7 @@ dependencies = [
  "google-docs1",
  "governor",
  "lopdf",
- "mcp-core",
+ "mermaid-rs-renderer",
  "notify",
  "pmcp",
  "pulldown-cmark",
@@ -258,6 +258,9 @@ dependencies = [
  "tokio",
  "tokio-retry",
  "tokio-util",
+ "toml",
+ "tracing",
+ "tracing-subscriber",
  "unicode-segmentation",
  "unicode-width 0.1.14",
  "uuid",
@@ -2043,18 +2046,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "jules-mcp-server"
-version = "0.3.1"
-dependencies = [
- "async-trait",
- "mcp-core",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
-]
-
-[[package]]
 name = "kasuari"
 version = "0.4.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2102,19 +2093,6 @@ name = "lab"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bf36173d4167ed999940f804952e6b08197cae5ad5d572eb4db150ce8ad5d58f"
-
-[[package]]
-name = "lark-mcp-server"
-version = "0.4.1"
-dependencies = [
- "async-trait",
- "blink-md",
- "mcp-core",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
-]
 
 [[package]]
 name = "lazy_static"
@@ -2259,20 +2237,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mcp-core"
-version = "0.2.1"
-dependencies = [
- "anyhow",
- "async-trait",
- "pmcp",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
 name = "md-5"
 version = "0.10.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2280,19 +2244,6 @@ checksum = "d89e7ee0cfbedfc4da3340218492196241d89eefb6dab27de5df917a6d2e78cf"
 dependencies = [
  "cfg-if",
  "digest 0.10.7",
-]
-
-[[package]]
-name = "md-mcp-server"
-version = "0.2.1"
-dependencies = [
- "async-trait",
- "blink-md",
- "mcp-core",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
 ]
 
 [[package]]
@@ -2390,19 +2341,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mmd-mcp-server"
-version = "0.1.1"
-dependencies = [
- "async-trait",
- "mcp-core",
- "mermaid-rs-renderer",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
-]
-
-[[package]]
 name = "moxcms"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2481,20 +2419,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "42b8cfee0e339a0337359f3c88165702ac6e600dc01c0cc9579a92d62b08477a"
 dependencies = [
  "bitflags 2.13.0",
-]
-
-[[package]]
-name = "notion-mcp-server"
-version = "0.4.1"
-dependencies = [
- "async-trait",
- "blink-md",
- "chrono",
- "mcp-core",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
 ]
 
 [[package]]

@@ -50,12 +50,18 @@ impl NotionClient {
             .await
     }
 
+    /// Soft-delete a block by moving it to the trash (`in_trash = true`).
+    ///
+    /// Typed counterpart of the unified trash lifecycle in
+    /// [`crate::api::trash`]; this delegates to
+    /// [`trash`](crate::client::NotionClient::trash) so there is one
+    /// source of truth for the request shape. Undo it with
+    /// `client.restore(Resource::Block, id)`.
     pub async fn delete_block(&self, block_id: &str) -> Result<Block> {
-        // Trash the block (sets in_trash to true)
-        let path = format!("/blocks/{}", block_id);
-        let body = serde_json::json!({ "in_trash": true });
-        self.request(reqwest::Method::PATCH, &path, Some(&body))
-            .await
+        let value = self
+            .trash(crate::api::trash::Resource::Block, block_id)
+            .await?;
+        Ok(serde_json::from_value(value)?)
     }
 
     /// Fetches all children for a block recursively.

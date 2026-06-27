@@ -2,6 +2,7 @@
 
 pub mod builder;
 pub mod error;
+pub mod generate_skills;
 pub mod id_mapper;
 pub mod json_schema;
 pub mod schema;

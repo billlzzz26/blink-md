@@ -18,6 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Single-crate consolidation**: collapsed the multi-crate Cargo workspace (`mcp-core`, `notion`/`md`/`mmd`/`lark`/`jules` MCP servers) back into the single `blink-md` crate. There are no sub-crates anymore.
+- **Unified MCP server**: the per-platform MCP server binaries were merged into one `blink-md-mcp` binary (behind the `mcp` feature) that registers every Notion, Markdown, Lark Sheets, and Mermaid tool. The shared `mcp-core` helpers now live in `src/mcp/core.rs`.
+- **Redesigned document deletion**: introduced a unified trash lifecycle (`src/api/trash.rs`) with a `Resource` enum and `trash` / `restore` / `delete_permanently` methods, plus a `Trashable` trait that unifies the legacy `archived` and current `in_trash` fields. `delete_block`/`delete_view` now delegate to it.
+- **CI/CD**: removed the duplicate `rust-ci.yml`, and switched workflows, the `Makefile`, and helper scripts from `--workspace` to single-crate `--all-features` builds.
+- Added `.qwen/` to `.gitignore` and package exclusion.
+
 ### Fixed
 - **Android CI**: switched `self_update` to rustls so Android cross builds no longer depend on native-tls/OpenSSL sysroot.
 - **Package hygiene**: added a package gate that blocks local agent data, secrets, and internal conductor docs from `cargo package`.
@@ -26,11 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Release CI**: crates.io publish now fails the release workflow instead of being ignored.
 
 ### Removed
+- **Jules/Hermes agent tooling** moved out of `src/mcp/jules` to `tooling/jules` (excluded from the crate and the build).
 - Removed tracked local agent configuration/examples and obsolete Gemini docs from the repository.
 - Removed tracked Jules anti-slop backup file.
-
-### Changed
-- Added `.qwen/` to `.gitignore` and package exclusion.
 
 ## [0.3.1] - 2026-06-13
 

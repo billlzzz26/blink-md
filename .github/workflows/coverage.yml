@@ -10,6 +10,8 @@ jobs:
   coverage:
     name: Upload coverage to Codecov
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -22,7 +24,7 @@ jobs:
           tool: cargo-llvm-cov
 
       - name: Generate coverage
-        run: cargo llvm-cov --workspace --all-features --lcov --output-path lcov.info
+        run: cargo llvm-cov --all-features --lcov --output-path lcov.info
 
       - name: Upload to Codecov
         uses: codecov/codecov-action@v5
@@ -33,6 +35,8 @@ jobs:
   check:
     name: Check coverage threshold
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -45,4 +49,4 @@ jobs:
           tool: cargo-llvm-cov
 
       - name: Check coverage
-        run: cargo llvm-cov --workspace --all-features --check -- --skip docs
+        run: cargo llvm-cov --all-features --check -- --skip docs

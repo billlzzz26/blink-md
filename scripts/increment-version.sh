@@ -19,19 +19,7 @@ update_package() {
     sed -i "s/^version = \".*\"/version = \"$next\"/" "$file"
 }
 
-# 1. Root (blink-md)
+# Single-crate project: only the root blink-md package has a version.
 update_package "blink-md" "Cargo.toml"
 
-# 2. mcp-core
-update_package "mcp-core" "src/mcp/core/Cargo.toml"
-
-# 3. jules
-update_package "jules" "src/mcp/jules/Cargo.toml"
-
-# 4. md
-update_package "md" "src/mcp/md/Cargo.toml"
-
-# 5. mmd
-update_package "mmd" "src/mcp/mmd/Cargo.toml"
-
-echo "==> Successfully incremented all internal package versions by 0.0.1"
+echo "==> Successfully incremented the blink-md package version by 0.0.1"

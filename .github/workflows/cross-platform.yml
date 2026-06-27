@@ -33,7 +33,7 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Build
-        run: cargo build --workspace --release --target ${{ matrix.target }}
+        run: cargo build --release --bin blink-md --target ${{ matrix.target }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
@@ -55,7 +55,7 @@ jobs:
         run: cargo install cross --git https://github.com/cross-rs/cross
 
       - name: Build for Android
-        run: cross build --release --target aarch64-linux-android -p blink-md
+        run: cross build --release --target aarch64-linux-android --bin blink-md
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
@@ -71,4 +71,4 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - uses: dtolnay/rust-toolchain@1.75.0
       - name: Check MSRV
-        run: cargo check --workspace
++        run: cargo check --all-features

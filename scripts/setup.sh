@@ -84,14 +84,14 @@ verify_tools() {
 
 # Build and test
 build_test() {
-    echo "Building workspace..."
-    cargo build --workspace
-    
+    echo "Building blink-md (all features)..."
+    cargo build --all-features
+
     echo "Running tests..."
-    cargo test --workspace
-    
+    cargo test --all-features
+
     echo "Running clippy..."
-    cargo clippy --workspace --all-targets
+    cargo clippy --all-targets --all-features -- -D warnings
     
     echo "=== Setup complete ==="
 }

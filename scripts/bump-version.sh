@@ -23,11 +23,9 @@ if [ -n "$PACKAGE_NAME" ]; then
         exit 1
     fi
 else
-    echo "==> Updating version to $NEW_VERSION across all Cargo.toml files..."
-    # Update root Cargo.toml
+    echo "==> Updating version to $NEW_VERSION in Cargo.toml..."
+    # Single-crate project: only the root Cargo.toml carries a version.
     sed -i "s/^version = \".*\"/version = \"$NEW_VERSION\"/" Cargo.toml
-    # Update all workspace member Cargo.toml files
-    find src/mcp -name "Cargo.toml" -exec sed -i "s/^version = \".*\"/version = \"$NEW_VERSION\"/" {} +
 fi
 
 echo "==> Standardizing line endings (LF) and ensuring trailing newlines..."

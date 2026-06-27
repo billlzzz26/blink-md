@@ -1,17 +1,17 @@
-.PHONY: all check test lint fmt clean build release setup hooks bench doc package-check
+.PHONY: all check test lint fmt fmt-fix clean build release setup hooks bench doc package-check mcp-build mcp-run ci
 
 # Default: run all quality checks
 all: fmt lint test check package-check
 
 # Quality gates
 check:
-	cargo check --workspace --all-targets
+	cargo check --all-targets --all-features
 
 test:
-	cargo test --workspace
+	cargo test --all-features
 
 lint:
-	cargo clippy --workspace --all-targets
+	cargo clippy --all-targets --all-features -- -D warnings
 
 fmt:
 	cargo fmt --all -- --check
@@ -21,10 +21,10 @@ fmt-fix:
 
 # Build
 build:
-	cargo build --workspace
+	cargo build --all-features
 
 release:
-	cargo build --workspace --release
+	cargo build --release --all-features
 
 # Clean
 clean:
@@ -32,7 +32,7 @@ clean:
 
 # Documentation
 doc:
-	cargo doc --workspace --no-deps --open
+	cargo doc --no-deps --all-features --open
 
 # Package hygiene
 package-check:
@@ -40,7 +40,7 @@ package-check:
 
 # Benchmarks
 bench:
-	cargo bench --workspace
+	cargo bench --all-features
 
 # Setup
 setup:
@@ -49,12 +49,12 @@ setup:
 hooks:
 	cp scripts/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
 
-# MCP servers
+# Unified MCP server (blink-md-mcp)
 mcp-build:
-	cargo build -p jules-mcp-server -p md-mcp-server -p mmd-mcp-server
+	cargo build --release --features mcp --bin blink-md-mcp
 
-mcp-test:
-	cargo test -p jules-mcp-server -p md-mcp-server -p mmd-mcp-server
+mcp-run:
+	cargo run --features mcp --bin blink-md-mcp
 
 # Full CI simulation
 ci: fmt lint test check package-check
