@@ -52,6 +52,23 @@ impl SchemaBuilder {
         self.insert(name, description, "boolean", false)
     }
 
+    /// Add an optional array-of-objects parameter.
+    pub fn optional_array_param(
+        mut self,
+        name: impl Into<String>,
+        description: impl Into<String>,
+    ) -> Self {
+        self.properties.insert(
+            name.into(),
+            json!({
+                "type": "array",
+                "items": { "type": "object" },
+                "description": description.into(),
+            }),
+        );
+        self
+    }
+
     /// Add a required object parameter.
     pub fn object_param(self, name: impl Into<String>, description: impl Into<String>) -> Self {
         self.insert(name, description, "object", true)

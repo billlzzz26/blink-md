@@ -138,7 +138,7 @@ impl ToolHandler for CreatePageTool {
                 .param("parent_id", "ID of the parent container")
                 .param("parent_type", "Type of parent ('page_id' or 'database_id')")
                 .object_param("properties", "Notion page properties JSON")
-                .optional_param("children", "Optional JSON array of initial child blocks")
+                .optional_array_param("children", "Optional array of initial child block objects")
                 .build(),
         ))
     }
