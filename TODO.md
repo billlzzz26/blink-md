@@ -56,7 +56,7 @@
 ## Active — next work
 ### 0. Markdown + YAML Frontmatter ↔ Notion Database (TDD, in progress)
 - [x] **Phase A — detection**: `detect_frontmatter()` extracts a `---`-delimited YAML block from the start of a Markdown file, leaving the rest as body. 15 unit tests cover: missing block, unterminated block, multi-line YAML, empty YAML, CRLF, body containing `---`, colons in values, and edge cases like empty input. Lives in [`src/api/markdown_frontmatter.rs`](src/api/markdown_frontmatter.rs); tested by [`tests/markdown_frontmatter.rs`](tests/markdown_frontmatter.rs).
-- [x] **Phase B — property mapping**: `parse_frontmatter_to_properties()` / `properties_to_yaml()` translate between explicit `type:` tagged YAML and [`crate::ir::metadata::PropertyValue`]. 9 `PropertyType` variants (Title, RichText, Number, Select, MultiSelect, Date, Checkbox, Url, Email), 25 unit tests in [`tests/frontmatter_properties.rs`](tests/frontmatter_properties.rs). Adds `serde_yaml = "0.9"` dependency.
+- [ ] **Phase B — property mapping**: parse explicit `type:` tagged YAML values into [`crate::ir::metadata::PropertyValue`] (Title, RichText, Number, Select, MultiSelect, Date, Checkbox, Url, Email, Relation).
 - [ ] **Phase C — converter**: `MarkdownWithFrontmatterConverter` that round-trips Markdown+YAML ↔ UniversalDocument with `metadata.properties` populated.
 - [ ] **Phase D — sync glue**: teach `blink-md sync --dir <dir>` to read frontmatter from each `.md` file and write properties into the Notion page on `create_page`.
 - [ ] **Phase E — export**: `export_page_to_md(page_id, out_dir)` writes one `<slug>-<page-id>.md` file per page with YAML header + body.
