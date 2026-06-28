@@ -212,23 +212,21 @@ fn parse_property(name: &str, v: &YamlValue) -> Result<PropertyValue, Frontmatte
             };
             Ok(PropertyValue::Number { number: Some(n) })
         }
-        PropertyType::Select => {
-            match m.get(YamlValue::String("value".into())) {
-                None | Some(YamlValue::Null) => Ok(PropertyValue::Select { select: None }),
-                Some(YamlValue::String(s)) => Ok(PropertyValue::Select {
-                    select: Some(SelectOption {
-                        id: None,
-                        name: s.clone(),
-                        color: None,
-                    }),
+        PropertyType::Select => match m.get(YamlValue::String("value".into())) {
+            None | Some(YamlValue::Null) => Ok(PropertyValue::Select { select: None }),
+            Some(YamlValue::String(s)) => Ok(PropertyValue::Select {
+                select: Some(SelectOption {
+                    id: None,
+                    name: s.clone(),
+                    color: None,
                 }),
-                Some(other) => Err(FrontmatterError::WrongFieldType(
-                    name.into(),
-                    "value".into(),
-                    format!("{:?}", other),
-                )),
-            }
-        }
+            }),
+            Some(other) => Err(FrontmatterError::WrongFieldType(
+                name.into(),
+                "value".into(),
+                format!("{:?}", other),
+            )),
+        },
         PropertyType::MultiSelect => {
             let val = m
                 .get(YamlValue::String("values".into()))
@@ -262,23 +260,21 @@ fn parse_property(name: &str, v: &YamlValue) -> Result<PropertyValue, Frontmatte
             }
             Ok(PropertyValue::MultiSelect { multi_select: opts })
         }
-        PropertyType::Date => {
-            match m.get(YamlValue::String("value".into())) {
-                None | Some(YamlValue::Null) => Ok(PropertyValue::Date { date: None }),
-                Some(YamlValue::String(s)) => Ok(PropertyValue::Date {
-                    date: Some(crate::ir::metadata::DateValue {
-                        start: s.clone(),
-                        end: None,
-                        time_zone: None,
-                    }),
+        PropertyType::Date => match m.get(YamlValue::String("value".into())) {
+            None | Some(YamlValue::Null) => Ok(PropertyValue::Date { date: None }),
+            Some(YamlValue::String(s)) => Ok(PropertyValue::Date {
+                date: Some(crate::ir::metadata::DateValue {
+                    start: s.clone(),
+                    end: None,
+                    time_zone: None,
                 }),
-                Some(other) => Err(FrontmatterError::WrongFieldType(
-                    name.into(),
-                    "value".into(),
-                    format!("{:?}", other),
-                )),
-            }
-        }
+            }),
+            Some(other) => Err(FrontmatterError::WrongFieldType(
+                name.into(),
+                "value".into(),
+                format!("{:?}", other),
+            )),
+        },
         PropertyType::Checkbox => {
             let val = m
                 .get(YamlValue::String("value".into()))
@@ -292,28 +288,28 @@ fn parse_property(name: &str, v: &YamlValue) -> Result<PropertyValue, Frontmatte
                 )),
             }
         }
-        PropertyType::Url => {
-            match m.get(YamlValue::String("value".into())) {
-                None | Some(YamlValue::Null) => Ok(PropertyValue::Url { url: None }),
-                Some(YamlValue::String(s)) => Ok(PropertyValue::Url { url: Some(s.clone()) }),
-                Some(other) => Err(FrontmatterError::WrongFieldType(
-                    name.into(),
-                    "value".into(),
-                    format!("{:?}", other),
-                )),
-            }
-        }
-        PropertyType::Email => {
-            match m.get(YamlValue::String("value".into())) {
-                None | Some(YamlValue::Null) => Ok(PropertyValue::Email { email: None }),
-                Some(YamlValue::String(s)) => Ok(PropertyValue::Email { email: Some(s.clone()) }),
-                Some(other) => Err(FrontmatterError::WrongFieldType(
-                    name.into(),
-                    "value".into(),
-                    format!("{:?}", other),
-                )),
-            }
-        }
+        PropertyType::Url => match m.get(YamlValue::String("value".into())) {
+            None | Some(YamlValue::Null) => Ok(PropertyValue::Url { url: None }),
+            Some(YamlValue::String(s)) => Ok(PropertyValue::Url {
+                url: Some(s.clone()),
+            }),
+            Some(other) => Err(FrontmatterError::WrongFieldType(
+                name.into(),
+                "value".into(),
+                format!("{:?}", other),
+            )),
+        },
+        PropertyType::Email => match m.get(YamlValue::String("value".into())) {
+            None | Some(YamlValue::Null) => Ok(PropertyValue::Email { email: None }),
+            Some(YamlValue::String(s)) => Ok(PropertyValue::Email {
+                email: Some(s.clone()),
+            }),
+            Some(other) => Err(FrontmatterError::WrongFieldType(
+                name.into(),
+                "value".into(),
+                format!("{:?}", other),
+            )),
+        },
         // Catch-all for opaque / not-yet-supported property values. The
         // payload is stored as a generic JSON value so it round-trips even
         // when the original variant (Relation, Formula, Rollup, …) has no
