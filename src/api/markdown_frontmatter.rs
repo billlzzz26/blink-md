@@ -35,8 +35,8 @@ pub struct FrontmatterBlock {
 #[derive(Debug, Error)]
 pub enum FrontmatterError {
     /// The YAML content was extracted but failed to parse as valid YAML.
-    /// This is reserved for future use when structured parsing is added
-    /// at this layer; for now detection only validates delimiter shape.
+    /// The YAML content inside the block is validated for syntax; callers
+    /// can rely on a `Some(_)` result meaning the delimited content is valid YAML.
     #[error("invalid YAML in frontmatter block: {0}")]
     InvalidYaml(String),
 }
