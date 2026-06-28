@@ -14,7 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Contributor License Agreement
-        uses: cla-assistant/github-action@v2
+        uses: cla-assistant/github-action@v2.6.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           path-to-signatures: signatures/version1/cla.json
           path-to-document: https://github.com/billlzzz26/blink-md/blob/main/CLA.md
