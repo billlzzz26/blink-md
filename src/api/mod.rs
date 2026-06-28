@@ -8,6 +8,7 @@ pub mod comments;
 pub mod databases;
 pub mod files;
 pub mod markdown;
+pub mod markdown_frontmatter;
 pub mod pages;
 pub mod search;
 pub mod trash;
