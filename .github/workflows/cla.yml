@@ -22,4 +22,4 @@ jobs:
           path-to-signatures: signatures/version1/cla.json
           path-to-document: https://github.com/billlzzz26/blink-md/blob/main/CLA.md
           branch: main
-          allowlist: bot*, *@users.noreply.github.com
+          allowlist: bot*, *@users.noreply.github.com, billlzzz26
