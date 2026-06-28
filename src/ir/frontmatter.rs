@@ -304,11 +304,19 @@ fn require_string<'a>(
 /// Serialize a properties map back to YAML frontmatter text.
 ///
 /// The output is suitable to be wrapped between `---\n...\n---\n` delimiters.
+///
+/// Keys are written in **sorted order** so the output is deterministic and
+/// stable across round-trips through `parse_frontmatter_to_properties` →
+/// `properties_to_yaml`. This matters for syncing/diffing files on disk.
 pub fn properties_to_yaml(
     props: &HashMap<String, PropertyValue>,
 ) -> Result<String, FrontmatterError> {
     let mut root = serde_yaml::Mapping::new();
-    for (key, value) in props {
+    // Sort keys for deterministic output.
+    let mut keys: Vec<&String> = props.keys().collect();
+    keys.sort();
+    for key in keys {
+        let value = props.get(key).expect("key present");
         let mut entry = serde_yaml::Mapping::new();
         match value {
             PropertyValue::Title { title } | PropertyValue::RichText { rich_text: title } => {
