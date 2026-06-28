@@ -392,14 +392,6 @@ fn test_property_type_enum_variants_are_distinct() {
 }
 
 #[test]
-fn test_property_type_display_is_snake_case() {
-    // Debug format is PascalCase (derived).
-    assert_eq!(format!("{:?}", PropertyType::Title), "Title");
-    assert_eq!(format!("{:?}", PropertyType::MultiSelect), "MultiSelect");
-    // Display (= YAML wire tag) is snake_case.
-    assert_eq!(format!("{}", PropertyType::RichText), "rich_text");
-    assert_eq!(format!("{}", PropertyType::MultiSelect), "multi_select");
-}
 fn test_property_type_serializes_to_snake_case_string() {
     // The serializer writes the tag in lowercase; this test pins that contract.
     assert_eq!(format!("{:?}", PropertyType::Title), "Title");
