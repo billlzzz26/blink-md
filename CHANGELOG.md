@@ -21,10 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Bumped version from 0.3.1 to 0.4.1.
-
-## [Unreleased]
-
-### Changed
 - **Single-crate consolidation**: collapsed the multi-crate Cargo workspace (`mcp-core`, `notion`/`md`/`mmd`/`lark`/`jules` MCP servers) back into the single `blink-md` crate. There are no sub-crates anymore.
 - **Unified MCP server**: the per-platform MCP server binaries were merged into one `blink-md-mcp` binary (behind the `mcp` feature) that registers every Notion, Markdown, Lark Sheets, and Mermaid tool. The shared `mcp-core` helpers now live in `src/mcp/core.rs`.
 - **Redesigned document deletion**: introduced a unified trash lifecycle (`src/api/trash.rs`) with a `Resource` enum and `trash` / `restore` / `delete_permanently` methods, plus a `Trashable` trait that unifies the legacy `archived` and current `in_trash` fields. `delete_block`/`delete_view` now delegate to it.

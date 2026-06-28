@@ -181,17 +181,18 @@ fn parse_property(name: &str, v: &YamlValue) -> Result<PropertyValue, Frontmatte
             let val = m
                 .get(YamlValue::String("value".into()))
                 .ok_or_else(|| FrontmatterError::MissingField(name.into(), "value".into()))?;
-            let n = match val {
-                YamlValue::Number(n) => n.as_f64().ok_or_else(|| {
+            let number = match val {
+                YamlValue::Null => None,
+                YamlValue::Number(n) => Some(n.as_f64().ok_or_else(|| {
                     FrontmatterError::WrongFieldType(
                         name.into(),
                         "value".into(),
                         format!("{:?}", n),
                     )
-                })?,
-                YamlValue::String(s) => s.parse::<f64>().map_err(|_| {
+                })?),
+                YamlValue::String(s) => Some(s.parse::<f64>().map_err(|_| {
                     FrontmatterError::WrongFieldType(name.into(), "value".into(), s.clone())
-                })?,
+                })?),
                 other => {
                     return Err(FrontmatterError::WrongFieldType(
                         name.into(),
@@ -200,17 +201,28 @@ fn parse_property(name: &str, v: &YamlValue) -> Result<PropertyValue, Frontmatte
                     ))
                 }
             };
-            Ok(PropertyValue::Number { number: Some(n) })
+            Ok(PropertyValue::Number { number })
         }
         PropertyType::Select => {
-            let val = require_string(name, m, "value")?;
-            Ok(PropertyValue::Select {
-                select: Some(SelectOption {
+            let val = m
+                .get(YamlValue::String("value".into()))
+                .ok_or_else(|| FrontmatterError::MissingField(name.into(), "value".into()))?;
+            let select = match val {
+                YamlValue::Null => None,
+                YamlValue::String(s) => Some(SelectOption {
                     id: None,
-                    name: val.to_string(),
+                    name: s.clone(),
                     color: None,
                 }),
-            })
+                other => {
+                    return Err(FrontmatterError::WrongFieldType(
+                        name.into(),
+                        "value".into(),
+                        format!("{:?}", other),
+                    ))
+                }
+            };
+            Ok(PropertyValue::Select { select })
         }
         PropertyType::MultiSelect => {
             let val = m
@@ -246,14 +258,25 @@ fn parse_property(name: &str, v: &YamlValue) -> Result<PropertyValue, Frontmatte
             Ok(PropertyValue::MultiSelect { multi_select: opts })
         }
         PropertyType::Date => {
-            let val = require_string(name, m, "value")?;
-            Ok(PropertyValue::Date {
-                date: Some(crate::ir::metadata::DateValue {
-                    start: val.to_string(),
+            let val = m
+                .get(YamlValue::String("value".into()))
+                .ok_or_else(|| FrontmatterError::MissingField(name.into(), "value".into()))?;
+            let date = match val {
+                YamlValue::Null => None,
+                YamlValue::String(s) => Some(crate::ir::metadata::DateValue {
+                    start: s.clone(),
                     end: None,
                     time_zone: None,
                 }),
-            })
+                other => {
+                    return Err(FrontmatterError::WrongFieldType(
+                        name.into(),
+                        "value".into(),
+                        format!("{:?}", other),
+                    ))
+                }
+            };
+            Ok(PropertyValue::Date { date })
         }
         PropertyType::Checkbox => {
             let val = m
@@ -329,18 +352,21 @@ pub fn properties_to_yaml(
                     YamlValue::String(PropertyType::Number.as_tag().into()),
                 );
                 let v = match number {
-                    Some(n) => serde_yaml::Number::from(*n),
-                    None => serde_yaml::Number::from(0),
+                    Some(n) => YamlValue::Number(serde_yaml::Number::from(*n)),
+                    None => YamlValue::Null,
                 };
-                entry.insert(YamlValue::String("value".into()), YamlValue::Number(v));
+                entry.insert(YamlValue::String("value".into()), v);
             }
             PropertyValue::Select { select } => {
                 entry.insert(
                     YamlValue::String("type".into()),
                     YamlValue::String(PropertyType::Select.as_tag().into()),
                 );
-                let name = select.as_ref().map(|o| o.name.clone()).unwrap_or_default();
-                entry.insert(YamlValue::String("value".into()), YamlValue::String(name));
+                let v = match select {
+                    Some(o) => YamlValue::String(o.name.clone()),
+                    None => YamlValue::Null,
+                };
+                entry.insert(YamlValue::String("value".into()), v);
             }
             PropertyValue::MultiSelect { multi_select } => {
                 entry.insert(
@@ -358,8 +384,11 @@ pub fn properties_to_yaml(
                     YamlValue::String("type".into()),
                     YamlValue::String(PropertyType::Date.as_tag().into()),
                 );
-                let s = date.as_ref().map(|d| d.start.clone()).unwrap_or_default();
-                entry.insert(YamlValue::String("value".into()), YamlValue::String(s));
+                let v = match date {
+                    Some(d) => YamlValue::String(d.start.clone()),
+                    None => YamlValue::Null,
+                };
+                entry.insert(YamlValue::String("value".into()), v);
             }
             PropertyValue::Checkbox { checkbox } => {
                 entry.insert(
@@ -391,17 +420,11 @@ pub fn properties_to_yaml(
                     YamlValue::String(email.clone().unwrap_or_default()),
                 );
             }
-            // Property types not yet representable in frontmatter are
-            // serialized as a Custom passthrough so we don't lose data.
-            other => {
-                entry.insert(
-                    YamlValue::String("type".into()),
-                    YamlValue::String("custom".into()),
-                );
-                let json = serde_json::to_value(other).unwrap_or(serde_json::Value::Null);
-                let yaml_val = serde_yaml::to_value(json).unwrap_or(YamlValue::Null);
-                entry.insert(YamlValue::String("value".into()), yaml_val);
-            }
+            // Property types not yet representable in frontmatter (Relation,
+            // Formula, Rollup, etc.) are silently skipped: emitting them as
+            // `type: custom` would produce YAML that cannot be parsed back,
+            // breaking round-trips. Phase C/D will add explicit support.
+            _ => continue,
         }
         root.insert(YamlValue::String(key.clone()), YamlValue::Mapping(entry));
     }
@@ -417,8 +440,14 @@ pub fn properties_to_yaml(
 fn inline_to_plain(inlines: &[InlineElement]) -> String {
     let mut s = String::new();
     for el in inlines {
-        if let InlineElement::TextRun { content, .. } = el {
-            s.push_str(content);
+        match el {
+            InlineElement::TextRun { content, .. } => s.push_str(content),
+            InlineElement::Equation { expression, .. } => s.push_str(expression),
+            InlineElement::Mention { label, target, .. } => {
+                s.push_str(label.as_deref().unwrap_or(target));
+            }
+            InlineElement::HardBreak => s.push('\n'),
+            InlineElement::SoftBreak => s.push(' '),
         }
     }
     s
