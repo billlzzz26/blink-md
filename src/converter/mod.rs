@@ -170,6 +170,7 @@ where
 pub mod github_markdown;
 pub mod lark_sheets;
 pub mod markdown;
+pub mod markdown_frontmatter;
 pub mod notion;
 
 /// Roundtrip with comparison (for testing)
