@@ -262,6 +262,23 @@ fn truncate_desc(desc: &str) -> String {
     s
 }
 
+/// Percent-encodes characters that are reserved in a Markdown link target or URL path segment.
+fn percent_encode_path(s: &str) -> String {
+    s.chars()
+        .flat_map(|c| match c {
+            ' ' => vec!['%', '2', '0'],
+            '#' => vec!['%', '2', '3'],
+            '%' => vec!['%', '2', '5'],
+            '?' => vec!['%', '3', 'F'],
+            '[' => vec!['%', '5', 'B'],
+            ']' => vec!['%', '5', 'D'],
+            '(' => vec!['%', '2', '8'],
+            ')' => vec!['%', '2', '9'],
+            _ => vec![c],
+        })
+        .collect()
+}
+
 /// Writes `INDEX.md` into `output_path` with a Markdown table linking to every skill's `SKILL.md`.
 fn write_skills_index(entries: &[SkillIndexEntry], output_path: &Path) -> Result<()> {
     let mut out = String::new();
@@ -282,7 +299,7 @@ fn write_skills_index(entries: &[SkillIndexEntry], output_path: &Path) -> Result
         out.push_str(&format!("{heading}\n\n{subtitle}\n\n"));
         out.push_str("| Skill | Description |\n|-------|-------------|\n");
         for item in &items {
-            let name_url = item.name.replace(' ', "%20").replace('(', "%28").replace(')', "%29");
+            let name_url = percent_encode_path(&item.name);
             out.push_str(&format!(
                 "| [{}]({}/SKILL.md) | {} |\n",
                 item.name, name_url, item.description
