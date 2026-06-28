@@ -400,3 +400,113 @@ fn test_property_type_serializes_to_snake_case_string() {
     assert_eq!(format!("{}", PropertyType::RichText), "rich_text");
     assert_eq!(format!("{}", PropertyType::MultiSelect), "multi_select");
 }
+
+// ---------------------------------------------------------------------------
+// Issue 5: Number null must round-trip (not silently become 0)
+// ---------------------------------------------------------------------------
+
+#[test]
+fn test_serialize_number_null_roundtrips() {
+    let mut map = HashMap::new();
+    map.insert("score".to_string(), PropertyValue::Number { number: None });
+    let yaml = properties_to_yaml(&map).unwrap();
+    // The output must NOT coerce null to a literal number like `0` or `0.0`.
+    assert!(
+        !yaml.contains(": 0\n") && !yaml.contains(": 0.0\n"),
+        "expected null number to be preserved, got: {}",
+        yaml
+    );
+    // It should serialize as YAML null. `serde_yaml` emits either `null`,
+    // `~`, or omits the key depending on configuration; accept any of those.
+    assert!(
+        yaml.contains("null") || yaml.contains("~") || !yaml.contains("value:"),
+        "expected null in serialized YAML, got: {}",
+        yaml
+    );
+
+    // And the value must round-trip back as `Number { number: None }`.
+    let parsed = parse_frontmatter_to_properties(&yaml).unwrap();
+    match parsed.get("score").unwrap() {
+        PropertyValue::Number { number: None } => {}
+        other => panic!("expected Number {{ number: None }}, got {:?}", other),
+    }
+}
+
+#[test]
+fn test_parse_number_null_value() {
+    // Direct parse of `value: null` must produce `Number { number: None }`.
+    let yaml = "score:\n  type: number\n  value: null\n";
+    let map = parse_ok(yaml);
+    match map.get("score").unwrap() {
+        PropertyValue::Number { number: None } => {}
+        other => panic!("expected Number {{ number: None }}, got {:?}", other),
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Issue 6: `type: custom` must round-trip via PropertyValue::Custom
+// ---------------------------------------------------------------------------
+
+#[test]
+fn test_serialize_custom_roundtrips() {
+    let mut map = HashMap::new();
+    map.insert(
+        "weird".to_string(),
+        PropertyValue::Custom {
+            key: "weird".to_string(),
+            value: serde_json::json!({ "rel": ["page-1"], "type": "relation" }),
+        },
+    );
+    let yaml = properties_to_yaml(&map).unwrap();
+    assert!(
+        yaml.contains("type: custom"),
+        "expected `type: custom` in serialized YAML, got: {}",
+        yaml
+    );
+    let parsed = parse_frontmatter_to_properties(&yaml).unwrap();
+    match parsed.get("weird").unwrap() {
+        PropertyValue::Custom { key, value } => {
+            assert_eq!(key, "weird");
+            assert_eq!(value["rel"][0], "page-1");
+            assert_eq!(value["type"], "relation");
+        }
+        other => panic!("expected PropertyValue::Custom, got {:?}", other),
+    }
+}
+
+#[test]
+fn test_parse_custom_with_null_value() {
+    // `type: custom` with `value: null` must parse to a Custom variant
+    // carrying `serde_json::Value::Null`.
+    let yaml = "weird:\n  type: custom\n  value: null\n";
+    let map = parse_ok(yaml);
+    match map.get("weird").unwrap() {
+        PropertyValue::Custom { key, value } => {
+            assert_eq!(key, "weird");
+            assert!(value.is_null(), "expected null, got {}", value);
+        }
+        other => panic!("expected PropertyValue::Custom, got {:?}", other),
+    }
+}
+
+#[test]
+fn test_unknown_property_variant_serializes_as_custom() {
+    // PropertyValue::Relation is not a dedicated wire type, so it must be
+    // serialized via the `custom` fallback and round-trip back as
+    // PropertyValue::Custom.
+    let mut map = HashMap::new();
+    map.insert(
+        "refs".to_string(),
+        PropertyValue::Relation {
+            relation: vec!["page-1".to_string(), "page-2".to_string()],
+        },
+    );
+    let yaml = properties_to_yaml(&map).unwrap();
+    assert!(yaml.contains("type: custom"), "got: {}", yaml);
+    let parsed = parse_frontmatter_to_properties(&yaml).unwrap();
+    assert!(
+        matches!(parsed.get("refs"), Some(PropertyValue::Custom { .. })),
+        "expected Custom, got {:?}",
+        parsed.get("refs")
+    );
+}

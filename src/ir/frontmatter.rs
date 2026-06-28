@@ -41,6 +41,10 @@ pub enum PropertyType {
     Checkbox,
     Url,
     Email,
+    /// Catch-all for any [`crate::ir::metadata::PropertyValue`] variant that
+    /// does not have a dedicated wire representation. The full variant is
+    /// stored under the `value:` key as opaque YAML/JSON.
+    Custom,
 }
 
 impl PropertyType {
@@ -56,6 +60,7 @@ impl PropertyType {
             "checkbox" => Some(Self::Checkbox),
             "url" => Some(Self::Url),
             "email" => Some(Self::Email),
+            "custom" => Some(Self::Custom),
             _ => None,
         }
     }
@@ -72,6 +77,7 @@ impl PropertyType {
             Self::Checkbox => "checkbox",
             Self::Url => "url",
             Self::Email => "email",
+            Self::Custom => "custom",
         }
     }
 }
@@ -192,6 +198,10 @@ fn parse_property(name: &str, v: &YamlValue) -> Result<PropertyValue, Frontmatte
                 YamlValue::String(s) => s.parse::<f64>().map_err(|_| {
                     FrontmatterError::WrongFieldType(name.into(), "value".into(), s.clone())
                 })?,
+                // Preserve `number: null` rather than coercing to 0.
+                YamlValue::Null => {
+                    return Ok(PropertyValue::Number { number: None });
+                }
                 other => {
                     return Err(FrontmatterError::WrongFieldType(
                         name.into(),
@@ -280,6 +290,21 @@ fn parse_property(name: &str, v: &YamlValue) -> Result<PropertyValue, Frontmatte
                 email: Some(val.to_string()),
             })
         }
+        // Catch-all for opaque / not-yet-supported property values. The
+        // payload is stored as a generic JSON value so it round-trips even
+        // when the original variant (Relation, Formula, Rollup, …) has no
+        // dedicated wire schema.
+        PropertyType::Custom => {
+            let val = m.get(YamlValue::String("value".into())).cloned();
+            let json = match val {
+                None | Some(YamlValue::Null) => serde_json::Value::Null,
+                Some(v) => yaml_to_json(v),
+            };
+            Ok(PropertyValue::Custom {
+                key: name.to_string(),
+                value: json,
+            })
+        }
     }
 }
 
@@ -299,6 +324,14 @@ fn require_string<'a>(
             format!("{:?}", other),
         )),
     }
+}
+
+/// Convert a [`serde_yaml::Value`] to a [`serde_json::Value`] via the common
+/// self-describing serialization format. Both types implement `Serialize`,
+/// and their serializations are compatible, so we round-trip through JSON.
+fn yaml_to_json(yaml: YamlValue) -> serde_json::Value {
+    let s = serde_json::to_string(&yaml).unwrap_or_else(|_| "null".to_string());
+    serde_json::from_str(&s).unwrap_or(serde_json::Value::Null)
 }
 
 /// Serialize a properties map back to YAML frontmatter text.
@@ -336,11 +369,13 @@ pub fn properties_to_yaml(
                     YamlValue::String("type".into()),
                     YamlValue::String(PropertyType::Number.as_tag().into()),
                 );
+                // Preserve a null number rather than silently coercing it
+                // to 0; round-trip fidelity matters.
                 let v = match number {
-                    Some(n) => serde_yaml::Number::from(*n),
-                    None => serde_yaml::Number::from(0),
+                    Some(n) => YamlValue::Number(serde_yaml::Number::from(*n)),
+                    None => YamlValue::Null,
                 };
-                entry.insert(YamlValue::String("value".into()), YamlValue::Number(v));
+                entry.insert(YamlValue::String("value".into()), v);
             }
             PropertyValue::Select { select } => {
                 entry.insert(
@@ -398,6 +433,20 @@ pub fn properties_to_yaml(
                     YamlValue::String("value".into()),
                     YamlValue::String(email.clone().unwrap_or_default()),
                 );
+            }
+            // Dedicated branch for explicit `PropertyValue::Custom` payloads:
+            // emit `type: custom` with the inner JSON value as YAML. This
+            // keeps the wire shape identical to the catch-all below, but
+            // avoids the cost (and potential double-wrapping) of re-running
+            // `serde_json::to_value` on a tagged-enum serialization that
+            // already contains a nested `type` field.
+            PropertyValue::Custom { value, .. } => {
+                entry.insert(
+                    YamlValue::String("type".into()),
+                    YamlValue::String(PropertyType::Custom.as_tag().into()),
+                );
+                let yaml_val = serde_yaml::to_value(value.clone()).unwrap_or(YamlValue::Null);
+                entry.insert(YamlValue::String("value".into()), yaml_val);
             }
             // Property types not yet representable in frontmatter are
             // serialized as a Custom passthrough so we don't lose data.

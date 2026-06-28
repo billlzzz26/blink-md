@@ -95,9 +95,12 @@ impl ToPlatform for MarkdownWithFrontmatterConverter {
                 }
             }
         }
+        // Match `MarkdownConverter::to_platform` exactly: that converter
+        // trims trailing whitespace from its output, so the composed output
+        // must not append an extra newline either. Appending one here would
+        // break plain-markdown round-trips.
         let body = MarkdownConverter::to_platform(doc)?;
         out.push_str(&body);
-        out.push('\n');
         Ok(out)
     }
 }

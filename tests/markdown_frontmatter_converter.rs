@@ -192,7 +192,14 @@ fn test_to_platform_yaml_block_in_body_does_not_double_close() {
                 content: vec![inline::text("Top".to_string())],
                 style: None,
             },
-            UniversalBlock::PageBreak,
+            // Render a paragraph whose text contains a literal `---` sequence
+            // so that the rendered Markdown body itself contains `---`. The
+            // frontmatter closer detection must still emit exactly one
+            // opening and one closing delimiter despite the body text.
+            UniversalBlock::Paragraph {
+                content: vec![inline::text("Divider-like: ---".to_string())],
+                style: None,
+            },
             UniversalBlock::Paragraph {
                 content: vec![inline::text("After".to_string())],
                 style: None,
@@ -206,8 +213,24 @@ fn test_to_platform_yaml_block_in_body_does_not_double_close() {
         )],
     );
     let out = MarkdownWithFrontmatterConverter::to_platform(&doc).expect("render");
-    // Exactly one opening `---\n` at the very start.
+    // Exactly one opening frontmatter delimiter at the very start.
     assert!(out.starts_with("---\n"));
+    // Exactly one closing `---` line. The body contains a `---` mid-line, so
+    // a naïve regex over `\n---\n` would over-count; the only full-line
+    // delimiter should be the frontmatter closer.
+    assert_eq!(
+        out.matches("\n---\n").count(),
+        1,
+        "expected exactly one closing `---` delimiter, got: {}",
+        out
+    );
+    // The body still carries a literal `---` somewhere (so we know we
+    // genuinely exercised the body-`---` case, not a stripped one).
+    assert!(
+        out.contains("Divider-like: ---"),
+        "body `---` was lost from render: {}",
+        out
+    );
     // The property type tag and a body word are present.
     assert!(out.contains("type: title"));
     assert!(out.contains("Top"));
@@ -253,6 +276,37 @@ Body paragraph.
         doc2.metadata.properties.get("done"),
         Some(PropertyValue::Checkbox { .. })
     ));
+    // Body blocks must also survive the round-trip — a converter bug that
+    // dropped or rewrote body blocks would otherwise go undetected.
+    assert!(
+        doc2.blocks.len() >= 2,
+        "blocks were dropped during round-trip, got {} blocks",
+        doc2.blocks.len()
+    );
+    // Heading is preserved at the right level.
+    assert!(
+        matches!(doc2.blocks[0], UniversalBlock::Heading { level: 1, .. }),
+        "expected first block to be a level-1 Heading, got {:?}",
+        doc2.blocks[0]
+    );
+    // Paragraph block content is preserved (look for "Body paragraph." text).
+    let has_body_paragraph = doc2.blocks.iter().any(|b| {
+        if let UniversalBlock::Paragraph { content, .. } = b {
+            content.iter().any(|el| {
+                matches!(
+                    el,
+                    blink_md::ir::inline::InlineElement::TextRun { content, .. }
+                        if content == "Body paragraph."
+                )
+            })
+        } else {
+            false
+        }
+    });
+    assert!(
+        has_body_paragraph,
+        "paragraph block content was lost during round-trip"
+    );
 }
 
 #[test]

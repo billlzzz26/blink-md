@@ -165,3 +165,29 @@ fn test_frontmatter_error_type_is_exported() {
     let msg = format!("{}", err);
     assert!(msg.contains("boom"));
 }
+
+// ---------------------------------------------------------------------------
+// Issue 9: detection must reject syntactically invalid YAML
+// ---------------------------------------------------------------------------
+
+#[test]
+fn test_detect_frontmatter_error_on_invalid_yaml() {
+    // Delimiters are present, but the body between them is not valid YAML.
+    // `detect_frontmatter` must surface this as `InvalidYaml` rather than
+    // silently claiming a block exists.
+    let input = "---\nbad: [unclosed\n---\nbody\n";
+    let result = detect_frontmatter(input);
+    match result {
+        Err(FrontmatterError::InvalidYaml(_)) => {}
+        other => panic!("expected InvalidYaml error, got {:?}", other),
+    }
+}
+
+#[test]
+fn test_detect_frontmatter_with_valid_yaml_still_succeeds() {
+    // Sanity: the new YAML-validity check does not regress the happy path.
+    let input = "---\nfoo: bar\n---\nbody\n";
+    let block = detect_ok(input).expect("valid YAML should be detected");
+    assert_eq!(block.yaml.trim(), "foo: bar");
+    assert_eq!(block.content, "body\n");
+}
