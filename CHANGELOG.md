@@ -24,6 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Markdown YAML frontmatter detection (Phase A)**: new `blink_md::api::markdown_frontmatter::detect_frontmatter()` extracts a `---`-delimited YAML block from the start of a Markdown file and returns the raw YAML text plus the remaining body. Unterminated blocks are treated as plain Markdown. 15 unit tests cover happy paths, multi-line YAML, empty blocks, CRLF inputs, body text containing `---`, and edge cases. Phase B (property mapping), Phase C (converter), and Phase D (sync glue) are tracked in `TODO.md`.
+
 ### Changed
 - **Single-crate consolidation**: collapsed the multi-crate Cargo workspace (`mcp-core`, `notion`/`md`/`mmd`/`lark`/`jules` MCP servers) back into the single `blink-md` crate. There are no sub-crates anymore.
 - **Unified MCP server**: the per-platform MCP server binaries were merged into one `blink-md-mcp` binary (behind the `mcp` feature) that registers every Notion, Markdown, Lark Sheets, and Mermaid tool. The shared `mcp-core` helpers now live in `src/mcp/core.rs`.
