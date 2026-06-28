@@ -94,10 +94,14 @@ pub fn detect_frontmatter(input: &str) -> Result<Option<FrontmatterBlock>, Front
         .sum();
     let content = normalized[prefix_len.min(normalized.len())..].to_string();
 
-    Ok(Some(FrontmatterBlock {
-        yaml: yaml_lines.join("\n"),
-        content,
-    }))
+    // Preserve the trailing LF that existed before the closing `---`:
+    // join() gives "a\nb" for ["a","b"] but the raw slice was "a\nb\n".
+    let mut yaml = yaml_lines.join("\n");
+    if !yaml_lines.is_empty() {
+        yaml.push('\n');
+    }
+
+    Ok(Some(FrontmatterBlock { yaml, content }))
 }
 
 #[cfg(test)]
@@ -114,7 +118,7 @@ mod tests {
         let r = detect_frontmatter("---\nk: v\n---\nbody").unwrap();
         assert!(r.is_some());
         let b = r.unwrap();
-        assert_eq!(b.yaml, "k: v");
+        assert_eq!(b.yaml, "k: v\n");
         assert_eq!(b.content, "body");
     }
 }

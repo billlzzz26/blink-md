@@ -43,7 +43,7 @@ fn test_detect_returns_none_when_not_starting_with_dashes() {
 fn test_detect_simple_frontmatter() {
     let input = "---\ntitle: Hello\n---\n# Body\n";
     let result = detect_ok(input).expect("expected frontmatter");
-    assert_eq!(result.yaml.trim(), "title: Hello");
+    assert_eq!(result.yaml, "title: Hello\n");
     assert_eq!(result.content, "# Body\n");
 }
 
@@ -72,7 +72,7 @@ Body.
 fn test_detect_empty_yaml_block() {
     let input = "---\n---\n# Body\n";
     let result = detect_ok(input).expect("expected frontmatter for empty yaml block");
-    assert_eq!(result.yaml.trim(), "");
+    assert_eq!(result.yaml, "");
     assert_eq!(result.content, "# Body\n");
 }
 
@@ -80,7 +80,7 @@ fn test_detect_empty_yaml_block() {
 fn test_detect_frontmatter_with_blank_lines_after() {
     let input = "---\ntitle: Foo\n---\n\n\n# Body\n";
     let result = detect_ok(input).expect("expected frontmatter");
-    assert_eq!(result.yaml.trim(), "title: Foo");
+    assert_eq!(result.yaml, "title: Foo\n");
     assert_eq!(result.content, "\n\n# Body\n");
 }
 
@@ -110,7 +110,7 @@ fn test_detect_preserves_inline_dashes_in_body() {
     // should not be mistaken for the closing frontmatter delimiter.
     let input = "---\ntitle: Foo\n---\nSome text\n---\nMore text\n";
     let result = detect_ok(input).expect("expected frontmatter");
-    assert_eq!(result.yaml.trim(), "title: Foo");
+    assert_eq!(result.yaml, "title: Foo\n");
     assert_eq!(result.content, "Some text\n---\nMore text\n");
 }
 
