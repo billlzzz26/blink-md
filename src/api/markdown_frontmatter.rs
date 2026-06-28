@@ -64,7 +64,7 @@ pub fn detect_frontmatter(input: &str) -> Result<Option<FrontmatterBlock>, Front
         Some(line) => line,
         None => return Ok(None),
     };
-    if first.trim_end() != "---" {
+    if first.trim_start_matches('\u{FEFF}').trim_end() != "---" {
         return Ok(None);
     }
 
