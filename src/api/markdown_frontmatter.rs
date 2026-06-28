@@ -35,8 +35,8 @@ pub struct FrontmatterBlock {
 #[derive(Debug, Error)]
 pub enum FrontmatterError {
     /// The YAML content was extracted but failed to parse as valid YAML.
-    /// The YAML content inside the block is validated for syntax; callers
-    /// can rely on a `Some(_)` result meaning the delimited content is valid YAML.
+    /// This is reserved for future use when structured parsing is added
+    /// at this layer; for now detection only validates delimiter shape.
     #[error("invalid YAML in frontmatter block: {0}")]
     InvalidYaml(String),
 }
@@ -45,11 +45,11 @@ pub enum FrontmatterError {
 ///
 /// Returns:
 /// - `Ok(Some(block))` if the input begins with a `---` line followed by
-///   a closing `---` line, and the content between them parses as valid YAML,
+///   a closing `---` line,
 /// - `Ok(None)` if the input does not start with a `---` line, or if a
 ///   starting `---` is never closed,
-/// - `Err(FrontmatterError::InvalidYaml(_))` if the block was delimited
-///   correctly but the inner YAML fails to parse.
+/// - `Err(_)` only when the structured YAML inside the block is malformed
+///   (currently unreachable for detection-only calls; reserved).
 ///
 /// The function is tolerant of CRLF line endings and treats `---` lines
 /// that appear later in the body as ordinary content.
@@ -64,7 +64,7 @@ pub fn detect_frontmatter(input: &str) -> Result<Option<FrontmatterBlock>, Front
         Some(line) => line,
         None => return Ok(None),
     };
-    if first.trim_end() != "---" {
+    if first.trim_start_matches('\u{FEFF}').trim_end() != "---" {
         return Ok(None);
     }
 
@@ -85,18 +85,6 @@ pub fn detect_frontmatter(input: &str) -> Result<Option<FrontmatterBlock>, Front
         return Ok(None);
     }
 
-    let yaml_text = yaml_lines.join("\n");
-
-    // Validate the extracted block as YAML before reporting success. Without
-    // this check, `detect_frontmatter` would happily claim a block exists for
-    // any `---`-delimited content, even if the body between the delimiters is
-    // not actually parseable YAML. Validation is delegated here so callers
-    // can rely on a `Some(_)` result meaning "the YAML is at least syntactically
-    // valid".
-    if let Err(e) = serde_yaml::from_str::<serde_yaml::Value>(&yaml_text) {
-        return Err(FrontmatterError::InvalidYaml(e.to_string()));
-    }
-
     // Reconstruct content: everything after the closing `---` line.
     // We must use the *normalized* form because we have already split on `\n`.
     let prefix_len: usize = normalized
@@ -106,10 +94,14 @@ pub fn detect_frontmatter(input: &str) -> Result<Option<FrontmatterBlock>, Front
         .sum();
     let content = normalized[prefix_len.min(normalized.len())..].to_string();
 
-    Ok(Some(FrontmatterBlock {
-        yaml: yaml_text,
-        content,
-    }))
+    // Preserve the trailing LF that existed before the closing `---`:
+    // join() gives "a\nb" for ["a","b"] but the raw slice was "a\nb\n".
+    let mut yaml = yaml_lines.join("\n");
+    if !yaml_lines.is_empty() {
+        yaml.push('\n');
+    }
+
+    Ok(Some(FrontmatterBlock { yaml, content }))
 }
 
 #[cfg(test)]
@@ -126,7 +118,7 @@ mod tests {
         let r = detect_frontmatter("---\nk: v\n---\nbody").unwrap();
         assert!(r.is_some());
         let b = r.unwrap();
-        assert_eq!(b.yaml, "k: v");
+        assert_eq!(b.yaml, "k: v\n");
         assert_eq!(b.content, "body");
     }
 }

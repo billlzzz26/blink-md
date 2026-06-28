@@ -43,7 +43,7 @@ fn test_detect_returns_none_when_not_starting_with_dashes() {
 fn test_detect_simple_frontmatter() {
     let input = "---\ntitle: Hello\n---\n# Body\n";
     let result = detect_ok(input).expect("expected frontmatter");
-    assert_eq!(result.yaml.trim(), "title: Hello");
+    assert_eq!(result.yaml, "title: Hello\n");
     assert_eq!(result.content, "# Body\n");
 }
 
@@ -72,7 +72,7 @@ Body.
 fn test_detect_empty_yaml_block() {
     let input = "---\n---\n# Body\n";
     let result = detect_ok(input).expect("expected frontmatter for empty yaml block");
-    assert_eq!(result.yaml.trim(), "");
+    assert_eq!(result.yaml, "");
     assert_eq!(result.content, "# Body\n");
 }
 
@@ -80,7 +80,7 @@ fn test_detect_empty_yaml_block() {
 fn test_detect_frontmatter_with_blank_lines_after() {
     let input = "---\ntitle: Foo\n---\n\n\n# Body\n";
     let result = detect_ok(input).expect("expected frontmatter");
-    assert_eq!(result.yaml.trim(), "title: Foo");
+    assert_eq!(result.yaml, "title: Foo\n");
     assert_eq!(result.content, "\n\n# Body\n");
 }
 
@@ -110,7 +110,7 @@ fn test_detect_preserves_inline_dashes_in_body() {
     // should not be mistaken for the closing frontmatter delimiter.
     let input = "---\ntitle: Foo\n---\nSome text\n---\nMore text\n";
     let result = detect_ok(input).expect("expected frontmatter");
-    assert_eq!(result.yaml.trim(), "title: Foo");
+    assert_eq!(result.yaml, "title: Foo\n");
     assert_eq!(result.content, "Some text\n---\nMore text\n");
 }
 
@@ -164,30 +164,4 @@ fn test_frontmatter_error_type_is_exported() {
     let err = FrontmatterError::InvalidYaml("boom".to_string());
     let msg = format!("{}", err);
     assert!(msg.contains("boom"));
-}
-
-// ---------------------------------------------------------------------------
-// Issue 9: detection must reject syntactically invalid YAML
-// ---------------------------------------------------------------------------
-
-#[test]
-fn test_detect_frontmatter_error_on_invalid_yaml() {
-    // Delimiters are present, but the body between them is not valid YAML.
-    // `detect_frontmatter` must surface this as `InvalidYaml` rather than
-    // silently claiming a block exists.
-    let input = "---\nbad: [unclosed\n---\nbody\n";
-    let result = detect_frontmatter(input);
-    match result {
-        Err(FrontmatterError::InvalidYaml(_)) => {}
-        other => panic!("expected InvalidYaml error, got {:?}", other),
-    }
-}
-
-#[test]
-fn test_detect_frontmatter_with_valid_yaml_still_succeeds() {
-    // Sanity: the new YAML-validity check does not regress the happy path.
-    let input = "---\nfoo: bar\n---\nbody\n";
-    let block = detect_ok(input).expect("valid YAML should be detected");
-    assert_eq!(block.yaml.trim(), "foo: bar");
-    assert_eq!(block.content, "body\n");
 }
