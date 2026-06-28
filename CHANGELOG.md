@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Markdown YAML frontmatter detection (Phase A)**: new `blink_md::api::markdown_frontmatter::detect_frontmatter()` extracts a `---`-delimited YAML block from the start of a Markdown file and returns the raw YAML text plus the remaining body. Unterminated blocks are treated as plain Markdown. 15 unit tests cover happy paths, multi-line YAML, empty blocks, CRLF inputs, body text containing `---`, and edge cases. Phase B (property mapping), Phase C (converter), and Phase D (sync glue) are tracked in `TODO.md`.
+- **Markdown YAML frontmatter property mapper (Phase B)**: new `blink_md::ir::frontmatter::{parse_frontmatter_to_properties, properties_to_yaml, PropertyType, FrontmatterError}` translates between explicit `type:` tagged YAML and `crate::ir::metadata::PropertyValue`. Supports 9 property types (Title, RichText, Number, Select, MultiSelect, Date, Checkbox, Url, Email) with structured errors for unknown types, missing fields, wrong field types, and invalid YAML. Adds `serde_yaml = "0.9"` dependency. 25 unit tests in `tests/frontmatter_properties.rs`.
+
 ## [0.4.1] - 2026-06-27
 
 ### Added

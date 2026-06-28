@@ -4,6 +4,7 @@
 //! Notion, GitHub Markdown, Lark, Google Docs, PDF, HTML, Docx, and more.
 
 pub mod blocks;
+pub mod frontmatter;
 pub mod inline;
 pub mod metadata;
 pub mod style;
