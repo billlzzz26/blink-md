@@ -4,8 +4,9 @@
 
 use crate::api::markdown::parse_markdown;
 use crate::converter::{ConverterError, FromPlatform, ToPlatform};
-use crate::ir::blocks::{ListItem, TaskItem};
+use crate::ir::blocks::{ListItem, TableRow, TaskItem};
 use crate::ir::inline::{InlineElement, TextStyle};
+use crate::ir::table::{CellAlignment, TableCell, TableRowType};
 use crate::ir::{DocumentMetadata, Platform, StyleSheet, UniversalBlock, UniversalDocument};
 
 pub struct MarkdownConverter;
@@ -119,6 +120,46 @@ fn bridge_notion_block_to_universal(block: crate::models::block::Block) -> Unive
             }],
             style: None,
         },
+        NBT::Table { table } => {
+            let has_header = table.has_column_header;
+            let rows = table
+                .children
+                .unwrap_or_default()
+                .into_iter()
+                .enumerate()
+                .map(|(i, row_block)| {
+                    let cells = match row_block.block_type {
+                        NBT::TableRow { table_row } => table_row
+                            .cells
+                            .into_iter()
+                            .map(|cell| TableCell {
+                                content: bridge_rich_text_to_inline(cell),
+                                colspan: None,
+                                rowspan: None,
+                                style: None,
+                                align: None,
+                            })
+                            .collect(),
+                        _ => Vec::new(),
+                    };
+                    let row_type = if i == 0 && has_header {
+                        TableRowType::Header
+                    } else {
+                        TableRowType::Body
+                    };
+                    TableRow {
+                        cells,
+                        row_type,
+                        style: None,
+                    }
+                })
+                .collect();
+            UniversalBlock::Table {
+                rows,
+                header: None,
+                style: None,
+            }
+        }
         _ => UniversalBlock::Raw {
             platform: Platform::Notion,
             data: serde_json::to_value(block).unwrap_or(serde_json::Value::Null),
@@ -201,11 +242,80 @@ fn render_universal_block(block: &UniversalBlock, indent: usize, out: &mut Strin
                 out.truncate(out.len() - 1);
             }
         }
+        UniversalBlock::Table { rows, header, .. } => {
+            render_table(rows, header.as_deref(), &tabs, out);
+        }
         _ => {
             out.push_str(&tabs);
             out.push_str("<!-- Unsupported UniversalBlock -->");
         }
     }
+}
+
+/// Render an IR table as a GFM pipe table. The first row (either the optional
+/// `header` field or the first `TableRow`) becomes the header line; column
+/// alignment is read from the header cells. No trailing newline is emitted —
+/// the caller adds block separators.
+fn render_table(rows: &[TableRow], header: Option<&[TableCell]>, tabs: &str, out: &mut String) {
+    // Normalise to a single row list whose first entry is the header.
+    let mut all_rows: Vec<TableRow> = Vec::new();
+    if let Some(cells) = header {
+        all_rows.push(TableRow {
+            cells: cells.to_vec(),
+            row_type: TableRowType::Header,
+            style: None,
+        });
+    }
+    all_rows.extend(rows.iter().cloned());
+    if all_rows.is_empty() {
+        return;
+    }
+
+    let ncols = all_rows.iter().map(|r| r.cells.len()).max().unwrap_or(0);
+    let render_row = |row: &TableRow, out: &mut String| {
+        out.push_str(tabs);
+        out.push('|');
+        for c in 0..ncols {
+            out.push(' ');
+            if let Some(cell) = row.cells.get(c) {
+                let mut s = String::new();
+                render_inline(&cell.content, &mut s);
+                out.push_str(&escape_cell(&s));
+            }
+            out.push_str(" |");
+        }
+    };
+
+    let head = &all_rows[0];
+    render_row(head, out);
+    out.push('\n');
+
+    // Separator line with per-column alignment markers from the header cells.
+    out.push_str(tabs);
+    out.push('|');
+    for c in 0..ncols {
+        out.push(' ');
+        out.push_str(
+            match head.cells.get(c).and_then(|cell| cell.align.as_ref()) {
+                Some(CellAlignment::Left) => ":---",
+                Some(CellAlignment::Center) => ":---:",
+                Some(CellAlignment::Right) => "---:",
+                None => "---",
+            },
+        );
+        out.push_str(" |");
+    }
+
+    for row in &all_rows[1..] {
+        out.push('\n');
+        render_row(row, out);
+    }
+}
+
+/// Escape a rendered cell so it is safe inside a GFM pipe table: literal pipes
+/// are backslash-escaped and newlines are flattened to spaces.
+fn escape_cell(s: &str) -> String {
+    s.replace('|', "\\|").replace(['\n', '\r'], " ")
 }
 
 fn render_inline(content: &[InlineElement], out: &mut String) {
@@ -307,5 +417,117 @@ mod tests {
 
         let md = MarkdownConverter::to_platform(&doc).unwrap();
         assert_eq!(md, "# Title\n**Body**");
+    }
+
+    #[test]
+    fn parses_gfm_table_into_ir() {
+        let md = "| Name | Age |\n| --- | --- |\n| Alice | 30 |\n| Bob | 25 |";
+        let doc = MarkdownConverter::from_platform(md.to_string()).unwrap();
+
+        let table = doc
+            .blocks
+            .iter()
+            .find_map(|b| match b {
+                UniversalBlock::Table { rows, .. } => Some(rows),
+                _ => None,
+            })
+            .expect("expected a table block");
+
+        // 1 header row + 2 body rows.
+        assert_eq!(table.len(), 3);
+        assert!(matches!(table[0].row_type, TableRowType::Header));
+        assert!(matches!(table[1].row_type, TableRowType::Body));
+        assert_eq!(table[0].cells.len(), 2);
+
+        let cell_text = |cell: &TableCell| {
+            let mut s = String::new();
+            render_inline(&cell.content, &mut s);
+            s
+        };
+        assert_eq!(cell_text(&table[0].cells[0]), "Name");
+        assert_eq!(cell_text(&table[2].cells[1]), "25");
+    }
+
+    #[test]
+    fn renders_ir_table_to_gfm() {
+        let doc = UniversalDocument {
+            metadata: DocumentMetadata::default(),
+            blocks: vec![UniversalBlock::Table {
+                rows: vec![
+                    TableRow {
+                        cells: vec![
+                            TableCell {
+                                content: vec![InlineElement::TextRun {
+                                    content: "Name".to_string(),
+                                    style: None,
+                                }],
+                                colspan: None,
+                                rowspan: None,
+                                style: None,
+                                align: None,
+                            },
+                            TableCell {
+                                content: vec![InlineElement::TextRun {
+                                    content: "Age".to_string(),
+                                    style: None,
+                                }],
+                                colspan: None,
+                                rowspan: None,
+                                style: None,
+                                align: Some(CellAlignment::Right),
+                            },
+                        ],
+                        row_type: TableRowType::Header,
+                        style: None,
+                    },
+                    TableRow {
+                        cells: vec![
+                            TableCell {
+                                content: vec![InlineElement::TextRun {
+                                    content: "Alice".to_string(),
+                                    style: None,
+                                }],
+                                colspan: None,
+                                rowspan: None,
+                                style: None,
+                                align: None,
+                            },
+                            TableCell {
+                                content: vec![InlineElement::TextRun {
+                                    content: "30".to_string(),
+                                    style: None,
+                                }],
+                                colspan: None,
+                                rowspan: None,
+                                style: None,
+                                align: None,
+                            },
+                        ],
+                        row_type: TableRowType::Body,
+                        style: None,
+                    },
+                ],
+                header: None,
+                style: None,
+            }],
+            styles: StyleSheet::default(),
+        };
+
+        let md = MarkdownConverter::to_platform(&doc).unwrap();
+        assert_eq!(md, "| Name | Age |\n| --- | ---: |\n| Alice | 30 |");
+    }
+
+    #[test]
+    fn table_roundtrips_through_ir() {
+        let md = "| A | B |\n| --- | --- |\n| 1 | 2 |";
+        let doc = MarkdownConverter::from_platform(md.to_string()).unwrap();
+        let out = MarkdownConverter::to_platform(&doc).unwrap();
+        assert_eq!(out, md);
+    }
+
+    #[test]
+    fn escapes_pipes_in_cells() {
+        assert_eq!(escape_cell("a|b"), "a\\|b");
+        assert_eq!(escape_cell("line1\nline2"), "line1 line2");
     }
 }

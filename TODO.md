@@ -62,7 +62,8 @@
 - [x] **Phase E — export**: `export_page_to_md(page_id, out_dir)` (CLI: `blink-md export-page <id> [--out-dir <dir>]`) writes one `<slug>-<page-id>.md` file per page with a typed YAML header + Markdown body — the reverse of Phase D, reusing `properties_to_yaml()`. Notion properties are mapped back to typed `PropertyValue`s (title, rich_text, number, select, multi_select, date, checkbox, url, email; unknown kinds fall back to `custom`). Implemented in [`src/cli/export_cmd.rs`](src/cli/export_cmd.rs) with `slugify()` / property-mapping unit tests.
 
 ### 1. Platform adapters behind Universal IR
-- [ ] GitHub Markdown/GFM extensions: footnotes, alerts, issue/PR refs, mentions, commit refs.
+- [x] **GFM tables**: `MarkdownConverter` round-trips pipe tables (parse → IR `Table`, render IR → aligned pipe table). `block_ir_to_notion` writes Notion `Table`/`TableRow` blocks (so `sync` pushes tables) and `NotionFromPlatform` regroups flattened API rows back into one IR table (so `export-page` renders a single table). Implemented in [`src/api/markdown.rs`](src/api/markdown.rs), [`src/converter/markdown.rs`](src/converter/markdown.rs), and [`src/converter/notion.rs`](src/converter/notion.rs).
+- [ ] GitHub Markdown/GFM extensions: footnotes, alerts, issue/PR refs, mentions, commit refs. _(Cell alignment is lost on the md→Notion→IR path since the Notion table model has no per-column alignment.)_
 - [ ] HTML adapter: semantic tags, styles, images, links, and platform extensions.
 - [ ] Full Lark/Feishu API adapter: 48 block types, mentions, topics, files, Bitable references.
 - [ ] Google Docs adapter: paragraphs, tables, TOC, section breaks, inline objects, suggestions.
