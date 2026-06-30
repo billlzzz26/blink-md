@@ -1,73 +1,72 @@
-# blink-md Plan — v0.3.1
+# blink-md Plan — v0.4.1
 
 ## Current state
-- Version: 0.3.1
-- Main branch: clean delivery baseline for cross-platform release artifacts, Thai TUI hardening, Universal Data Adapters, self-update, installers, and CLI help polish.
+- Version: 0.4.1
+- Current branch: `feature/google-workspace-oauth`
 - Source of truth: `TODO.md` for work status, `CHANGELOG.md` for released changes, `README.md` for user-facing guidance.
 - Quality gates: `make ci` plus GitHub Actions CI and Cross-Platform Build.
 
-## Completed in v0.3.1
-- Unified MCP server: single `blink-md-mcp` binary (feature `mcp`) with in-crate `src/mcp/` modules (core, tools, server). The former per-platform servers were merged; Jules/Hermes tooling moved to `tooling/jules`.
-- Universal IR foundation for Notion and Markdown conversion.
-- Markdown roundtrip tests and converter coverage.
-- TUI theme system with 15 JSON themes and syntect-based syntax highlighting.
-- Thai TUI hardening with grapheme-aware input and visual-width handling.
+## Completed in v0.4.1
+### MCP server (unified)
+- Single `blink-md-mcp` binary (feature `mcp`) bundling all tools.
+- In-crate `src/mcp/core.rs` shared pmcp utilities (was `mcp-core`).
+- Markdown, Notion/IR, Lark Sheets, and Mermaid tool groups.
+- Live Notion tools shared with `blink-md mcp-serve`.
+- Jules/Hermes bridge relocated to `tooling/jules` (outside the build).
+
+### Universal IR and converters
+- Universal IR document/block/inline/style/table/metadata types.
+- Notion ↔ IR conversion for pages, blocks, rich text, mentions, properties, and platform extensions.
+- Markdown/GFM ↔ IR conversion with roundtrip tests.
 - Lark/Feishu Sheets and CSV adapters through Universal IR.
-- Self-update command and global installers.
-- Release workflow for Linux, macOS Intel/ARM, and Windows artifacts.
-- Package hygiene guard to keep local agent data, secrets, and internal conductor docs out of `cargo package`.
+
+### Frontmatter integration (merged in main)
+- Phases A–E complete: detection, property mapping, converter, sync glue, and page export all landed.
+- See merged PRs #27, #28, #30.
 
 ---
 
-## Workflow Goals (md-sync, db2sheet, msg2chan)
+## Active workflow goals
 
-### Phase 1: md-sync (Markdown ↔ Notion Database)
-- [ ] **Phase B — property mapping**: parse explicit `type:` tagged YAML values into `PropertyValue` (Title, RichText, Number, Select, MultiSelect, Date, Checkbox, Url, Email, Relation)
-- [ ] **Phase C — converter**: `MarkdownWithFrontmatterConverter` round-trips Markdown+YAML ↔ UniversalDocument with `metadata.properties` populated
-- [ ] **Phase D — sync glue**: teach `blink-md sync --dir <dir>` to read frontmatter from each `.md` file and write properties into the Notion page on `create_page`
-- [ ] **Phase E — export**: `export_page_to_md(page_id, out_dir)` writes one `<slug>-<page-id>.md` file per page with YAML header + body
+### md-sync (completed)
+- [x] Phases A–E complete (merged)
 
-### Phase 2: db2sheet (Database to Sheet)
+### db2sheet (pending)
 - [ ] Add `db_query` tool with --format csv|json|osc
 - [ ] Support pagination via `start_cursor` and `page_size`
 - [ ] OSC output: emit `/row/update` messages for each row
 
-### Phase 3: msg2chan (Message to Channel)
+### msg2chan (pending)
 - [ ] Create `src/api/message.rs` module
 - [ ] Accept text input from stdin, file, or webhook
 - [ ] Auto-export to `.md` with slug+timestamp
 
 ---
 
-## Google Workspace Integration (OAuth + API Adapter)
+## Next work: Cloud Platform OAuth + API Adapters
 
-### Phase 1: OAuth Foundation
-- [ ] Create `src/oauth.rs` - token provider trait + caching (adapted from google-workspace-cli)
-- [ ] Create `src/services.rs` - service registry mapping aliases to API names/versions
-- [ ] Add `--google` feature to Cargo.toml with `yup-oauth2` config
+### Google Workspace
+- [ ] OAuth foundation (src/oauth.rs, src/services.rs)
+- [ ] Docs/Sheets API modules
+- [ ] IR converters
 
-### Phase 2: API Modules
-- [ ] Create `src/api/google/mod.rs` - common Google API utilities
-- [ ] Create `src/api/google/docs.rs` - Google Docs read/write
-- [ ] Create `src/api/google/sheets.rs` - Spreadsheet API
-- [ ] Create `src/api/google/keep.rs` - Google Keep notes
-- [ ] Create `src/api/google/chat.rs` - Chat spaces/messages
-- [ ] Create `src/api/google/calendar.rs` - Calendar events
-- [ ] Create `src/api/google/tasks.rs` - Task lists
+### Lark/Feishu
+- [ ] Tenant token provider
+- [ ] Docs/Sheets adapters (feishu-sdk)
+- [ ] IR converters
 
-### Phase 3: IR Adapters
-- [ ] Extend IR with Google property types (text styles, suggestions, section breaks)
-- [ ] Build `GoogleDocConverter` for lossless Docs ↔ Universal IR
-- [ ] Build `GoogleSheetConverter` for Sheets ↔ IR tables
-- [ ] Wire converters to `blink-md convert` command
+### Shared infrastructure
+- [ ] Unified `cloud` CLI command
+- [ ] Service registry pattern
+- [ ] Batch operations for efficiency
 
 ---
 
-## Dependencies
+## Dependencies to Add
 
-| Feature | Crates Needed |
-|---------|---------------|
+| Feature | Crates |
+|---------|--------|
 | Google OAuth | `yup-oauth2` (existing) |
 | Token encryption | `aes-gcm`, `zeroize` |
-| Google APIs | `google-docs1` (existing), `google-sheets4` (optional) |
 | OSC output | `rosc` (optional) |
+| Lark/Feishu | `feishu-sdk` (existing) |
