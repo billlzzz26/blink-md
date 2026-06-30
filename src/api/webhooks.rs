@@ -66,6 +66,12 @@ pub enum WebhookEventType {
     DatabaseMoved,
     DatabaseDeleted,
     DatabaseUndeleted,
+    DataSourceCreated,
+    DataSourceContentUpdated,
+    DataSourceSchemaUpdated,
+    DataSourceMoved,
+    DataSourceDeleted,
+    DataSourceUndeleted,
     CommentCreated,
     CommentUpdated,
     CommentDeleted,
@@ -88,6 +94,13 @@ impl From<&str> for WebhookEventType {
             "database.moved" => Self::DatabaseMoved,
             "database.deleted" => Self::DatabaseDeleted,
             "database.undeleted" => Self::DatabaseUndeleted,
+            // Data source events (Notion API version 2025-09-03 and later).
+            "data_source.created" => Self::DataSourceCreated,
+            "data_source.content_updated" => Self::DataSourceContentUpdated,
+            "data_source.schema_updated" => Self::DataSourceSchemaUpdated,
+            "data_source.moved" => Self::DataSourceMoved,
+            "data_source.deleted" => Self::DataSourceDeleted,
+            "data_source.undeleted" => Self::DataSourceUndeleted,
             "comment.created" => Self::CommentCreated,
             "comment.updated" => Self::CommentUpdated,
             "comment.deleted" => Self::CommentDeleted,
@@ -226,6 +239,21 @@ mod tests {
         let body = b"{}";
         assert!(!verify_webhook_signature(token, body, "deadbeef")); // no sha256= prefix
         assert!(!verify_webhook_signature(token, body, "sha256=zzzz")); // non-hex
+                                                                        // Valid hex but the wrong byte length: exercises the length-mismatch
+                                                                        // branch in `ct_eq` (must return false, not panic).
+        assert!(!verify_webhook_signature(token, body, "sha256=dead"));
+    }
+
+    #[test]
+    fn data_source_event_types_are_classified() {
+        assert_eq!(
+            WebhookEventType::from("data_source.content_updated"),
+            WebhookEventType::DataSourceContentUpdated
+        );
+        assert_eq!(
+            WebhookEventType::from("data_source.schema_updated"),
+            WebhookEventType::DataSourceSchemaUpdated
+        );
     }
 
     #[test]
