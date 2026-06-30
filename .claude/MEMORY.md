@@ -57,6 +57,8 @@ Active work: Markdown + YAML Frontmatter ↔ Notion Database
 ## Work Log
 
 ### 2026-06-30
+- chore: add project hooks.json for session end memory
+- docs: add .claude/MEMORY.md and add-memory skill
 - git add commit push: committed Cargo.lock regeneration and skills/ directory (19 files, 6136 insertions)
 - Created .claude/MEMORY.md with project summary and add-memory skill
 - Configured hooks.json and post-commit for auto-summarizing work

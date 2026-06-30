@@ -1,0 +1,11 @@
+{
+  "hooks": [
+    {
+      "name": "add_memory",
+      "trigger": "session_end",
+      "type": "script",
+      "script": "add-memory.sh",
+      "enabled": true
+    }
+  ]
+}

@@ -14,13 +14,12 @@ secrets/
 .qwen/
 .learnings/
 
+# Project memory (keep templates/hooks, ignore runtime files)
+.claude/hooks/*.sh.local
+.claude/memory/*/
+
 # MCP subproject build artifacts
 src/mcp/*/target/
-
-# Agent tools/hooks (keep hooks.json and referenced scripts)
-.hermes/
-!.hermes/hooks.json
-!.hermes/hooks/*.sh
 
 # IDE
 .idea/
