@@ -1,5 +1,3 @@
 {
-  "hooks": {
-    "session_end": ".claude/hooks/add-memory.sh"
-  }
+  "hooks": {}
 }

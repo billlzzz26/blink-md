@@ -36,3 +36,38 @@
 - [ ] Create `src/api/message.rs` module
 - [ ] Accept text input from stdin, file, or webhook
 - [ ] Auto-export to `.md` with slug+timestamp
+
+---
+
+## Google Workspace Integration (OAuth + API Adapter)
+
+### Phase 1: OAuth Foundation
+- [ ] Create `src/oauth.rs` - token provider trait + caching (adapted from google-workspace-cli)
+- [ ] Create `src/services.rs` - service registry mapping aliases to API names/versions
+- [ ] Add `--google` feature to Cargo.toml with `yup-oauth2` config
+
+### Phase 2: API Modules
+- [ ] Create `src/api/google/mod.rs` - common Google API utilities
+- [ ] Create `src/api/google/docs.rs` - Google Docs read/write
+- [ ] Create `src/api/google/sheets.rs` - Spreadsheet API
+- [ ] Create `src/api/google/keep.rs` - Google Keep notes
+- [ ] Create `src/api/google/chat.rs` - Chat spaces/messages
+- [ ] Create `src/api/google/calendar.rs` - Calendar events
+- [ ] Create `src/api/google/tasks.rs` - Task lists
+
+### Phase 3: IR Adapters
+- [ ] Extend IR with Google property types (text styles, suggestions, section breaks)
+- [ ] Build `GoogleDocConverter` for lossless Docs ↔ Universal IR
+- [ ] Build `GoogleSheetConverter` for Sheets ↔ IR tables
+- [ ] Wire converters to `blink-md convert` command
+
+---
+
+## Dependencies
+
+| Feature | Crates Needed |
+|---------|---------------|
+| Google OAuth | `yup-oauth2` (existing) |
+| Token encryption | `aes-gcm`, `zeroize` |
+| Google APIs | `google-docs1` (existing), `google-sheets4` (optional) |
+| OSC output | `rosc` (optional) |

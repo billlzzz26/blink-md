@@ -60,3 +60,44 @@ Every chat message becomes a dated note in a Notion database, written to markdow
 1. Add message handler in `src/api/message.rs`
 2. Wire to Notion create_page API
 3. Configure webhook server (axum/hyper)
+
+---
+
+## Google Workspace OAuth + API Adapter
+
+### Goal
+Integrate Google Workspace APIs (Docs, Sheets, Keep, Chat, Calendar, Tasks) using `yup-oauth2` pattern from google-workspace-cli.
+
+### Context
+blink-md already has `yup-oauth2` and `google-docs1` in Cargo.toml. Extend to full Google Workspace support.
+
+### Architecture (adapted from google-workspace-cli)
+- OAuth flow with `yup-oauth2::InstalledFlowDelegate` (loopback server)
+- Token caching to `~/.config/blink-md/token_cache.json`
+- Service registry mapping aliases → API names/versions
+
+### Services to Add
+| Alias | API | Version | Description |
+|-------|-----|---------|-------------|
+| docs | docs | v1 | Read/write Google Docs |
+| sheets | sheets | v4 | Read/write spreadsheets |
+| keep | keep | v1 | Manage notes |
+| chat | chat | v1 | Manage spaces/messages |
+| calendar | calendar | v3 | Manage calendars/events |
+| tasks | tasks | v1 | Manage task lists |
+
+### Implementation Path
+1. Create `src/oauth.rs` - token provider trait + caching
+2. Create `src/services.rs` - service registry pattern
+3. Create `src/api/google/mod.rs` - Google API modules
+4. Add `--google` feature to Cargo.toml
+
+---
+
+## Dependencies to Add
+
+| Feature | Crates |
+|---------|--------|
+| Google OAuth | `yup-oauth2` (existing) |
+| Token encryption | `aes-gcm`, `zeroize` |
+| Google APIs | `google-docs1` (existing), `google-sheets4` (optional) |
