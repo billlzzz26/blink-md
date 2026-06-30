@@ -17,33 +17,22 @@
 - Release workflow for Linux, macOS Intel/ARM, and Windows artifacts.
 - Package hygiene guard to keep local agent data, secrets, and internal conductor docs out of `cargo package`.
 
-## Active engineering focus
-1. Keep CI green across stable CI, cross-platform release builds, and package hygiene.
-2. Finish remaining platform adapters behind Universal IR:
-   - GitHub Markdown/GFM
-   - HTML
-   - Lark/Feishu API
-   - Google Docs
-   - PDF
-   - Docx
-   - Sheets/Excel
-3. Finish remaining Notion API surface:
-   - page markdown endpoints
-   - data source CRUD
-   - webhooks
-   - search sort/filter
-   - block position updates
-   - file upload polish
-4. Improve TUI from browse-only to preview/edit workflows:
-   - preview page as Markdown through IR
-   - edit with `$EDITOR`
-   - convert back and push to Notion
-   - better status/help surfaces
+---
 
-## Definition of done for every new feature
-- Code change is covered by tests that fail before the fix or feature exists.
-- `make ci` passes locally.
-- `scripts/check-package-hygiene.py` passes.
-- README, TODO.md, CHANGELOG.md, and relevant docs are updated before merge.
-- CI workflows are updated if the feature changes build, package, release, or cross-platform behavior.
-- Secrets and local agent state stay ignored and are never included in packages or commits.
+## Workflow Goals (md-sync, db2sheet, msg2chan)
+
+### Phase 1: md-sync (Markdown ↔ Notion Database)
+- [ ] **Phase B — property mapping**: parse explicit `type:` tagged YAML values into `PropertyValue` (Title, RichText, Number, Select, MultiSelect, Date, Checkbox, Url, Email, Relation)
+- [ ] **Phase C — converter**: `MarkdownWithFrontmatterConverter` round-trips Markdown+YAML ↔ UniversalDocument with `metadata.properties` populated
+- [ ] **Phase D — sync glue**: teach `blink-md sync --dir <dir>` to read frontmatter from each `.md` file and write properties into the Notion page on `create_page`
+- [ ] **Phase E — export**: `export_page_to_md(page_id, out_dir)` writes one `<slug>-<page-id>.md` file per page with YAML header + body
+
+### Phase 2: db2sheet (Database to Sheet)
+- [ ] Add `db_query` tool with --format csv|json|osc
+- [ ] Support pagination via `start_cursor` and `page_size`
+- [ ] OSC output: emit `/row/update` messages for each row
+
+### Phase 3: msg2chan (Message to Channel)
+- [ ] Create `src/api/message.rs` module
+- [ ] Accept text input from stdin, file, or webhook
+- [ ] Auto-export to `.md` with slug+timestamp
