@@ -2,11 +2,11 @@
 
 ## REQUIREMENTS ANALYSIS AND UI COMPLETENESS
 
-โปรเจกต์ `notion-rs` ต้องการ Schema ที่ยืดหยุ่นเพื่อรองรับหน้าเพจแบบลำดับชั้น บล็อกหลายประเภท พร็อพเพอร์ตี้แบบไดนามิก และการโต้ตอบของผู้ใช้ 
+โปรเจกต์ `notion-rs` ต้องการ Schema ที่ยืดหยุ่นเพื่อรองรับหน้าเพจแบบลำดับชั้น บล็อกหลายประเภท พร็อพเพอร์ตี้แบบไดนามิก และการโต้ตอบของผู้ใช้
 
 ข้อกำหนดสำคัญเพื่อให้แน่ใจว่าการแปลงข้อมูลแสดงผลบน UI ได้ถูกต้องและสมบูรณ์:
 1. Ordering & Sequencing: บล็อกและเพจต้องมีลำดับที่ชัดเจน (`sort_order`) เพื่อให้ UI วาดองค์ประกอบตามลำดับที่ถูกต้อง
-2. Database Views: ฐานข้อมูลต้องรองรับมุมมองหลายแบบ (Table, Board, Gallery, Timeline) 
+2. Database Views: ฐานข้อมูลต้องรองรับมุมมองหลายแบบ (Table, Board, Gallery, Timeline)
 3. Rich Format Metadata: สี การจัดหน้า และการตกแต่งข้อความถูกเก็บในฟิลด์ `JSONB` เพื่อรักษาความถูกต้องของการแสดงผล
 
 ## ENTITY RELATIONSHIP
@@ -82,8 +82,8 @@ CREATE TABLE workspaces (
 CREATE TABLE databases (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     workspace_id UUID NOT NULL REFERENCES workspaces(id),
-    parent_page_id UUID, 
-    title JSONB NOT NULL DEFAULT '[]', 
+    parent_page_id UUID,
+    title JSONB NOT NULL DEFAULT '[]',
     description JSONB DEFAULT '[]',
     icon JSONB,
     cover JSONB,
@@ -96,14 +96,14 @@ CREATE TABLE databases (
     last_edited_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Database Views 
+-- Database Views
 CREATE TABLE database_views (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     database_id UUID NOT NULL REFERENCES databases(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
-    view_type VARCHAR(50) NOT NULL, 
-    config JSONB NOT NULL DEFAULT '{}', 
-    sort_order DOUBLE PRECISION NOT NULL, 
+    view_type VARCHAR(50) NOT NULL,
+    config JSONB NOT NULL DEFAULT '{}',
+    sort_order DOUBLE PRECISION NOT NULL,
     created_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -113,15 +113,15 @@ CREATE TABLE pages (
     workspace_id UUID NOT NULL REFERENCES workspaces(id),
     parent_type VARCHAR(20) NOT NULL CHECK (parent_type IN ('workspace', 'database', 'page')),
     parent_id UUID NOT NULL,
-    sort_order DOUBLE PRECISION NOT NULL DEFAULT 0, 
+    sort_order DOUBLE PRECISION NOT NULL DEFAULT 0,
 
     icon JSONB,
     cover JSONB,
-    properties JSONB NOT NULL DEFAULT '{}', 
+    properties JSONB NOT NULL DEFAULT '{}',
     url TEXT,
     public_url TEXT,
     in_trash BOOLEAN DEFAULT FALSE,
-    
+
     created_by UUID NOT NULL REFERENCES users(id),
     last_edited_by UUID NOT NULL REFERENCES users(id),
     created_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -134,13 +134,13 @@ CREATE TABLE blocks (
     page_id UUID NOT NULL REFERENCES pages(id) ON DELETE CASCADE,
     parent_type VARCHAR(20) NOT NULL CHECK (parent_type IN ('page', 'block')),
     parent_id UUID NOT NULL,
-    
-    sort_order DOUBLE PRECISION NOT NULL, 
-    block_type VARCHAR(50) NOT NULL, 
-    content JSONB NOT NULL DEFAULT '{}', 
+
+    sort_order DOUBLE PRECISION NOT NULL,
+    block_type VARCHAR(50) NOT NULL,
+    content JSONB NOT NULL DEFAULT '{}',
     has_children BOOLEAN DEFAULT FALSE,
     in_trash BOOLEAN DEFAULT FALSE,
-    
+
     created_by UUID NOT NULL REFERENCES users(id),
     last_edited_by UUID NOT NULL REFERENCES users(id),
     created_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -150,8 +150,8 @@ CREATE TABLE blocks (
 -- Comments
 CREATE TABLE comments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    discussion_id UUID NOT NULL, 
-    parent_id UUID NOT NULL, 
+    discussion_id UUID NOT NULL,
+    parent_id UUID NOT NULL,
     parent_type VARCHAR(20) NOT NULL CHECK (parent_type IN ('page', 'block')),
     rich_text JSONB NOT NULL DEFAULT '[]',
     created_by UUID NOT NULL REFERENCES users(id),
