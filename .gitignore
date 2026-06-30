@@ -11,11 +11,16 @@ secrets/
 
 # AI agent local data
 .gemini/
-.learnings/
 .qwen/
+.learnings/
 
 # MCP subproject build artifacts
 src/mcp/*/target/
+
+# Agent tools/hooks (keep hooks.json and referenced scripts)
+.hermes/
+!.hermes/hooks.json
+!.hermes/hooks/*.sh
 
 # IDE
 .idea/
