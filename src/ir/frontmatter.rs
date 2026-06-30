@@ -264,17 +264,25 @@ fn parse_property(name: &str, v: &YamlValue) -> Result<PropertyValue, Frontmatte
             None | Some(YamlValue::Null) => Ok(PropertyValue::Date { date: None }),
             Some(YamlValue::String(s)) => {
                 // `end` and `time_zone` are optional sibling keys so date ranges
-                // and zoned dates round-trip; plain dates omit them.
-                let optional_str = |key: &str| match m.get(YamlValue::String(key.into())) {
-                    None | Some(YamlValue::Null) => None,
-                    Some(YamlValue::String(v)) => Some(v.clone()),
-                    _ => None,
+                // and zoned dates round-trip; plain dates omit them. A present
+                // but non-string value is a malformed field, not a missing one,
+                // so it errors rather than being silently dropped.
+                let optional_str = |key: &str| -> Result<Option<String>, FrontmatterError> {
+                    match m.get(YamlValue::String(key.into())) {
+                        None | Some(YamlValue::Null) => Ok(None),
+                        Some(YamlValue::String(v)) => Ok(Some(v.clone())),
+                        Some(other) => Err(FrontmatterError::WrongFieldType(
+                            name.into(),
+                            key.into(),
+                            format!("{:?}", other),
+                        )),
+                    }
                 };
                 Ok(PropertyValue::Date {
                     date: Some(crate::ir::metadata::DateValue {
                         start: s.clone(),
-                        end: optional_str("end"),
-                        time_zone: optional_str("time_zone"),
+                        end: optional_str("end")?,
+                        time_zone: optional_str("time_zone")?,
                     }),
                 })
             }
@@ -592,6 +600,18 @@ mod tests {
             }
             other => panic!("expected Date, got {:?}", other),
         }
+    }
+
+    #[test]
+    fn non_string_date_end_is_rejected() {
+        // A present-but-malformed `end` must error, not be silently dropped.
+        let yaml = "when:\n  type: date\n  value: \"2026-06-30\"\n  end: 42\n";
+        let err = parse_frontmatter_to_properties(yaml).unwrap_err();
+        assert!(
+            matches!(err, FrontmatterError::WrongFieldType(_, ref field, _) if field == "end"),
+            "expected WrongFieldType for `end`, got {:?}",
+            err
+        );
     }
 
     #[test]
