@@ -252,32 +252,52 @@ fn render_universal_block(block: &UniversalBlock, indent: usize, out: &mut Strin
     }
 }
 
-/// Render an IR table as a GFM pipe table. The first row (either the optional
-/// `header` field or the first `TableRow`) becomes the header line; column
-/// alignment is read from the header cells. No trailing newline is emitted —
-/// the caller adds block separators.
+/// Render an IR table as a GFM pipe table. Column alignment is read from the
+/// header cells. No trailing newline is emitted — the caller adds block
+/// separators.
+///
+/// GFM requires a header row, so the header is chosen as: the explicit
+/// `header` field if present; otherwise a leading `TableRowType::Header` row;
+/// otherwise a synthetic empty header so a body-only table keeps all of its
+/// rows as data rather than promoting the first one.
 fn render_table(rows: &[TableRow], header: Option<&[TableCell]>, tabs: &str, out: &mut String) {
-    // Normalise to a single row list whose first entry is the header.
-    let mut all_rows: Vec<TableRow> = Vec::new();
-    if let Some(cells) = header {
-        all_rows.push(TableRow {
-            cells: cells.to_vec(),
-            row_type: TableRowType::Header,
-            style: None,
-        });
-    }
-    all_rows.extend(rows.iter().cloned());
-    if all_rows.is_empty() {
+    let ncols = rows
+        .iter()
+        .map(|r| r.cells.len())
+        .chain(header.map(|h| h.len()))
+        .max()
+        .unwrap_or(0);
+    if ncols == 0 {
         return;
     }
 
-    let ncols = all_rows.iter().map(|r| r.cells.len()).max().unwrap_or(0);
-    let render_row = |row: &TableRow, out: &mut String| {
+    let empty_header = vec![
+        TableCell {
+            content: Vec::new(),
+            colspan: None,
+            rowspan: None,
+            style: None,
+            align: None,
+        };
+        ncols
+    ];
+    let (header_cells, body_rows): (&[TableCell], &[TableRow]) = if let Some(cells) = header {
+        (cells, rows)
+    } else if rows
+        .first()
+        .is_some_and(|r| matches!(r.row_type, TableRowType::Header))
+    {
+        (&rows[0].cells, &rows[1..])
+    } else {
+        (&empty_header, rows)
+    };
+
+    let render_cells = |cells: &[TableCell], out: &mut String| {
         out.push_str(tabs);
         out.push('|');
         for c in 0..ncols {
             out.push(' ');
-            if let Some(cell) = row.cells.get(c) {
+            if let Some(cell) = cells.get(c) {
                 let mut s = String::new();
                 render_inline(&cell.content, &mut s);
                 out.push_str(&escape_cell(&s));
@@ -286,8 +306,7 @@ fn render_table(rows: &[TableRow], header: Option<&[TableCell]>, tabs: &str, out
         }
     };
 
-    let head = &all_rows[0];
-    render_row(head, out);
+    render_cells(header_cells, out);
     out.push('\n');
 
     // Separator line with per-column alignment markers from the header cells.
@@ -296,7 +315,7 @@ fn render_table(rows: &[TableRow], header: Option<&[TableCell]>, tabs: &str, out
     for c in 0..ncols {
         out.push(' ');
         out.push_str(
-            match head.cells.get(c).and_then(|cell| cell.align.as_ref()) {
+            match header_cells.get(c).and_then(|cell| cell.align.as_ref()) {
                 Some(CellAlignment::Left) => ":---",
                 Some(CellAlignment::Center) => ":---:",
                 Some(CellAlignment::Right) => "---:",
@@ -306,9 +325,9 @@ fn render_table(rows: &[TableRow], header: Option<&[TableCell]>, tabs: &str, out
         out.push_str(" |");
     }
 
-    for row in &all_rows[1..] {
+    for row in body_rows {
         out.push('\n');
-        render_row(row, out);
+        render_cells(&row.cells, out);
     }
 }
 
@@ -529,5 +548,43 @@ mod tests {
     fn escapes_pipes_in_cells() {
         assert_eq!(escape_cell("a|b"), "a\\|b");
         assert_eq!(escape_cell("line1\nline2"), "line1 line2");
+    }
+
+    #[test]
+    fn body_only_table_gets_synthetic_header() {
+        // A table with no header row must not promote its first data row to the
+        // GFM header; it gets an empty synthetic header instead.
+        let cell = |t: &str| TableCell {
+            content: vec![InlineElement::TextRun {
+                content: t.to_string(),
+                style: None,
+            }],
+            colspan: None,
+            rowspan: None,
+            style: None,
+            align: None,
+        };
+        let doc = UniversalDocument {
+            metadata: DocumentMetadata::default(),
+            blocks: vec![UniversalBlock::Table {
+                rows: vec![
+                    TableRow {
+                        cells: vec![cell("1"), cell("2")],
+                        row_type: TableRowType::Body,
+                        style: None,
+                    },
+                    TableRow {
+                        cells: vec![cell("3"), cell("4")],
+                        row_type: TableRowType::Body,
+                        style: None,
+                    },
+                ],
+                header: None,
+                style: None,
+            }],
+            styles: StyleSheet::default(),
+        };
+        let md = MarkdownConverter::to_platform(&doc).unwrap();
+        assert_eq!(md, "|  |  |\n| --- | --- |\n| 1 | 2 |\n| 3 | 4 |");
     }
 }

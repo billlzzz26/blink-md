@@ -510,14 +510,20 @@ pub fn parse_markdown(md: &str) -> Vec<Block> {
                     }));
                 }
                 TagEnd::Table => {
-                    blocks.push(create_block(BlockType::Table {
+                    let rows = std::mem::take(&mut table_rows);
+                    let has_rows = !rows.is_empty();
+                    let mut block = create_block(BlockType::Table {
                         table: TableContent {
                             table_width,
                             has_column_header: table_has_header,
                             has_row_header: false,
-                            children: Some(std::mem::take(&mut table_rows)),
+                            children: Some(rows),
                         },
-                    }));
+                    });
+                    // The table owns its `TableRow` children, so reflect that in
+                    // the flag consumers rely on (e.g. recursive export).
+                    block.has_children = has_rows;
+                    blocks.push(block);
                 }
                 _ => {}
             },

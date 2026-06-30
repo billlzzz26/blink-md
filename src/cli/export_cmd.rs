@@ -121,7 +121,11 @@ fn notion_property_to_ir(name: &str, value: &Value) -> PropertyValue {
                         .and_then(|d| d.get("end"))
                         .and_then(Value::as_str)
                         .map(str::to_string),
-                    time_zone: None,
+                    time_zone: value
+                        .get("date")
+                        .and_then(|d| d.get("time_zone"))
+                        .and_then(Value::as_str)
+                        .map(str::to_string),
                 }),
         },
         Some("checkbox") => PropertyValue::Checkbox {

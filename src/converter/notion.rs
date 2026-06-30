@@ -730,24 +730,27 @@ fn block_ir_to_notion(block: &UniversalBlock) -> Result<Block, ConverterError> {
             },
         }),
         UniversalBlock::Table { rows, header, .. } => {
-            let mut notion_rows: Vec<Block> = Vec::new();
-            let mut has_column_header = false;
-            if let Some(cells) = header {
-                has_column_header = true;
-                notion_rows.push(table_row_to_notion(cells));
-            }
-            for row in rows {
-                if matches!(row.row_type, TableRowType::Header) {
-                    has_column_header = true;
-                }
-                notion_rows.push(table_row_to_notion(&row.cells));
-            }
+            // Notion requires every TableRow to have exactly `table_width`
+            // cells, so compute the width up front and pad ragged rows.
             let table_width = rows
                 .iter()
                 .map(|r| r.cells.len())
                 .chain(header.iter().map(|h| h.len()))
                 .max()
-                .unwrap_or(0) as u32;
+                .unwrap_or(0);
+            let mut notion_rows: Vec<Block> = Vec::new();
+            let mut has_column_header = false;
+            if let Some(cells) = header {
+                has_column_header = true;
+                notion_rows.push(table_row_to_notion(cells, table_width));
+            }
+            for row in rows {
+                if matches!(row.row_type, TableRowType::Header) {
+                    has_column_header = true;
+                }
+                notion_rows.push(table_row_to_notion(&row.cells, table_width));
+            }
+            let table_width = table_width as u32;
             Ok(Block {
                 object: "block".to_string(),
                 id: "temp".to_string(),
@@ -774,8 +777,14 @@ fn block_ir_to_notion(block: &UniversalBlock) -> Result<Block, ConverterError> {
     }
 }
 
-/// Build a Notion `TableRow` block from IR table cells.
-fn table_row_to_notion(cells: &[TableCell]) -> Block {
+/// Build a Notion `TableRow` block from IR table cells, padding to `width`
+/// with empty cells so Notion does not reject a ragged row.
+fn table_row_to_notion(cells: &[TableCell], width: usize) -> Block {
+    let mut row_cells: Vec<Vec<RichText>> = cells
+        .iter()
+        .map(|c| inline_to_rich_text(&c.content))
+        .collect();
+    row_cells.resize_with(width.max(row_cells.len()), Vec::new);
     Block {
         object: "block".to_string(),
         id: "temp".to_string(),
@@ -787,12 +796,7 @@ fn table_row_to_notion(cells: &[TableCell]) -> Block {
         in_trash: false,
         parent: None,
         block_type: BlockType::TableRow {
-            table_row: TableRowContent {
-                cells: cells
-                    .iter()
-                    .map(|c| inline_to_rich_text(&c.content))
-                    .collect(),
-            },
+            table_row: TableRowContent { cells: row_cells },
         },
     }
 }
@@ -947,7 +951,11 @@ fn property_value_from_ir(value: &PropertyValue) -> Result<Value, ConverterError
             serde_json::json!({ "relation": relation.iter().map(|id| serde_json::json!({ "id": id })).collect::<Vec<_>>() }),
         ),
         PropertyValue::Files { files } => Ok(serde_json::json!({ "files": files })),
-        PropertyValue::Custom { key, value } => Ok(serde_json::json!({ key: value })),
+        // A `Custom` value already holds the full Notion property body
+        // (e.g. `{"people": [...]}` or `{"relation": [...]}`); emit it as-is.
+        // `properties_from_ir` keys it under the property name, so wrapping it
+        // again here would double-nest and corrupt the property.
+        PropertyValue::Custom { value, .. } => Ok(value.clone()),
         _ => Err(ConverterError::ConversionFailed(format!(
             "Property type not yet implemented: {:?}",
             value
@@ -1042,5 +1050,53 @@ mod tests {
             }
             other => panic!("expected Table, got {:?}", other),
         }
+    }
+
+    #[test]
+    fn ragged_ir_rows_are_padded_to_table_width() {
+        let table = UniversalBlock::Table {
+            rows: vec![
+                TableRow {
+                    cells: vec![ir_cell("A"), ir_cell("B"), ir_cell("C")],
+                    row_type: TableRowType::Header,
+                    style: None,
+                },
+                TableRow {
+                    cells: vec![ir_cell("1")],
+                    row_type: TableRowType::Body,
+                    style: None,
+                },
+            ],
+            header: None,
+            style: None,
+        };
+        let block = block_ir_to_notion(&table).unwrap();
+        match block.block_type {
+            BlockType::Table { table } => {
+                assert_eq!(table.table_width, 3);
+                let children = table.children.expect("rows");
+                // Every emitted TableRow must carry exactly `table_width` cells.
+                for child in &children {
+                    match &child.block_type {
+                        BlockType::TableRow { table_row } => {
+                            assert_eq!(table_row.cells.len(), 3);
+                        }
+                        other => panic!("expected TableRow, got {:?}", other),
+                    }
+                }
+            }
+            other => panic!("expected Table, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn custom_property_emits_body_without_double_wrapping() {
+        let custom = PropertyValue::Custom {
+            key: "People".to_string(),
+            value: serde_json::json!({ "people": [{ "id": "u1" }] }),
+        };
+        let json = property_value_from_ir(&custom).unwrap();
+        // Must be the bare property body, not `{ "People": { ... } }`.
+        assert_eq!(json, serde_json::json!({ "people": [{ "id": "u1" }] }));
     }
 }

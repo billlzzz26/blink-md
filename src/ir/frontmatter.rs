@@ -262,13 +262,22 @@ fn parse_property(name: &str, v: &YamlValue) -> Result<PropertyValue, Frontmatte
         }
         PropertyType::Date => match m.get(YamlValue::String("value".into())) {
             None | Some(YamlValue::Null) => Ok(PropertyValue::Date { date: None }),
-            Some(YamlValue::String(s)) => Ok(PropertyValue::Date {
-                date: Some(crate::ir::metadata::DateValue {
-                    start: s.clone(),
-                    end: None,
-                    time_zone: None,
-                }),
-            }),
+            Some(YamlValue::String(s)) => {
+                // `end` and `time_zone` are optional sibling keys so date ranges
+                // and zoned dates round-trip; plain dates omit them.
+                let optional_str = |key: &str| match m.get(YamlValue::String(key.into())) {
+                    None | Some(YamlValue::Null) => None,
+                    Some(YamlValue::String(v)) => Some(v.clone()),
+                    _ => None,
+                };
+                Ok(PropertyValue::Date {
+                    date: Some(crate::ir::metadata::DateValue {
+                        start: s.clone(),
+                        end: optional_str("end"),
+                        time_zone: optional_str("time_zone"),
+                    }),
+                })
+            }
             Some(other) => Err(FrontmatterError::WrongFieldType(
                 name.into(),
                 "value".into(),
@@ -438,6 +447,22 @@ pub fn properties_to_yaml(
                         .map(|d| YamlValue::String(d.start.clone()))
                         .unwrap_or(YamlValue::Null),
                 );
+                // Emit `end` / `time_zone` only when present so plain dates stay
+                // a single `value:` line and ranges/zoned dates round-trip.
+                if let Some(d) = date {
+                    if let Some(end) = &d.end {
+                        entry.insert(
+                            YamlValue::String("end".into()),
+                            YamlValue::String(end.clone()),
+                        );
+                    }
+                    if let Some(tz) = &d.time_zone {
+                        entry.insert(
+                            YamlValue::String("time_zone".into()),
+                            YamlValue::String(tz.clone()),
+                        );
+                    }
+                }
             }
             PropertyValue::Checkbox { checkbox } => {
                 entry.insert(
@@ -539,5 +564,51 @@ mod tests {
         let out = properties_to_yaml(&m).unwrap();
         assert!(out.contains("type: title"));
         assert!(out.contains("Hello"));
+    }
+
+    #[test]
+    fn date_range_with_time_zone_roundtrips() {
+        let mut props = HashMap::new();
+        props.insert(
+            "when".to_string(),
+            PropertyValue::Date {
+                date: Some(crate::ir::metadata::DateValue {
+                    start: "2026-06-30".to_string(),
+                    end: Some("2026-07-02".to_string()),
+                    time_zone: Some("America/New_York".to_string()),
+                }),
+            },
+        );
+        let yaml = properties_to_yaml(&props).unwrap();
+        assert!(yaml.contains("end: 2026-07-02"));
+        assert!(yaml.contains("time_zone: America/New_York"));
+
+        let parsed = parse_frontmatter_to_properties(&yaml).unwrap();
+        match parsed.get("when") {
+            Some(PropertyValue::Date { date: Some(d) }) => {
+                assert_eq!(d.start, "2026-06-30");
+                assert_eq!(d.end.as_deref(), Some("2026-07-02"));
+                assert_eq!(d.time_zone.as_deref(), Some("America/New_York"));
+            }
+            other => panic!("expected Date, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn plain_date_omits_end_and_time_zone() {
+        let mut props = HashMap::new();
+        props.insert(
+            "due".to_string(),
+            PropertyValue::Date {
+                date: Some(crate::ir::metadata::DateValue {
+                    start: "2026-06-30".to_string(),
+                    end: None,
+                    time_zone: None,
+                }),
+            },
+        );
+        let yaml = properties_to_yaml(&props).unwrap();
+        assert!(!yaml.contains("end:"));
+        assert!(!yaml.contains("time_zone:"));
     }
 }
