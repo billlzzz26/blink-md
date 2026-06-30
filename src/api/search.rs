@@ -55,7 +55,11 @@ impl NotionClient {
     ///
     /// Pagination is hard-capped at [`Self::SEARCH_ALL_MAX_PAGES`] pages so a
     /// server that keeps reporting `has_more: true` (with a fresh cursor each
-    /// time) cannot drive unbounded iteration or memory growth.
+    /// time) cannot drive unbounded iteration or memory growth. If that cap is
+    /// reached while the server still reports more pages, this returns
+    /// [`NotionError::PaginationLimitExceeded`] rather than silently truncating
+    /// — the method's contract is "every result, or an error", never a partial
+    /// set that looks complete.
     pub async fn search_all(
         &self,
         query: Option<String>,
@@ -76,14 +80,18 @@ impl NotionClient {
                 .await?;
             all.extend(page.results);
             if !page.has_more {
-                break;
+                return Ok(all);
             }
             // Defend against a server that reports `has_more` without a cursor.
             match page.next_cursor {
                 Some(next) => cursor = Some(next),
-                None => break,
+                None => return Ok(all),
             }
         }
-        Ok(all)
+        // The loop exhausted the page cap while `has_more` was still true:
+        // surface that explicitly instead of returning a truncated result.
+        Err(crate::error::NotionError::PaginationLimitExceeded {
+            limit: Self::SEARCH_ALL_MAX_PAGES,
+        })
     }
 }

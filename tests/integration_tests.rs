@@ -389,9 +389,14 @@ mod search_pagination_tests {
             .mount(&server)
             .await;
 
-        // Second page (and beyond) terminates the loop.
+        // Second page: only matches when the cursor from page 1 was forwarded.
+        // If cursor forwarding broke, no mock matches the 2nd request and the
+        // call errors, failing the test.
         wiremock::Mock::given(wiremock::matchers::method("POST"))
             .and(wiremock::matchers::path("/search"))
+            .and(wiremock::matchers::body_partial_json(
+                serde_json::json!({ "start_cursor": "c2" }),
+            ))
             .respond_with(wiremock::ResponseTemplate::new(200).set_body_string(
                 r#"{"object":"list","results":[{"id":"p2"}],"next_cursor":null,"has_more":false}"#,
             ))
