@@ -79,11 +79,13 @@
 - [x] **Block operations: delete, get, append with position** — `get_block()` added; `append_block_children` already takes a `Position`; `update_block`/`delete_block` present in [`src/api/blocks.rs`](src/api/blocks.rs). _(per-block-type typed update still open.)_
 - [ ] File upload polish: multipart, external URL, base64, retry/error handling.
 
-### 3. TUI preview/edit workflows
-- [ ] Preview page as Markdown through IR.
-- [ ] Edit page in `$EDITOR`, convert back, and push to Notion.
-- [ ] Conflict resolution: local wins, remote wins, merge.
-- [ ] Live search results and better status/help surfaces.
+### 3. CLI & TUI UX
+- [x] **CLI output formatting** — list/get commands render aligned, unicode-width-aware tables by default; global `--format table|json` for machine output. Lives in [`src/cli/output.rs`](src/cli/output.rs). _(Increment 1.)_
+- [x] **Industry-standard error output** — `error: <message>: <cause>` to stderr, non-zero exit, red on TTY (honors `NO_COLOR`); `-v/--verbose` for the full chain + backtrace.
+- [ ] CLI ergonomics — `--limit`, `--sort`, `--filter` on `search`/list commands. _(Increment 2.)_
+- [ ] TUI preview/edit: preview page as Markdown through IR; edit in `$EDITOR`, convert back, push to Notion.
+- [ ] TUI conflict resolution: local wins, remote wins, merge.
+- [ ] TUI live search results and better status/help surfaces. _(Theme system, footer hints, loading/error status, and `?` help overlay already shipped — see issue #1.)_
 
 ### 4. Integration tests
 - [x] **Enable ignored wiremock tests** — removed `#[ignore]` from the whole suite in [`tests/integration_tests.rs`](tests/integration_tests.rs) so they run under `cargo test`; fixed 3 fixtures that had drifted from the models (`List.has_more`, PascalCase `ViewType`, `TableConfig.properties`).
