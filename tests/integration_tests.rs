@@ -1,8 +1,7 @@
 //! Integration tests for the Notion API modules
 //!
-//! These tests mock the HTTP layer using `wiremock` to avoid making
-//! actual API calls.  If `wiremock` isn't available, the tests compile
-//! but are marked `#[ignore]`.
+//! These tests mock the HTTP layer using `wiremock` (a dev-dependency) so they
+//! run as part of the normal `cargo test` suite without making real API calls.
 
 use blink_md::client::NotionClient;
 
@@ -19,7 +18,6 @@ mod users_tests {
     use super::*;
 
     #[tokio::test]
-    #[ignore = "requires wiremock"]
     async fn get_me_returns_user() {
         let server = wiremock::MockServer::start().await;
         let client = mock_client(&server);
@@ -51,7 +49,6 @@ mod blocks_tests {
     use super::*;
 
     #[tokio::test]
-    #[ignore = "requires wiremock"]
     async fn get_block_children_parses_list() {
         let server = wiremock::MockServer::start().await;
         let client = mock_client(&server);
@@ -74,7 +71,9 @@ mod blocks_tests {
                             "last_edited_by":{"object":"user","id":"u1","type":"person","person":{"email":"a@b.com"}},
                             "parent":{"type":"page_id","page_id":"page-1"},
                             "in_trash":false
-                        }]
+                        }],
+                        "next_cursor":null,
+                        "has_more":false
                     }"#),
             )
             .mount(&server)
@@ -97,7 +96,6 @@ mod pages_tests {
     use super::*;
 
     #[tokio::test]
-    #[ignore = "requires wiremock"]
     async fn get_page_returns_page() {
         let server = wiremock::MockServer::start().await;
         let client = mock_client(&server);
@@ -135,7 +133,6 @@ mod databases_tests {
     use super::*;
 
     #[tokio::test]
-    #[ignore = "requires wiremock"]
     async fn get_database_returns_database() {
         let server = wiremock::MockServer::start().await;
         let client = mock_client(&server);
@@ -178,7 +175,6 @@ mod search_tests {
     use super::*;
 
     #[tokio::test]
-    #[ignore = "requires wiremock"]
     async fn search_returns_results() {
         let server = wiremock::MockServer::start().await;
         let client = mock_client(&server);
@@ -189,7 +185,9 @@ mod search_tests {
                 wiremock::ResponseTemplate::new(200)
                     .set_body_string(r#"{
                         "object":"list",
-                        "results":[{"object":"page","id":"page-1","type":"page","properties":{"title":{"title":[]}},"created_time":"2026-01-01T00:00:00.000Z","last_edited_time":"2026-01-01T00:00:00.000Z","created_by":{"object":"user","id":"u1","type":"person","person":{}},"last_edited_by":{"object":"user","id":"u1","type":"person","person":{}},"parent":{"type":"workspace","workspace":true},"archived":false,"url":"https://notion.so/page-1"}]
+                        "results":[{"object":"page","id":"page-1","type":"page","properties":{"title":{"title":[]}},"created_time":"2026-01-01T00:00:00.000Z","last_edited_time":"2026-01-01T00:00:00.000Z","created_by":{"object":"user","id":"u1","type":"person","person":{}},"last_edited_by":{"object":"user","id":"u1","type":"person","person":{}},"parent":{"type":"workspace","workspace":true},"archived":false,"url":"https://notion.so/page-1"}],
+                        "next_cursor":null,
+                        "has_more":false
                     }"#),
             )
             .mount(&server)
@@ -211,7 +209,6 @@ mod comments_tests {
     use super::*;
 
     #[tokio::test]
-    #[ignore = "requires wiremock"]
     async fn list_comments_returns_comments() {
         let server = wiremock::MockServer::start().await;
         let client = mock_client(&server);
@@ -253,7 +250,6 @@ mod views_tests {
     use super::*;
 
     #[tokio::test]
-    #[ignore = "requires wiremock"]
     async fn get_view_returns_view() {
         let server = wiremock::MockServer::start().await;
         let client = mock_client(&server);
@@ -265,8 +261,8 @@ mod views_tests {
                         "object":"view",
                         "id":"view-1",
                         "name":"Default view",
-                        "type":"table",
-                        "table":{}
+                        "type":"Table",
+                        "table":{"properties":[]}
                     }"#,
             ))
             .mount(&server)
@@ -285,7 +281,6 @@ mod webhooks_tests {
     use super::*;
 
     #[tokio::test]
-    #[ignore = "requires wiremock"]
     async fn list_webhooks_returns_empty() {
         let server = wiremock::MockServer::start().await;
         let client = mock_client(&server);
@@ -308,7 +303,6 @@ mod error_handling_tests {
     use super::*;
 
     #[tokio::test]
-    #[ignore = "requires wiremock"]
     async fn api_error_returns_notion_error() {
         let server = wiremock::MockServer::start().await;
         let client = mock_client(&server);
@@ -333,5 +327,89 @@ mod error_handling_tests {
             err_msg.contains("unauthorized") || err_msg.contains("Invalid API token"),
             "Error message should contain context: {err_msg}"
         );
+    }
+}
+
+// ─── blocks: single get ──────────────────────────────────────────────
+
+#[cfg(test)]
+mod block_get_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn get_block_returns_single_block() {
+        let server = wiremock::MockServer::start().await;
+        let client = mock_client(&server);
+
+        wiremock::Mock::given(wiremock::matchers::method("GET"))
+            .and(wiremock::matchers::path("/blocks/b1"))
+            .respond_with(wiremock::ResponseTemplate::new(200).set_body_string(
+                r#"{
+                    "object":"block",
+                    "id":"b1",
+                    "type":"paragraph",
+                    "paragraph":{"rich_text":[],"color":"default"},
+                    "has_children":false,
+                    "created_time":"2026-01-01T00:00:00.000Z",
+                    "last_edited_time":"2026-01-01T00:00:00.000Z",
+                    "created_by":{"object":"user","id":"u1","type":"person","person":{"email":"a@b.com"}},
+                    "last_edited_by":{"object":"user","id":"u1","type":"person","person":{"email":"a@b.com"}},
+                    "parent":{"type":"page_id","page_id":"page-1"},
+                    "in_trash":false
+                }"#,
+            ))
+            .mount(&server)
+            .await;
+
+        let block = client.get_block("b1").await.unwrap();
+        assert_eq!(block.id, "b1");
+        assert!(!block.has_children);
+    }
+}
+
+// ─── search: auto-pagination ─────────────────────────────────────────
+
+#[cfg(test)]
+mod search_pagination_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn search_all_follows_pagination() {
+        let server = wiremock::MockServer::start().await;
+        let client = mock_client(&server);
+
+        // First page reports more results and a cursor; consumed once.
+        wiremock::Mock::given(wiremock::matchers::method("POST"))
+            .and(wiremock::matchers::path("/search"))
+            .respond_with(wiremock::ResponseTemplate::new(200).set_body_string(
+                r#"{"object":"list","results":[{"id":"p1"}],"next_cursor":"c2","has_more":true}"#,
+            ))
+            .up_to_n_times(1)
+            .with_priority(1)
+            .mount(&server)
+            .await;
+
+        // Second page: only matches when the cursor from page 1 was forwarded.
+        // If cursor forwarding broke, no mock matches the 2nd request and the
+        // call errors, failing the test.
+        wiremock::Mock::given(wiremock::matchers::method("POST"))
+            .and(wiremock::matchers::path("/search"))
+            .and(wiremock::matchers::body_partial_json(
+                serde_json::json!({ "start_cursor": "c2" }),
+            ))
+            .respond_with(wiremock::ResponseTemplate::new(200).set_body_string(
+                r#"{"object":"list","results":[{"id":"p2"}],"next_cursor":null,"has_more":false}"#,
+            ))
+            .with_priority(2)
+            .mount(&server)
+            .await;
+
+        let all = client
+            .search_all(Some("x".to_string()), None, None)
+            .await
+            .unwrap();
+        assert_eq!(all.len(), 2);
+        assert_eq!(all[0]["id"], "p1");
+        assert_eq!(all[1]["id"], "p2");
     }
 }

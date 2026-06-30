@@ -43,6 +43,17 @@ pub enum NotionError {
     /// The requested operation is not supported for this resource type.
     #[error("Unsupported operation: {0}")]
     Unsupported(&'static str),
+
+    /// Auto-pagination hit its safety cap before the server stopped reporting
+    /// more pages, so the result set would otherwise be silently truncated.
+    #[error(
+        "pagination exceeded the {limit}-page safety limit; \
+         narrow the query/filter or paginate manually with `search`"
+    )]
+    PaginationLimitExceeded {
+        /// The page cap that was reached.
+        limit: usize,
+    },
 }
 
 /// A convenience type alias for `Result<T, NotionError>`.

@@ -80,6 +80,12 @@ feishu-sdk = "0.1"
 toml = "1.1"
 serde_yaml = "0.9"
 
+# --- Webhook signature verification (HMAC-SHA256, constant-time compare) ---
+hmac = "0.12"
+sha2 = "0.10"
+hex = "0.4"
+subtle = "2"
+
 # --- MCP server (`blink-md-mcp` binary), behind the `mcp` feature ---
 pmcp = { workspace = true, optional = true }
 tracing = { version = "0.1", optional = true }
