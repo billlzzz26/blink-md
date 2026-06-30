@@ -84,6 +84,14 @@ enum Commands {
         #[arg(long)]
         notion_db: Option<String>,
     },
+    /// Export a Notion page to a Markdown file with a YAML frontmatter header
+    ExportPage {
+        /// Page ID to export
+        page_id: String,
+        /// Directory to write the `<slug>-<page-id>.md` file into
+        #[arg(short, long, default_value = ".")]
+        out_dir: std::path::PathBuf,
+    },
     /// Show diff between two files
     Diff {
         old: std::path::PathBuf,
@@ -423,6 +431,10 @@ async fn main() -> anyhow::Result<()> {
                 .or_else(|| std::env::var("NOTION_DB_ID").ok())
                 .expect("NOTION_DB_ID is required for sync");
             cli::sync_cmd::start_sync(dir, client, db).await?;
+        }
+        Commands::ExportPage { page_id, out_dir } => {
+            let path = cli::export_cmd::export_page_to_md(&client, &page_id, &out_dir).await?;
+            println!("Exported page {} to {}", page_id, path.display());
         }
         Commands::Diff { old, new } => {
             cli::diff::run_diff(old, new).await?;

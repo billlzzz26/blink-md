@@ -1,5 +1,6 @@
 use crate::models::block::{
-    Block, BlockType, CalloutContent, HeadingContent, TextBlockContent, ToDoContent,
+    Block, BlockType, CalloutContent, HeadingContent, TableContent, TableRowContent,
+    TextBlockContent, ToDoContent,
 };
 use crate::models::common::{
     Annotations, BotInfo, Icon, MentionObject, RichText, TextContent, UserType,
@@ -355,6 +356,14 @@ pub fn parse_markdown(md: &str) -> Vec<Block> {
     let mut current_rich_text = Vec::new();
     let mut state = ParserState::new();
 
+    // GFM table accumulation. `current_rich_text` is reused for the in-progress
+    // cell; `table_cells` collects finished cells into the current row, and
+    // `table_rows` collects finished `TableRow` blocks until the table closes.
+    let mut table_rows: Vec<Block> = Vec::new();
+    let mut table_cells: Vec<Vec<RichText>> = Vec::new();
+    let mut table_width: u32 = 0;
+    let mut table_has_header = false;
+
     for event in parser {
         match event {
             Event::Start(tag) => match tag {
@@ -370,6 +379,13 @@ pub fn parse_markdown(md: &str) -> Vec<Block> {
                     }
                 }
                 Tag::BlockQuote(_) => state.container_stack.push(ContainerType::Quote),
+                Tag::Table(alignments) => {
+                    table_rows.clear();
+                    table_cells.clear();
+                    table_width = alignments.len() as u32;
+                    table_has_header = false;
+                    current_rich_text.clear();
+                }
                 _ => {}
             },
             Event::End(tag_end) => match tag_end {
@@ -474,6 +490,40 @@ pub fn parse_markdown(md: &str) -> Vec<Block> {
                         },
                     };
                     blocks.push(create_block(block_type));
+                }
+                TagEnd::TableCell => {
+                    table_cells.push(std::mem::take(&mut current_rich_text));
+                }
+                TagEnd::TableHead => {
+                    table_has_header = true;
+                    table_rows.push(create_block(BlockType::TableRow {
+                        table_row: TableRowContent {
+                            cells: std::mem::take(&mut table_cells),
+                        },
+                    }));
+                }
+                TagEnd::TableRow => {
+                    table_rows.push(create_block(BlockType::TableRow {
+                        table_row: TableRowContent {
+                            cells: std::mem::take(&mut table_cells),
+                        },
+                    }));
+                }
+                TagEnd::Table => {
+                    let rows = std::mem::take(&mut table_rows);
+                    let has_rows = !rows.is_empty();
+                    let mut block = create_block(BlockType::Table {
+                        table: TableContent {
+                            table_width,
+                            has_column_header: table_has_header,
+                            has_row_header: false,
+                            children: Some(rows),
+                        },
+                    });
+                    // The table owns its `TableRow` children, so reflect that in
+                    // the flag consumers rely on (e.g. recursive export).
+                    block.has_children = has_rows;
+                    blocks.push(block);
                 }
                 _ => {}
             },
