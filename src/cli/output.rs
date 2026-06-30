@@ -1,7 +1,7 @@
 //! Human- and machine-friendly rendering for CLI command results.
 //!
 //! Every list/get command renders through this module so output is consistent:
-//! a clean, aligned table for humans by default, or `--output json` for scripts
+//! a clean, aligned table for humans by default, or `--format json` for scripts
 //! and pipelines. The table renderer is dependency-free and unicode-width aware
 //! (so CJK/Thai/emoji columns still line up).
 
@@ -193,13 +193,24 @@ pub fn field_last_edited(v: &Value) -> String {
 }
 
 fn join_plain_text(arr: &[Value]) -> String {
-    arr.iter()
+    let joined: String = arr
+        .iter()
         .filter_map(|rt| rt.get("plain_text").and_then(Value::as_str))
-        .collect()
+        .collect();
+    single_line(&joined)
 }
 
 fn str_or_dash(v: Option<&Value>) -> String {
-    v.and_then(Value::as_str).unwrap_or("-").to_string()
+    match v.and_then(Value::as_str) {
+        Some(s) => single_line(s),
+        None => "-".to_string(),
+    }
+}
+
+/// Flatten any embedded newlines/tabs to single spaces so a cell can never
+/// split a logical row across output lines and wreck column alignment.
+fn single_line(s: &str) -> String {
+    s.replace(['\n', '\r', '\t'], " ")
 }
 
 #[cfg(test)]
@@ -245,6 +256,20 @@ mod tests {
         assert_eq!(field_title(&user), "Alice");
         let bare = json!({ "object": "page" });
         assert_eq!(field_title(&bare), "Untitled");
+    }
+
+    #[test]
+    fn extracted_text_is_flattened_to_one_line() {
+        // A title/url containing newlines or tabs must not split a table row.
+        let page = json!({
+            "properties": { "Name": { "type": "title", "title": [{ "plain_text": "line1\nline2\ttabbed" }] } }
+        });
+        let title = field_title(&page);
+        assert!(!title.contains('\n') && !title.contains('\t'));
+        assert_eq!(title, "line1 line2 tabbed");
+
+        let with_url = json!({ "url": "http://x\n/y" });
+        assert_eq!(field_url(&with_url), "http://x /y");
     }
 
     #[test]

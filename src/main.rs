@@ -568,7 +568,14 @@ fn as_records(value: serde_json::Value) -> Vec<serde_json::Value> {
         serde_json::Value::Array(items) => items,
         serde_json::Value::Object(mut map) => match map.remove("results") {
             Some(serde_json::Value::Array(items)) => items,
-            _ => vec![serde_json::Value::Object(map)],
+            // A present-but-non-array `results` is not a paginated list; put it
+            // back so the original object is preserved wholesale (the doc
+            // contract), rather than silently dropping the field.
+            Some(other) => {
+                map.insert("results".to_string(), other);
+                vec![serde_json::Value::Object(map)]
+            }
+            None => vec![serde_json::Value::Object(map)],
         },
         other => vec![other],
     }
