@@ -89,19 +89,29 @@ impl Column {
 /// stay aligned. Returns the full table as a string ending in a newline.
 fn render_table(headers: &[&str], rows: &[Vec<String>]) -> String {
     let cols = headers.len();
+    // Normalize every header and cell to a single line at the render boundary:
+    // any value — regardless of which extractor produced it — that contains a
+    // newline/tab would otherwise split a logical row across output lines and
+    // wreck alignment for everything below it.
+    let headers: Vec<String> = headers.iter().map(|h| single_line(h)).collect();
+    let rows: Vec<Vec<String>> = rows
+        .iter()
+        .map(|row| row.iter().map(|c| single_line(c)).collect())
+        .collect();
+
     let mut widths: Vec<usize> = headers.iter().map(|h| h.width()).collect();
-    for row in rows {
+    for row in &rows {
         for (i, cell) in row.iter().enumerate().take(cols) {
             widths[i] = widths[i].max(cell.width());
         }
     }
 
     let mut out = String::new();
-    write_row(&mut out, headers.iter().map(|h| h.to_string()), &widths);
+    write_row(&mut out, headers.iter().cloned(), &widths);
     // Separator line.
     let sep: Vec<String> = widths.iter().map(|w| "-".repeat(*w)).collect();
     write_row(&mut out, sep.into_iter(), &widths);
-    for row in rows {
+    for row in &rows {
         write_row(&mut out, row.iter().cloned(), &widths);
     }
     out
@@ -256,6 +266,16 @@ mod tests {
         assert_eq!(field_title(&user), "Alice");
         let bare = json!({ "object": "page" });
         assert_eq!(field_title(&bare), "Untitled");
+    }
+
+    #[test]
+    fn renderer_flattens_newlines_in_any_cell() {
+        // Even a raw cell (not from a sanitizing extractor) must not split the
+        // row — the renderer normalizes at its boundary.
+        let out = render_table(&["A", "B"], &[vec!["x\ny".to_string(), "z".to_string()]]);
+        // Exactly 3 lines: header, separator, one data row.
+        assert_eq!(out.lines().count(), 3);
+        assert_eq!(out.lines().nth(2).unwrap(), "x y | z");
     }
 
     #[test]
