@@ -279,9 +279,11 @@ fn print_error(err: &anyhow::Error, verbose: bool) {
 async fn run(cli: Cli) -> anyhow::Result<()> {
     let output = cli.format;
 
-    // Commands that don't require a Notion client are dispatched before the
-    // NOTION_TOKEN requirement so they work without credentials. The MCP server
-    // binds the Notion client server-side only when NOTION_TOKEN is present.
+    // Commands that don't talk to the Notion API run before the NOTION_TOKEN
+    // requirement so they work with no credentials — a user converting or
+    // diffing a local file should never be asked for a token they don't need.
+    // The MCP server binds the Notion client server-side only when NOTION_TOKEN
+    // is present.
     if let Commands::GenerateSkills { output_dir } = &cli.command {
         let args = vec!["--output-dir".to_string(), output_dir.clone()];
         return blink_md::sync::generate_skills::handle_generate_skills(&args).await;
@@ -289,6 +291,27 @@ async fn run(cli: Cli) -> anyhow::Result<()> {
     #[cfg(feature = "mcp")]
     if let Commands::McpServe = &cli.command {
         return cli::mcp::run_mcp_server().await;
+    }
+    if let Commands::Convert {
+        input,
+        output: out_path,
+        from,
+        to,
+    } = &cli.command
+    {
+        return cli::convert::run_convert(
+            input.clone(),
+            out_path.clone(),
+            from.clone(),
+            to.clone(),
+        )
+        .await;
+    }
+    if let Commands::Diff { old, new } = &cli.command {
+        return cli::diff::run_diff(old.clone(), new.clone()).await;
+    }
+    if let Commands::Upgrade = &cli.command {
+        return handle_upgrade().await;
     }
 
     let token = std::env::var("NOTION_TOKEN").map_err(|_| {
@@ -474,14 +497,6 @@ async fn run(cli: Cli) -> anyhow::Result<()> {
         Commands::Tui => {
             cli::run_tui(client).await?;
         }
-        Commands::Convert {
-            input,
-            output,
-            from,
-            to,
-        } => {
-            cli::convert::run_convert(input, output, from, to).await?;
-        }
         Commands::Sync { dir, notion_db } => {
             let db = notion_db
                 .or_else(|| std::env::var("NOTION_DB_ID").ok())
@@ -492,11 +507,8 @@ async fn run(cli: Cli) -> anyhow::Result<()> {
             let path = cli::export_cmd::export_page_to_md(&client, &page_id, &out_dir).await?;
             println!("Exported page {} to {}", page_id, path.display());
         }
-        Commands::Diff { old, new } => {
-            cli::diff::run_diff(old, new).await?;
-        }
-        Commands::Upgrade => {
-            handle_upgrade().await?;
+        Commands::Convert { .. } | Commands::Diff { .. } | Commands::Upgrade => {
+            unreachable!("offline commands are dispatched before client initialization")
         }
         Commands::McpServe => {
             // `mcp` builds dispatch this before the client is created; this arm
