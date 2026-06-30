@@ -73,10 +73,10 @@
 
 ### 2. Notion API surface
 - [ ] Page markdown endpoints: GET/PATCH markdown.
-- [ ] Data source CRUD: create, update, delete, list, query with pagination.
-- [ ] Webhooks: event types, payload parsing, signature verification.
-- [ ] Search enhancements: sort, filter, page_size, start_cursor.
-- [ ] Block operations: update all block types, delete, get, append with position.
+- [ ] Data source CRUD: create, update, delete, list, query with pagination. _(have: get/list/query data sources + query pagination; missing create/update/delete.)_
+- [x] **Webhooks: event types, payload parsing, signature verification** — `WebhookEventType`, `WebhookEvent`/`WebhookPayload`, `parse_webhook_payload()`, and constant-time `verify_webhook_signature()` (HMAC-SHA256) in [`src/api/webhooks.rs`](src/api/webhooks.rs).
+- [x] **Search enhancements: sort, filter, page_size, start_cursor** — already on `search()`; added `search_all()` auto-pagination helper in [`src/api/search.rs`](src/api/search.rs).
+- [x] **Block operations: delete, get, append with position** — `get_block()` added; `append_block_children` already takes a `Position`; `update_block`/`delete_block` present in [`src/api/blocks.rs`](src/api/blocks.rs). _(per-block-type typed update still open.)_
 - [ ] File upload polish: multipart, external URL, base64, retry/error handling.
 
 ### 3. TUI preview/edit workflows
@@ -86,8 +86,8 @@
 - [ ] Live search results and better status/help surfaces.
 
 ### 4. Integration tests
-- [ ] Enable or intentionally document ignored wiremock tests.
-- [ ] Add API tests for pages, databases, blocks, files, webhooks, search, and errors.
+- [x] **Enable ignored wiremock tests** — removed `#[ignore]` from the whole suite in [`tests/integration_tests.rs`](tests/integration_tests.rs) so they run under `cargo test`; fixed 3 fixtures that had drifted from the models (`List.has_more`, PascalCase `ViewType`, `TableConfig.properties`).
+- [x] **API tests for pages, databases, blocks, webhooks, search, and errors** — wiremock coverage for users/blocks (children + single get)/pages-search (+ `search_all` pagination)/databases/comments/views/webhooks/errors. _(files upload tests still open.)_
 - [ ] Add converter roundtrips for Notion, Markdown, HTML, Google Docs, Lark, Docx, PDF, and Sheets.
 
 ### 5. Documentation
