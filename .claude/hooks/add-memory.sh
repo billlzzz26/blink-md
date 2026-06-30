@@ -1,6 +1,5 @@
 #!/bin/bash
-# add-memory.sh — Append work summary to memory files (no overwrite)
-# Usage: Called by Hermes hooks or manually: ./add-memory.sh "summary text"
+# add-memory.sh - Append work summary without overwriting
 
 set -euo pipefail
 
@@ -8,47 +7,47 @@ SUMMARY="${1:-}"
 TIMESTAMP=$(date +%Y-%m-%d)
 SESSION_ID=$(date +%H%M%S)
 
-# Change to project root (where .claude/ exists)
+# Find project root (where .claude/ lives)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd 2>/dev/null || pwd)"
-cd "$PROJECT_ROOT" 2>/dev/null || true
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$PROJECT_ROOT"
 
-# Ensure memory directories exist
+# Create memory dirs if needed
 mkdir -p ".claude/memory"
 
-# Create session-memory template if missing
+# Create session template if missing
 SESSION_FILE=".claude/memory/session-${SESSION_ID}.md"
-if [ ! -f "$SESSION_FILE" ]; then
-    cat > "$SESSION_FILE" << 'EOF'
-# Session Memory Template
+[ ! -f "$SESSION_FILE" ] && cat > "$SESSION_FILE" << 'EOF'
+# Session Memory
 
 ## Tasks Completed
-- 
 
 ## Decisions Made
-- 
 
 ## Files Changed
-- 
 
 ## Next Steps
-- 
 EOF
-fi
 
-# Append summary to session memory
+# Append to session file
 if [ -n "$SUMMARY" ]; then
-    # Add to session file
-    sed -i "/^## Tasks Completed/a\\- $SUMMARY $(date +%H:%M)" "$SESSION_FILE" 2>/dev/null || true
+    printf -- "- %s %s\n" "$SUMMARY" "$(date +%H:%M)" >> "$SESSION_FILE"
     
-    # Update project MEMORY.md Work Log (if exists)
-    if [ -f ".claude/MEMORY.md" ]; then
-        if grep -q "### $TIMESTAMP" ".claude/MEMORY.md"; then
-            sed -i "/^### $TIMESTAMP$/a\\- $SUMMARY" ".claude/MEMORY.md" 2>/dev/null || true
-        else
-            sed -i "/^## Work Log/,\$s/.*/&\n\n### $TIMESTAMP\n- $SUMMARY/" ".claude/MEMORY.md" 2>/dev/null || true
+    # Append to .claude/MEMORY.md Work Log (avoid duplicates)
+    MEMORY_FILE=".claude/MEMORY.md"
+    if [ -f "$MEMORY_FILE" ]; then
+        # Check if already exists
+        if ! grep -qxF "- $SUMMARY" "$MEMORY_FILE" 2>/dev/null; then
+            if grep -q "### $TIMESTAMP" "$MEMORY_FILE"; then
+                sed -i "/^### $TIMESTAMP$/a\\- $SUMMARY" "$MEMORY_FILE"
+            else
+                sed -i "/^## Work Log/a\\
+
+### $TIMESTAMP
+- $SUMMARY" "$MEMORY_FILE"
+            fi
         fi
     fi
 fi
 
-echo "Memory recorded in .claude/memory/session-${SESSION_ID}.md"
+echo "Memory: $SESSION_FILE"

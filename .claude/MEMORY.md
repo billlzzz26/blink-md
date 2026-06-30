@@ -57,6 +57,8 @@ Active work: Markdown + YAML Frontmatter ↔ Notion Database
 ## Work Log
 
 ### 2026-06-30
+- refactor(.claude): consolidate memory system hooks and scripts
+- feat(.claude): add memory system with hooks and scripts
 - chore: add project hooks.json for session end memory
 - docs: add .claude/MEMORY.md and add-memory skill
 - git add commit push: committed Cargo.lock regeneration and skills/ directory (19 files, 6136 insertions)

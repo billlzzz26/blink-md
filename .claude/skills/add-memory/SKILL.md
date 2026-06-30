@@ -1,27 +1,22 @@
 ---
 name: add-memory
-description: "Append work summary to MEMORY.md without overwriting. Distinction: MEMORY.md for project facts, memory/ for session logs."
-metadata:
-  version: 1.0.0
+description: "Append work summary to .claude/MEMORY.md without overwriting. MEMORY.md for project facts, .claude/memory/ for session logs."
 ---
 
 # Add Memory
 
-Append work summary to `.claude/skills/add-memory/MEMORY.md` without overwriting.
+Append work summary to `.claude/MEMORY.md` without overwriting.
 
 ## Memory Types
 
 - **MEMORY.md** - Project facts (stable, persistent): architecture, components, work log
-- **memory/<session-memory>.md** - Session logs (per-session, may change): meeting notes, temporary findings
+- **memory/** - Session logs (per-session, may change)
 
 ## Usage
 
-1. Read current MEMORY.md to understand structure
-2. Summarize work in 1-2 concise sentences
-3. Append dated entry under `## Work Log` section
-4. Do NOT overwrite existing content
+`.claude/hooks/add-memory.sh "work summary"`
 
-## Work Log Entry Format
+## Work Log Format
 
 ```markdown
 ### YYYY-MM-DD
@@ -30,7 +25,6 @@ Append work summary to `.claude/skills/add-memory/MEMORY.md` without overwriting
 
 ## Rules
 
-- Merge new info with existing structure
+- Do NOT overwrite existing content
+- Merge with existing structure
 - Keep entries factual and concise
-- Preserve historical continuity
-- One entry per work session/task
