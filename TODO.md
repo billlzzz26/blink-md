@@ -1,8 +1,8 @@
 # blink-md TODO.md — v0.3.1
 
 ## Overview
-- Version: 0.3.1
-- Current branch: `main`
+- Version: 0.4.1
+- Current branch: `feature/google-workspace-oauth`
 - Quality gate: `make ci`
 - Package gate: `python scripts/check-package-hygiene.py`
 - CI: `.github/workflows/rust-ci.yml` and `.github/workflows/cross-platform.yml`
@@ -54,14 +54,24 @@
 ---
 
 ## Active — next work
-### 0. Markdown + YAML Frontmatter ↔ Notion Database (TDD, complete — Phases A–E)
-- [x] **Phase A — detection**: `detect_frontmatter()` extracts a `---`-delimited YAML block from the start of a Markdown file, leaving the rest as body. 15 unit tests cover: missing block, unterminated block, multi-line YAML, empty YAML, CRLF, body containing `---`, colons in values, and edge cases like empty input. Lives in [`src/api/markdown_frontmatter.rs`](src/api/markdown_frontmatter.rs); tested by [`tests/markdown_frontmatter.rs`](tests/markdown_frontmatter.rs). _(merged #28)_
-- [x] **Phase B — property mapping**: parse explicit `type:` tagged YAML values into [`crate::ir::metadata::PropertyValue`] (Title, RichText, Number, Select, MultiSelect, Date, Checkbox, Url, Email). Implemented as `parse_frontmatter_to_properties()` (plus `properties_to_yaml()` for the reverse) in [`src/ir/frontmatter.rs`](src/ir/frontmatter.rs). _(merged #30)_
-- [x] **Phase C — converter**: `MarkdownWithFrontmatterConverter` that round-trips Markdown+YAML ↔ UniversalDocument with `metadata.properties` populated. Lives in [`src/converter/markdown_frontmatter.rs`](src/converter/markdown_frontmatter.rs). _(merged #27, fmt #29)_
-- [x] **Phase D — sync glue**: `blink-md sync --dir <dir>` now reads frontmatter from each `.md` file via `MarkdownWithFrontmatterConverter::from_platform()` → `NotionToPlatform::to_platform()` and writes properties into the Notion page on `create_page`. The YAML block no longer leaks into the page body. When no `title`-typed property is present, the file stem is used as a `Name` title (preserving the prior default). Implemented in [`src/cli/sync_cmd.rs`](src/cli/sync_cmd.rs) with `ensure_title()` unit tests.
-- [x] **Phase E — export**: `export_page_to_md(page_id, out_dir)` (CLI: `blink-md export-page <id> [--out-dir <dir>]`) writes one `<slug>-<page-id>.md` file per page with a typed YAML header + Markdown body — the reverse of Phase D, reusing `properties_to_yaml()`. Notion properties are mapped back to typed `PropertyValue`s (title, rich_text, number, select, multi_select, date, checkbox, url, email; unknown kinds fall back to `custom`). Implemented in [`src/cli/export_cmd.rs`](src/cli/export_cmd.rs) with `slugify()` / property-mapping unit tests.
+### 0. Markdown + YAML Frontmatter ↔ Notion Database (merged)
+- [x] **Phases A–E complete**: detection, property mapping, converter, sync glue, and page export all landed. See merged PRs #27, #28, #30.
 
-### 1. Platform adapters behind Universal IR
+### 1. Google Workspace OAuth + API Adapter
+- [ ] Create `src/oauth.rs` - token provider trait + caching (adapted from google-workspace-cli)
+- [ ] Create `src/services.rs` - service registry mapping aliases to API names/versions
+- [ ] Add `--google` feature to Cargo.toml
+- [ ] Create `src/api/google/mod.rs` - common Google API utilities
+- [ ] Create `src/api/google/docs.rs` - Google Docs read/write
+- [ ] Create `src/api/google/sheets.rs` - Spreadsheet API
+- [ ] Create `src/api/google/keep.rs` - Google Keep notes
+- [ ] Create `src/api/google/chat.rs` - Chat spaces/messages
+- [ ] Create `src/api/google/calendar.rs` - Calendar events
+- [ ] Create `src/api/google/tasks.rs` - Task lists
+- [ ] Extend IR with Google property types for lossless conversion
+- [ ] Build GoogleDocConverter for Docs ↔ Universal IR
+
+### 2. Platform adapters behind Universal IR
 - [x] **GFM tables**: `MarkdownConverter` round-trips pipe tables (parse → IR `Table`, render IR → aligned pipe table). `block_ir_to_notion` writes Notion `Table`/`TableRow` blocks (so `sync` pushes tables) and `NotionFromPlatform` regroups flattened API rows back into one IR table (so `export-page` renders a single table). Implemented in [`src/api/markdown.rs`](src/api/markdown.rs), [`src/converter/markdown.rs`](src/converter/markdown.rs), and [`src/converter/notion.rs`](src/converter/notion.rs).
 - [ ] GitHub Markdown/GFM extensions: footnotes, alerts, issue/PR refs, mentions, commit refs. _(Cell alignment is lost on the md→Notion→IR path since the Notion table model has no per-column alignment.)_
 - [ ] HTML adapter: semantic tags, styles, images, links, and platform extensions.
@@ -71,7 +81,7 @@
 - [ ] Docx adapter: paragraphs, runs, tables, images, styles, numbering, headers/footers.
 - [ ] Sheets/Excel adapter: merged cells, formulas, validation, conditional formatting.
 
-### 2. Notion API surface
+### 3. Notion API surface
 - [ ] Page markdown endpoints: GET/PATCH markdown.
 - [ ] Data source CRUD: create, update, delete, list, query with pagination.
 - [ ] Webhooks: event types, payload parsing, signature verification.
@@ -79,18 +89,18 @@
 - [ ] Block operations: update all block types, delete, get, append with position.
 - [ ] File upload polish: multipart, external URL, base64, retry/error handling.
 
-### 3. TUI preview/edit workflows
+### 4. TUI preview/edit workflows
 - [ ] Preview page as Markdown through IR.
 - [ ] Edit page in `$EDITOR`, convert back, and push to Notion.
 - [ ] Conflict resolution: local wins, remote wins, merge.
 - [ ] Live search results and better status/help surfaces.
 
-### 4. Integration tests
+### 5. Integration tests
 - [ ] Enable or intentionally document ignored wiremock tests.
 - [ ] Add API tests for pages, databases, blocks, files, webhooks, search, and errors.
 - [ ] Add converter roundtrips for Notion, Markdown, HTML, Google Docs, Lark, Docx, PDF, and Sheets.
 
-### 5. Documentation
+### 6. Documentation
 - [ ] Keep README user-facing and current after each release.
 - [ ] Keep CHANGELOG.md updated with Unreleased entries before merge.
 - [ ] Keep docs/PLAN.md aligned with TODO.md.
