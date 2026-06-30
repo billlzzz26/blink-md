@@ -3,6 +3,11 @@ use clap::{Parser, Subcommand};
 
 mod cli;
 
+use cli::output::{
+    field_block_type, field_id, field_last_edited, field_object, field_title, field_url,
+    print_object, print_records, Column, OutputFormat,
+};
+
 #[derive(Parser)]
 #[command(name = "blink-md")]
 #[command(version)]
@@ -25,6 +30,14 @@ mod cli;
 struct Cli {
     #[command(subcommand)]
     command: Commands,
+
+    /// Output format for results: `table` (human) or `json` (scripting).
+    #[arg(long, value_enum, default_value_t = OutputFormat::Table, global = true)]
+    format: OutputFormat,
+
+    /// Print verbose diagnostics (full error cause chain) to stderr.
+    #[arg(short, long, global = true)]
+    verbose: bool,
 }
 
 #[derive(Subcommand)]
@@ -228,12 +241,49 @@ enum CommentAction {
 }
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
+async fn main() -> std::process::ExitCode {
     let cli = Cli::parse();
+    let verbose = cli.verbose;
+    match run(cli).await {
+        Ok(()) => std::process::ExitCode::SUCCESS,
+        Err(err) => {
+            print_error(&err, verbose);
+            std::process::ExitCode::FAILURE
+        }
+    }
+}
 
-    // Commands that don't require a Notion client are dispatched before the
-    // NOTION_TOKEN requirement so they work without credentials. The MCP server
-    // binds the Notion client server-side only when NOTION_TOKEN is present.
+/// Render an error to stderr in the conventional CLI style: a red `error:`
+/// prefix (only on a TTY and when `NO_COLOR` is unset) followed by the message
+/// and its cause chain. With `--verbose`, print the full `{:?}` form instead
+/// (cause chain plus any backtrace), matching how tools like cargo behave.
+fn print_error(err: &anyhow::Error, verbose: bool) {
+    use std::io::IsTerminal;
+    let color = std::io::stderr().is_terminal() && std::env::var_os("NO_COLOR").is_none();
+    let prefix = if color {
+        "\x1b[31;1merror:\x1b[0m"
+    } else {
+        "error:"
+    };
+    if verbose {
+        eprintln!("{prefix} {err:?}");
+    } else {
+        eprint!("{prefix} {err}");
+        for cause in err.chain().skip(1) {
+            eprint!(": {cause}");
+        }
+        eprintln!();
+    }
+}
+
+async fn run(cli: Cli) -> anyhow::Result<()> {
+    let output = cli.format;
+
+    // Commands that don't talk to the Notion API run before the NOTION_TOKEN
+    // requirement so they work with no credentials — a user converting or
+    // diffing a local file should never be asked for a token they don't need.
+    // The MCP server binds the Notion client server-side only when NOTION_TOKEN
+    // is present.
     if let Commands::GenerateSkills { output_dir } = &cli.command {
         let args = vec!["--output-dir".to_string(), output_dir.clone()];
         return blink_md::sync::generate_skills::handle_generate_skills(&args).await;
@@ -241,6 +291,27 @@ async fn main() -> anyhow::Result<()> {
     #[cfg(feature = "mcp")]
     if let Commands::McpServe = &cli.command {
         return cli::mcp::run_mcp_server().await;
+    }
+    if let Commands::Convert {
+        input,
+        output: out_path,
+        from,
+        to,
+    } = &cli.command
+    {
+        return cli::convert::run_convert(
+            input.clone(),
+            out_path.clone(),
+            from.clone(),
+            to.clone(),
+        )
+        .await;
+    }
+    if let Commands::Diff { old, new } = &cli.command {
+        return cli::diff::run_diff(old.clone(), new.clone()).await;
+    }
+    if let Commands::Upgrade = &cli.command {
+        return handle_upgrade().await;
     }
 
     let token = std::env::var("NOTION_TOKEN").map_err(|_| {
@@ -254,15 +325,19 @@ async fn main() -> anyhow::Result<()> {
         Commands::Users { action } => match action {
             UserAction::Me => {
                 let user = client.get_me().await?;
-                println!("{}", serde_json::to_string_pretty(&user)?);
+                print_object(output, &serde_json::to_value(&user)?, USER_FIELDS);
             }
             UserAction::List => {
                 let users = client.list_users().await?;
-                println!("{}", serde_json::to_string_pretty(&users)?);
+                print_records(
+                    output,
+                    &as_records(serde_json::to_value(&users)?),
+                    USER_FIELDS,
+                );
             }
             UserAction::Get { user_id } => {
                 let user = client.get_user(&user_id).await?;
-                println!("{}", serde_json::to_string_pretty(&user)?);
+                print_object(output, &serde_json::to_value(&user)?, USER_FIELDS);
             }
         },
         Commands::Pages { action } => match action {
@@ -279,11 +354,11 @@ async fn main() -> anyhow::Result<()> {
                         None,
                     )
                     .await?;
-                print_search_results(results.results);
+                print_records(output, &results.results, OBJECT_FIELDS);
             }
             PageAction::Get { page_id } => {
                 let page = client.get_page(&page_id).await?;
-                println!("{}", serde_json::to_string_pretty(&page)?);
+                print_object(output, &serde_json::to_value(&page)?, PAGE_FIELDS);
             }
             PageAction::Create {
                 parent_id,
@@ -327,7 +402,7 @@ async fn main() -> anyhow::Result<()> {
         Commands::Databases { action } => match action {
             DatabaseAction::Get { database_id } => {
                 let db = client.get_database(&database_id).await?;
-                println!("{}", serde_json::to_string_pretty(&db)?);
+                print_object(output, &serde_json::to_value(&db)?, PAGE_FIELDS);
             }
             DatabaseAction::Create {
                 parent_id,
@@ -377,7 +452,11 @@ async fn main() -> anyhow::Result<()> {
         Commands::Blocks { action } => match action {
             BlockAction::Children { block_id } => {
                 let list = client.get_block_children(&block_id, None, None).await?;
-                println!("{}", serde_json::to_string_pretty(&list.results)?);
+                print_records(
+                    output,
+                    &as_records(serde_json::to_value(&list.results)?),
+                    BLOCK_FIELDS,
+                );
             }
             BlockAction::Append {
                 block_id,
@@ -413,18 +492,10 @@ async fn main() -> anyhow::Result<()> {
         },
         Commands::Search { query } => {
             let results = client.search(query, None, None, None, None).await?;
-            print_search_results(results.results);
+            print_records(output, &results.results, OBJECT_FIELDS);
         }
         Commands::Tui => {
             cli::run_tui(client).await?;
-        }
-        Commands::Convert {
-            input,
-            output,
-            from,
-            to,
-        } => {
-            cli::convert::run_convert(input, output, from, to).await?;
         }
         Commands::Sync { dir, notion_db } => {
             let db = notion_db
@@ -436,11 +507,8 @@ async fn main() -> anyhow::Result<()> {
             let path = cli::export_cmd::export_page_to_md(&client, &page_id, &out_dir).await?;
             println!("Exported page {} to {}", page_id, path.display());
         }
-        Commands::Diff { old, new } => {
-            cli::diff::run_diff(old, new).await?;
-        }
-        Commands::Upgrade => {
-            handle_upgrade().await?;
+        Commands::Convert { .. } | Commands::Diff { .. } | Commands::Upgrade => {
+            unreachable!("offline commands are dispatched before client initialization")
         }
         Commands::McpServe => {
             // `mcp` builds dispatch this before the client is created; this arm
@@ -461,46 +529,55 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn print_search_results(results: Vec<serde_json::Value>) {
-    println!("{:<40} | {:<36} | {:<10}", "Title", "ID", "Type");
-    println!("{:-<40}-+-{:-<36}-+-{:-<10}", "", "", "");
-    for res in results {
-        let id = res.get("id").and_then(|v| v.as_str()).unwrap_or("N/A");
-        let obj_type = res
-            .get("object")
-            .and_then(|v| v.as_str())
-            .unwrap_or("unknown");
+/// Columns for a mixed search/list of pages and databases.
+const OBJECT_FIELDS: &[Column] = &[
+    Column::new("Title", field_title),
+    Column::new("Type", field_object),
+    Column::new("ID", field_id),
+    Column::new("Last edited", field_last_edited),
+];
 
-        let title = if obj_type == "page" {
-            res.get("properties")
-                .and_then(|p| p.get("title"))
-                .or_else(|| {
-                    // Try to find any property with "title" type if the key is not "title"
-                    res.get("properties")
-                        .and_then(|p| p.as_object())
-                        .and_then(|obj| {
-                            obj.values()
-                                .find(|v| v.get("type").and_then(|t| t.as_str()) == Some("title"))
-                        })
-                })
-                .and_then(|t| t.get("title"))
-                .and_then(|t| t.as_array())
-                .and_then(|arr| arr.first())
-                .and_then(|t| t.get("plain_text"))
-                .and_then(|v| v.as_str())
-                .unwrap_or("Untitled")
-        } else if obj_type == "database" {
-            res.get("title")
-                .and_then(|t| t.as_array())
-                .and_then(|arr| arr.first())
-                .and_then(|t| t.get("plain_text"))
-                .and_then(|v| v.as_str())
-                .unwrap_or("Untitled Database")
-        } else {
-            "N/A"
-        };
+/// Detailed fields for a single page/database.
+const PAGE_FIELDS: &[Column] = &[
+    Column::new("Title", field_title),
+    Column::new("Type", field_object),
+    Column::new("ID", field_id),
+    Column::new("URL", field_url),
+    Column::new("Last edited", field_last_edited),
+];
 
-        println!("{:<40} | {:<36} | {:<10}", title, id, obj_type);
+/// Columns for users.
+const USER_FIELDS: &[Column] = &[
+    Column::new("Name", field_title),
+    Column::new("Type", field_object),
+    Column::new("ID", field_id),
+];
+
+/// Columns for a block listing.
+const BLOCK_FIELDS: &[Column] = &[
+    Column::new("Type", field_block_type),
+    Column::new("ID", field_id),
+    Column::new("Last edited", field_last_edited),
+];
+
+/// Normalize an API response into a flat list of record values: an array as-is,
+/// an object's `results` array (paginated lists), or a single object wrapped in
+/// a one-element list.
+fn as_records(value: serde_json::Value) -> Vec<serde_json::Value> {
+    match value {
+        serde_json::Value::Array(items) => items,
+        serde_json::Value::Object(mut map) => match map.remove("results") {
+            Some(serde_json::Value::Array(items)) => items,
+            // A present-but-non-array `results` is not a paginated list; put it
+            // back so the original object is preserved wholesale (the doc
+            // contract), rather than silently dropping the field.
+            Some(other) => {
+                map.insert("results".to_string(), other);
+                vec![serde_json::Value::Object(map)]
+            }
+            None => vec![serde_json::Value::Object(map)],
+        },
+        other => vec![other],
     }
 }
 
