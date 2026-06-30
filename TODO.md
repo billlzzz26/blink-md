@@ -54,12 +54,12 @@
 ---
 
 ## Active — next work
-### 0. Markdown + YAML Frontmatter ↔ Notion Database (TDD, in progress)
+### 0. Markdown + YAML Frontmatter ↔ Notion Database (TDD, complete — Phases A–E)
 - [x] **Phase A — detection**: `detect_frontmatter()` extracts a `---`-delimited YAML block from the start of a Markdown file, leaving the rest as body. 15 unit tests cover: missing block, unterminated block, multi-line YAML, empty YAML, CRLF, body containing `---`, colons in values, and edge cases like empty input. Lives in [`src/api/markdown_frontmatter.rs`](src/api/markdown_frontmatter.rs); tested by [`tests/markdown_frontmatter.rs`](tests/markdown_frontmatter.rs). _(merged #28)_
 - [x] **Phase B — property mapping**: parse explicit `type:` tagged YAML values into [`crate::ir::metadata::PropertyValue`] (Title, RichText, Number, Select, MultiSelect, Date, Checkbox, Url, Email). Implemented as `parse_frontmatter_to_properties()` (plus `properties_to_yaml()` for the reverse) in [`src/ir/frontmatter.rs`](src/ir/frontmatter.rs). _(merged #30)_
 - [x] **Phase C — converter**: `MarkdownWithFrontmatterConverter` that round-trips Markdown+YAML ↔ UniversalDocument with `metadata.properties` populated. Lives in [`src/converter/markdown_frontmatter.rs`](src/converter/markdown_frontmatter.rs). _(merged #27, fmt #29)_
-- [ ] **Phase D — sync glue**: teach `blink-md sync --dir <dir>` to read frontmatter from each `.md` file and write properties into the Notion page on `create_page`. **Current gap:** `start_sync` in [`src/cli/sync_cmd.rs`](src/cli/sync_cmd.rs) still calls `parse_markdown()` directly (so the YAML block leaks into the page body) and hard-codes only a `Name` title from the file stem, discarding all frontmatter properties. Wire in `MarkdownWithFrontmatterConverter::from_platform()` and convert `metadata.properties` via `property_value_from_ir()` (currently private in [`src/converter/notion.rs`](src/converter/notion.rs) — expose it or reuse `properties_from_ir`).
-- [ ] **Phase E — export**: `export_page_to_md(page_id, out_dir)` writes one `<slug>-<page-id>.md` file per page with YAML header + body — the reverse of Phase D, reusing `properties_to_yaml()`. Not started.
+- [x] **Phase D — sync glue**: `blink-md sync --dir <dir>` now reads frontmatter from each `.md` file via `MarkdownWithFrontmatterConverter::from_platform()` → `NotionToPlatform::to_platform()` and writes properties into the Notion page on `create_page`. The YAML block no longer leaks into the page body. When no `title`-typed property is present, the file stem is used as a `Name` title (preserving the prior default). Implemented in [`src/cli/sync_cmd.rs`](src/cli/sync_cmd.rs) with `ensure_title()` unit tests.
+- [x] **Phase E — export**: `export_page_to_md(page_id, out_dir)` (CLI: `blink-md export-page <id> [--out-dir <dir>]`) writes one `<slug>-<page-id>.md` file per page with a typed YAML header + Markdown body — the reverse of Phase D, reusing `properties_to_yaml()`. Notion properties are mapped back to typed `PropertyValue`s (title, rich_text, number, select, multi_select, date, checkbox, url, email; unknown kinds fall back to `custom`). Implemented in [`src/cli/export_cmd.rs`](src/cli/export_cmd.rs) with `slugify()` / property-mapping unit tests.
 
 ### 1. Platform adapters behind Universal IR
 - [ ] GitHub Markdown/GFM extensions: footnotes, alerts, issue/PR refs, mentions, commit refs.
@@ -107,4 +107,4 @@
 - [ ] Verify GitHub Actions CI and Cross-Platform Build are green.
 - [ ] Verify release artifacts are produced for all target platforms.
 
-*Updated: 2026-06-30 | Frontmatter Phases A–C marked complete; D/E gaps documented.*
+*Updated: 2026-06-30 | Frontmatter Phases A–E complete (sync glue + page export landed).*
