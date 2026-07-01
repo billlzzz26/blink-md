@@ -9,5 +9,6 @@ pub mod diff;
 pub mod export_cmd;
 #[cfg(feature = "mcp")]
 pub mod mcp;
+pub mod output;
 pub mod sync_cmd;
 pub mod theme;

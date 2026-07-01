@@ -17,6 +17,12 @@ struct SearchRequest {
 }
 
 impl NotionClient {
+    /// Upper bound on the number of pages [`search_all`](Self::search_all)
+    /// will fetch, as a safety valve against a server that never stops
+    /// reporting `has_more`. At the 100-results page size this caps a single
+    /// call at 100k results.
+    pub const SEARCH_ALL_MAX_PAGES: usize = 1_000;
+
     /// Search for pages and databases in Notion.
     ///
     /// Supports text query, sorting, filtering by object type, and pagination.
@@ -37,5 +43,55 @@ impl NotionClient {
         };
         self.request(reqwest::Method::POST, "/search", Some(&body))
             .await
+    }
+
+    /// Search and automatically follow pagination, returning every matching
+    /// result across all pages.
+    ///
+    /// Repeatedly calls [`search`](Self::search) with the previous page's
+    /// `next_cursor` until `has_more` is `false`, requesting the maximum page
+    /// size (100). Use [`search`](Self::search) directly when you need
+    /// page-by-page control.
+    ///
+    /// Pagination is hard-capped at [`Self::SEARCH_ALL_MAX_PAGES`] pages so a
+    /// server that keeps reporting `has_more: true` (with a fresh cursor each
+    /// time) cannot drive unbounded iteration or memory growth. If that cap is
+    /// reached while the server still reports more pages, this returns
+    /// [`NotionError::PaginationLimitExceeded`] rather than silently truncating
+    /// — the method's contract is "every result, or an error", never a partial
+    /// set that looks complete.
+    pub async fn search_all(
+        &self,
+        query: Option<String>,
+        filter: Option<serde_json::Value>,
+        sort: Option<serde_json::Value>,
+    ) -> Result<Vec<serde_json::Value>> {
+        let mut all = Vec::new();
+        let mut cursor: Option<String> = None;
+        for _ in 0..Self::SEARCH_ALL_MAX_PAGES {
+            let page = self
+                .search(
+                    query.clone(),
+                    filter.clone(),
+                    sort.clone(),
+                    cursor.take(),
+                    Some(100),
+                )
+                .await?;
+            all.extend(page.results);
+            if !page.has_more {
+                return Ok(all);
+            }
+            // Defend against a server that reports `has_more` without a cursor.
+            match page.next_cursor {
+                Some(next) => cursor = Some(next),
+                None => return Ok(all),
+            }
+        }
+        // The loop exhausted the page cap while `has_more` was still true:
+        // surface that explicitly instead of returning a truncated result.
+        Err(crate::error::NotionError::PaginationLimitExceeded {
+            limit: Self::SEARCH_ALL_MAX_PAGES,
+        })
     }
 }

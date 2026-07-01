@@ -1,6 +1,6 @@
 [package]
 name = "blink-md"
-version = "0.4.1"
+version = "0.4.2"
 edition = "2021"
 default-run = "blink-md"
 description = "High-performance Notion document sync and conversion engine with Universal IR support for Markdown, Lark, Sheets, and more."
@@ -79,6 +79,12 @@ csv = "1.3"
 feishu-sdk = "0.1"
 toml = "1.1"
 serde_yaml = "0.9"
+
+# --- Webhook signature verification (HMAC-SHA256, constant-time compare) ---
+hmac = "0.12"
+sha2 = "0.10"
+hex = "0.4"
+subtle = "2"
 
 # --- MCP server (`blink-md-mcp` binary), behind the `mcp` feature ---
 pmcp = { workspace = true, optional = true }

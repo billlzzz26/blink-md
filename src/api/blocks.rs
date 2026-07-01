@@ -11,6 +11,12 @@ struct AppendChildrenRequest {
 }
 
 impl NotionClient {
+    /// Retrieve a single block by ID (`GET /blocks/{id}`).
+    pub async fn get_block(&self, block_id: &str) -> Result<Block> {
+        let path = format!("/blocks/{}", block_id);
+        self.request(reqwest::Method::GET, &path, None::<&()>).await
+    }
+
     pub async fn get_block_children(
         &self,
         block_id: &str,
