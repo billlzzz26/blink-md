@@ -38,4 +38,6 @@ Thumbs.db
 
 # Project-specific
 .cavekit/
-docs/mcp/conductor/
+
+# Hermes agent session data
+.hermes/

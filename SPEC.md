@@ -1,24 +1,10 @@
 # blink-md Workflow Goals
 
-## md-sync: Bidirectional Markdown ↔ Notion Database Sync
+## md-sync: Bidirectional Markdown ↔ Notion Database Sync (merged)
 
-### Goal
-Complete Phase B-E (property mapping to sync glue) for YAML frontmatter ↔ Notion database synchronization.
-
-### Context
-Markdown files with YAML frontmatter should sync two-way with Notion database properties. YAML `type:` tag indicates Notion property type.
-
-### Requirements
-- Parse YAML `type:` tagged values to `PropertyValue` enum
-- `MarkdownWithFrontmatterConverter` round-trips Markdown+YAML ↔ UniversalDocument
-- `blink-md sync --dir <dir>` reads frontmatter and writes Notion properties
-- `export_page_to_md(page_id, out_dir)` writes `.md` files with YAML headers
-
-### Implementation Path
-1. Extend `parse_frontmatter_to_properties` to handle type tags
-2. Build converter in `src/converter/markdown_frontmatter.rs`
-3. Add sync command in `src/cli/commands.rs`
-4. Implement export in `src/api/notion/export.rs`
+### Status: Phases A–E complete
+- Detection, property mapping, converter, sync glue, and page export all landed.
+- See merged PRs #27, #28, #30.
 
 ---
 
@@ -63,7 +49,7 @@ Every chat message becomes a dated note in a Notion database, written to markdow
 
 ---
 
-## Google Workspace OAuth + API Adapter
+## Google Workspace OAuth + API Adapter (in progress on feature branch)
 
 ### Goal
 Integrate Google Workspace APIs (Docs, Sheets, Keep, Chat, Calendar, Tasks) using `yup-oauth2` pattern from google-workspace-cli.
@@ -77,14 +63,14 @@ blink-md already has `yup-oauth2` and `google-docs1` in Cargo.toml. Extend to fu
 - Service registry mapping aliases → API names/versions
 
 ### Services to Add
-| Alias | API | Version | Description |
-|-------|-----|---------|-------------|
-| docs | docs | v1 | Read/write Google Docs |
-| sheets | sheets | v4 | Read/write spreadsheets |
-| keep | keep | v1 | Manage notes |
-| chat | chat | v1 | Manage spaces/messages |
-| calendar | calendar | v3 | Manage calendars/events |
-| tasks | tasks | v1 | Manage task lists |
+| Alias | API | Version |
+|-------|-----|---------|
+| docs | docs | v1 |
+| sheets | sheets | v4 |
+| keep | keep | v1 |
+| chat | chat | v1 |
+| calendar | calendar | v3 |
+| tasks | tasks | v1 |
 
 ### Implementation Path
 1. Create `src/oauth.rs` - token provider trait + caching
@@ -92,12 +78,9 @@ blink-md already has `yup-oauth2` and `google-docs1` in Cargo.toml. Extend to fu
 3. Create `src/api/google/mod.rs` - Google API modules
 4. Add `--google` feature to Cargo.toml
 
----
-
-## Dependencies to Add
-
-| Feature | Crates |
-|---------|--------|
-| Google OAuth | `yup-oauth2` (existing) |
-| Token encryption | `aes-gcm`, `zeroize` |
-| Google APIs | `google-docs1` (existing), `google-sheets4` (optional) |
+### Related Issues
+- #32 Google Workspace OAuth + API Adapter
+- #33 OAuth token provider with caching
+- #34 Google Docs IR adapter
+- #35 Google Sheets CSV export
+- #36 Google Chat, Keep, Calendar, Tasks API modules

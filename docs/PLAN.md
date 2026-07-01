@@ -72,6 +72,24 @@
 
 ---
 
+## Lark/Feishu Integration (OAuth + API Adapter)
+
+### Phase 1: Tenant Auth
+- [ ] Tenant token provider (feishu-sdk)
+
+### Phase 2: API Modules
+- [ ] Docs/Sheets adapters (feishu-sdk)
+
+### Phase 3: IR Adapters
+- [ ] Wire Lark/Feishu converters to `blink-md convert` command
+
+## Shared cloud infrastructure
+- [ ] Unified `cloud` CLI command spanning Google Workspace and Lark/Feishu
+- [ ] Service registry pattern shared across providers
+- [ ] Batch operations for efficiency
+
+---
+
 ## Dependencies
 
 | Feature | Crates Needed |
@@ -80,3 +98,4 @@
 | Token encryption | `aes-gcm`, `zeroize` |
 | Google APIs | `google-docs1` (existing), `google-sheets4` (optional) |
 | OSC output | `rosc` (optional) |
+| Lark/Feishu | `feishu-sdk` (existing) |
