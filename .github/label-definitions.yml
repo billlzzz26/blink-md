@@ -5,7 +5,7 @@
 #
 # Color groups:
 # - Danger/urgent (red)    -> fix
-# - Docs (white)           -> docs
+# - Docs (light gray)      -> docs
 # - CI/CD, GitHub (purple) -> ci
 # - everything else has its own distinct color so groups stay visually
 #   separable at a glance.
@@ -40,7 +40,7 @@
 
 # Area — auto-applied by .github/labels.yml based on changed paths.
 - name: docs
-  color: "ffffff"
+  color: "eeeeee"
   description: Documentation changes
   aliases: [documentation]
 
