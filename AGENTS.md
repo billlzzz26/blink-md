@@ -1,6 +1,6 @@
 # AGENTS.md
 
-โฟลเดอร์นี้คือพื้นที่ทำงานของคุณ ปฏิบัติตัวตามนั้น
+โฟลเดอร์นี้คือพื้นที่ทำงานของคุณ ปฏิบัติตัวตามนั้น ไฟล์นี้อยู่ที่รูทเพราะเป็นกติกาทั่วไปของทั้งโปรเจกต์ (โปรเจกต์นี้เป็น single crate ไม่มี workspace ย่อยที่ต้องมี AGENTS.md ของตัวเอง)
 
 ## 1. เริ่มเซสชัน
 
@@ -8,7 +8,7 @@
 
 1. อ่าน `.claude/MEMORY.md` เพื่อทราบบริบทของโปรเจกต์ระยะยาว (โหลดเฉพาะในเซสชันหลักที่แชทตรงกับผู้ใช้เท่านั้น ห้ามโหลดในบริบทที่ใช้ร่วมกับผู้อื่น)
 2. อ่านไฟล์ล่าสุดใน `.claude/memory/` เพื่อทราบเหตุการณ์เซสชันก่อนหน้า
-3. ดู `docs/AGENTS.md` สำหรับกฎเวิร์กโฟลว์และข้อกำหนดเฉพาะของโปรเจกต์นี้ (SPEC/PLAN/TODO/DESIGN, ห้ามตัวหนา, header ภาษาอังกฤษล้วน) — ไฟล์นั้นคือ single source of truth ของธรรมเนียมปฏิบัติในโปรเจกต์
+3. ดูหัวข้อ 8-11 ด้านล่างสำหรับกฎเวิร์กโฟลว์และข้อกำหนดเฉพาะของโปรเจกต์นี้ (SPEC/PLAN/TODO/DESIGN, ห้ามตัวหนา, header ภาษาอังกฤษล้วน)
 
 > [!NOTE]
 > ไม่ต้องขออนุญาตก่อนทำ 3 ขั้นตอนข้างต้น ทำได้เลย
@@ -72,3 +72,35 @@
 
 1. ไฟล์ที่ส่งมอบ (รายงาน โค้ด ข้อมูล ฯลฯ) → รากพื้นที่ทำงานหรือโฟลเดอร์ย่อย ห้ามใส่ในโฟลเดอร์ระบบที่สงวนไว้
 2. ไฟล์ชั่วคราว/ระหว่างทำงาน → โฟลเดอร์ `.tmp/` ภายในพื้นที่ทำงาน
+
+## 8. PROJECT WORKFLOW & PROTOCOLS
+
+1. Define (SPEC.md) - ระบุสิ่งที่จะทำและเหตุผล
+2. Design (PLAN.md) - เขียนขั้นตอนและงานที่จะทำเป็น Phase
+3. Implement (TODO.md) - เช็คลิสงานที่ต้องทำอย่างละเอียดก่อนเริ่มงาน
+4. Design System (DESIGN.md) - มาตรฐาน UI และ Token
+
+## 9. CORE PRINCIPLES & CONTINUITY (META-RULES)
+
+1. Merge, Never Overwrite (ผสาน ห้ามทำลาย): เมื่อผู้ใช้เสนอแนะแนวทางใหม่ หรือชี้ข้อผิดพลาด ห้ามลบโครงสร้างเดิม (เช่น TODO.md, PLAN.md) ทิ้งเพื่อเริ่มใหม่ทั้งหมด ต้องใช้วิธีการผสานความต้องการใหม่เข้ากับรากฐานเดิมเพื่อรักษาประวัติการทำงาน (Historical Continuity)
+2. Context Before Execution (สร้างกฎก่อนลงมือ): เมื่อได้รับคำตักเตือนเรื่องพฤติกรรม ต้องหยุดเพื่อนำบทเรียนที่ได้ไปฝังเป็น "กฎการทำงาน" (Protocol) ในไฟล์ Context หลัก (AGENTS.md) ให้เสร็จสมบูรณ์ก่อนเสนอตัวรับงาน
+3. Anti-Panic Protocol (ห้ามลนลานทำลายงานเก่า): ห้ามทำลายงานเก่าเพื่อเอาใจผู้ใช้ การแก้ปัญหาต้องทำผ่านการวิเคราะห์อย่างมีเหตุผล (Structural Refinement) ไม่ใช่การตอบสนองแบบตื่นตระหนก (Reactive Destruction)
+4. Lexical Precision: ในการจัดการ Universal IR ต้องเคารพความแตกต่างของแต่ละแพลตฟอร์มอย่างเคร่งครัด (เช่น Lark 48 types vs Notion H1-H3) โดยเป้าหมายคือการแปลงที่สูญเสียข้อมูลเป็นศูนย์ (Lossless) และไม่ต้องพึ่งพามนุษย์ในการตรวจสอบซ้ำ
+5. Skill Compliance: ต้องอ่านและปฏิบัติตามคู่มือของ Skill ที่เกี่ยวข้องอย่างเคร่งครัด (เช่น การใช้ `fileKey` ใน `figma-generate-diagram` หรือการใช้ Hybrid Workflow) ห้ามเพิกเฉยต่อกระบวนการที่ออกแบบมาแล้ว
+
+## 10. AGENT BEHAVIOR MANDATES
+
+> [!WARNING]
+> 1. Agent Role: ดำเนินการตามแผนด้วยความแม่นยำสูง (High Fidelity)
+> 2. ห้ามขอโทษในทุกกรณี เมื่อทำผิดต้องลงมือแก้ไขเชิงระบบ
+> 3. ห้ามใช้ตัวหนาในการจัดรูปแบบทุกพื้นที่
+> 4. Header ต้องเป็นภาษาอังกฤษล้วน สั้น และกระชับ
+
+## 11. COMMIT MESSAGES & LABELS
+
+1. Commit message และ PR title ต้องใช้รูปแบบ Conventional Commits: `type(scope): summary` เช่น `feat(cli): add --sort flag`, `fix(api): handle empty search results`, `docs: update README roadmap`
+2. Types ต้องตรงกับ Type of Change ใน `.github/PULL_REQUEST_TEMPLATE.md`: `feat` (New feature), `fix` (Bug fix), `perf` (Performance optimization), `refactor` (Refactoring), `docs` (Documentation update), `test`, `ci`, `chore`
+3. ป้ายทั้งหมดใช้ชื่อสั้นตรงกับ type/scope ข้างต้น (`docs` ไม่ใช่ `documentation`, `deps` ไม่ใช่ `dependencies`, `test` ไม่ใช่ `tests`) เพื่อให้ป้ายกับคำนำหน้า commit เป็นคำเดียวกัน
+4. `.github/labels.yml` ติดป้ายตามพื้นที่ที่เปลี่ยนโดยอัตโนมัติ (`docs`, `ci`, `rust`, `test`, `deps`, `scripts`, `tooling`) — path glob บอกความหมายเชิง feature/fix/refactor ไม่ได้
+5. ป้ายเชิงความหมาย (`feat`/`fix`/`refactor`/`perf`/`chore`) ต้องติดเองให้ตรงกับ Conventional Commit type ที่ใช้ในหัวข้อ PR อย่ารอให้ผู้ใช้ติดแทน และอย่าติดป้ายที่ไม่ตรงกับสิ่งที่เปลี่ยนจริง
+6. สีและคำอธิบายของทุกป้าย (ทั้งเชิงพื้นที่และเชิงความหมาย) กำหนดไว้ที่เดียวใน `.github/label-definitions.yml` ใช้กลุ่มสีแยกตามหมวด: แดง = ด่วน/อันตราย (`fix`), ขาว = เอกสาร (`docs`), ม่วงเข้ม = CI/CD (`ci`), ที่เหลือแยกสีตามหมวดของตัวเอง — `.github/workflows/sync-labels.yml` เป็นตัว sync ชื่อ/สี/คำอธิบายจริงเข้า repo

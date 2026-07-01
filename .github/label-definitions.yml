@@ -14,7 +14,7 @@
 # history on already-labeled issues/PRs) instead of creating a duplicate.
 
 # Semantic type — matches the Conventional Commits prefix used in commit
-# messages and PR titles (see docs/AGENTS.md). Applied by hand; path globs
+# messages and PR titles (see AGENTS.md). Applied by hand; path globs
 # can't tell a fix from a feature.
 - name: feat
   color: "2ea44f"
