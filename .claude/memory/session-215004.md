@@ -1,12 +1,6 @@
 # Session Memory
 
-## Tasks Completed
-
-## Decisions Made
-
-## Files Changed
-
-## Next Steps
+## Log
 - Merged PR #37 (webhook signature verification) and PR #38 (get_block, search_all pagination, fixed silent-truncation bug -> PaginationLimitExceeded) 21:50
 - Built CLI UX overhaul: src/cli/output.rs table/JSON renderer, standard error output (error: prefix, exit codes, -v/--verbose), fixed offline commands (convert/diff/upgrade) wrongly requiring NOTION_TOKEN 21:50
 - Opened issues #39 (Notion OAuth), #40 (webhook worker), #41 (remaining Notion API surface) for deferred Notion work 21:50

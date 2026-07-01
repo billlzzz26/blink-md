@@ -5,7 +5,7 @@ set -euo pipefail
 
 SUMMARY="${1:-}"
 TIMESTAMP=$(date +%Y-%m-%d)
-SESSION_ID=$(date +%H%M%S)
+SESSION_ID=$(date +%Y%m%d-%H%M%S)
 
 # Find project root (parent of .claude/, where .claude/hooks/ lives two levels down)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -20,13 +20,7 @@ SESSION_FILE=".claude/memory/session-${SESSION_ID}.md"
 [ ! -f "$SESSION_FILE" ] && cat > "$SESSION_FILE" << 'EOF'
 # Session Memory
 
-## Tasks Completed
-
-## Decisions Made
-
-## Files Changed
-
-## Next Steps
+## Log
 EOF
 
 # Append to session file
