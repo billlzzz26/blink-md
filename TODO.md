@@ -1,11 +1,11 @@
-# blink-md TODO.md — v0.3.1
+# blink-md TODO.md — v0.4.2
 
 ## Overview
-- Version: 0.3.1
+- Version: 0.4.2
 - Current branch: `main`
 - Quality gate: `make ci`
 - Package gate: `python scripts/check-package-hygiene.py`
-- CI: `.github/workflows/rust-ci.yml` and `.github/workflows/cross-platform.yml`
+- CI: `.github/workflows/ci.yml`, `.github/workflows/coverage.yml`, and `.github/workflows/cross-platform.yml`
 
 ## Definition of done for every change
 - Code, tests, docs, CI/package gates, and release notes are updated together.
@@ -111,4 +111,4 @@
 - [ ] Verify GitHub Actions CI and Cross-Platform Build are green.
 - [ ] Verify release artifacts are produced for all target platforms.
 
-*Updated: 2026-06-30 | Frontmatter Phases A–E complete (sync glue + page export landed).*
+*Updated: 2026-07-01 | v0.4.2 released — CLI output/error formatting, webhooks, frontmatter Phases A–E, GFM tables, and the adapter architecture proposal (`docs/ARCHITECTURE.md`) landed.*
