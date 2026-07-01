@@ -60,6 +60,9 @@ publish).
 ## Work Log
 
 ### 2026-07-01
+
+*Details: [.claude/memory/session-2026-07-01.md](.claude/memory/session-2026-07-01.md)*
+
 - Fixed add-memory.sh hook: PROJECT_ROOT path resolution was one level too shallow (wrote to phantom .claude/.claude/memory/) and the sed multi-line Work Log append was malformed (silently never ran); replaced with a portable awk insert
 - Released v0.4.2: bumped Cargo.toml, cut CHANGELOG Unreleased into 0.4.2 section, synced README/TODO.md/docs/PLAN.md off stale 0.3.1 references; PR #43 merged to main; v0.4.2 git tag + crates.io publish still pending explicit user go-ahead
 - Added paths-ignore to ci.yml/coverage.yml/cross-platform.yml/audit.yml so doc-only changes skip CI (tag pushes, daily audit schedule unaffected)
@@ -67,6 +70,10 @@ publish).
 - Opened issues #39 (Notion OAuth), #40 (webhook worker), #41 (remaining Notion API surface) for deferred Notion work
 - Built CLI UX overhaul: src/cli/output.rs table/JSON renderer, standard error output (error: prefix, exit codes, -v/--verbose), fixed offline commands (convert/diff/upgrade) wrongly requiring NOTION_TOKEN
 - Merged PR #37 (webhook signature verification) and PR #38 (get_block, search_all pagination, fixed silent-truncation bug -> PaginationLimitExceeded)
+
+#### feat
+
+1. rewrite add-memory.sh/.py into type-sectioned GFM format with day-linked session logs, add AGENTS.md file-placement/documentation rules (23:38)
 
 ### 2026-06-30
 - refactor(.claude): consolidate memory system hooks and scripts

@@ -17,8 +17,8 @@
 
 คุณเริ่มต้นใหม่ทุกครั้งที่เปิดเซสชัน ไฟล์เหล่านี้คือสิ่งที่เชื่อมความต่อเนื่อง:
 
-1. `.claude/memory/session-<timestamp>.md` — บันทึกเหตุการณ์ดิบของแต่ละเซสชัน สร้าง/เพิ่มรายการผ่าน `.claude/hooks/add-memory.sh "<สรุปงาน>"`
-2. `.claude/MEMORY.md` — ความทรงจำระยะยาวที่คัดสรรแล้ว: ภาพรวมโปรเจกต์ สถาปัตยกรรม โฟกัสปัจจุบัน และ work log แก้ไขไฟล์นี้โดยตรงเมื่อข้อเท็จจริงของโปรเจกต์เปลี่ยน (เวอร์ชัน โฟกัส งานที่เสร็จแล้ว) อย่าปล่อยให้มันล้าสมัย
+1. `.claude/memory/session-<YYYY-MM-DD>.md` — บันทึกเหตุการณ์ดิบของแต่ละวัน (ไฟล์เดียวต่อวัน ไม่แยกตามการเรียกแต่ละครั้ง) สร้าง/เพิ่มรายการผ่าน `.claude/hooks/add-memory.sh "type: สรุปงาน"` ดูรูปแบบและกฎไม่ซ้ำซ้อนกับ README.md/AGENTS.md ใน `.claude/skills/add-memory/SKILL.md`
+2. `.claude/MEMORY.md` — ความทรงจำระยะยาวที่คัดสรรแล้ว: ภาพรวมโปรเจกต์ สถาปัตยกรรม โฟกัสปัจจุบัน และ work log (ลิงก์ไปยัง session log ของแต่ละวัน) แก้ไขไฟล์นี้โดยตรงเมื่อข้อเท็จจริงของโปรเจกต์เปลี่ยน (เวอร์ชัน โฟกัส งานที่เสร็จแล้ว) อย่าปล่อยให้มันล้าสมัย
 
 > [!TIP]
 > จดสิ่งสำคัญไว้เสมอ ห้ามใช้ "ความจำในใจ" — มันหายไปเมื่อปิดเซสชัน แต่ไฟล์จะยังอยู่
@@ -103,4 +103,19 @@
 3. ป้ายทั้งหมดใช้ชื่อสั้นตรงกับ type/scope ข้างต้น (`docs` ไม่ใช่ `documentation`, `deps` ไม่ใช่ `dependencies`, `test` ไม่ใช่ `tests`) เพื่อให้ป้ายกับคำนำหน้า commit เป็นคำเดียวกัน
 4. `.github/labels.yml` ติดป้ายตามพื้นที่ที่เปลี่ยนโดยอัตโนมัติ (`docs`, `ci`, `rust`, `test`, `deps`, `scripts`, `tooling`) — path glob บอกความหมายเชิง feature/fix/refactor ไม่ได้
 5. ป้ายเชิงความหมาย (`feat`/`fix`/`refactor`/`perf`/`chore`) ต้องติดเองให้ตรงกับ Conventional Commit type ที่ใช้ในหัวข้อ PR อย่ารอให้ผู้ใช้ติดแทน และอย่าติดป้ายที่ไม่ตรงกับสิ่งที่เปลี่ยนจริง
-6. สีและคำอธิบายของทุกป้าย (ทั้งเชิงพื้นที่และเชิงความหมาย) กำหนดไว้ที่เดียวใน `.github/label-definitions.yml` ใช้กลุ่มสีแยกตามหมวด: แดง = ด่วน/อันตราย (`fix`), ขาว = เอกสาร (`docs`), ม่วงเข้ม = CI/CD (`ci`), ที่เหลือแยกสีตามหมวดของตัวเอง — `.github/workflows/sync-labels.yml` เป็นตัว sync ชื่อ/สี/คำอธิบายจริงเข้า repo
+6. สีและคำอธิบายของทุกป้าย (ทั้งเชิงพื้นที่และเชิงความหมาย) กำหนดไว้ที่เดียวใน `.github/label-definitions.yml` ใช้กลุ่มสีแยกตามหมวด: แดง = ด่วน/อันตราย (`fix`), เทาอ่อน = เอกสาร (`docs`), ม่วงเข้ม = CI/CD (`ci`), ที่เหลือแยกสีตามหมวดของตัวเอง — `.github/workflows/sync-labels.yml` เป็นตัว sync ชื่อ/สี/คำอธิบายจริงเข้า repo
+
+## 12. FILE PLACEMENT & DOCUMENTATION RULES
+
+1. Root only: `AGENTS.md`, `README.md`, `CHANGELOG.md`, `TODO.md`, `Cargo.toml`/`Cargo.lock`, `LICENSE` — fixed-path contract files every tool or contributor expects at root. Never duplicate one of these under `docs/`.
+2. `docs/`: long-form reference or design material with no fixed expected path — architecture proposals/ADRs (`docs/ARCHITECTURE.md`), planning narrative (`docs/PLAN.md`), the archive index (`docs/ARCHIVED.md`).
+3. Each file has one job; do not restate another file's content:
+   - `README.md`: user-facing pitch, install/usage, feature list, roadmap headline.
+   - `TODO.md`: actionable checklist only.
+   - `CHANGELOG.md`: released history (Keep a Changelog format) — no roadmap, no design rationale.
+   - `docs/PLAN.md`: the why/phases behind `TODO.md`'s checklist — never repeats its checkboxes verbatim.
+   - `docs/ARCHITECTURE.md` and similar: forward-looking proposals, not current status.
+   - `.claude/MEMORY.md` / `.claude/memory/`: the agent's own working memory (architecture summary, current focus, work log) — references `README.md`/`AGENTS.md` by name instead of restating them (see `.claude/skills/add-memory/SKILL.md`).
+4. Update `TODO.md` in the same commit/PR as the work it tracks — check items off or add new ones then, not as a later afterthought.
+5. Archiving: when a doc is superseded, move it (never delete) to an archive location and record the move and reason in `docs/ARCHIVED.md`. Precedent: `tooling/conductor-archive/`.
+6. Communication vs documentation: commit messages, PR descriptions, and chat replies are communication — addressed to a reader right now, may reference a doc but should not reproduce it at length. Anything that needs to persist as project knowledge belongs in a doc file, not only in a commit message or reply.
