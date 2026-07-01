@@ -4,6 +4,8 @@ on:
   workflow_dispatch:
   push:
     branches-ignore: [main]
+    paths:
+      - 'src/registry/**'
 
 permissions:
   contents: write
@@ -23,6 +25,7 @@ jobs:
         run: cargo run -- generate-skills --output-dir skills
 
       - name: Check for changes
+        id: diff
         run: |
           if git diff --quiet skills/; then
             echo "changed=false" >> $GITHUB_OUTPUT
