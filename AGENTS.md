@@ -117,5 +117,5 @@
    - `docs/ARCHITECTURE.md` and similar: forward-looking proposals, not current status.
    - `.claude/MEMORY.md` / `.claude/memory/`: the agent's own working memory (architecture summary, current focus, work log) — references `README.md`/`AGENTS.md` by name instead of restating them (see `.claude/skills/add-memory/SKILL.md`).
 4. Update `TODO.md` in the same commit/PR as the work it tracks — check items off or add new ones then, not as a later afterthought.
-5. Archiving: when a doc is superseded, move it (never delete) to an archive location and record the move and reason in `docs/ARCHIVED.md`. Precedent: `tooling/conductor-archive/`.
+5. Archiving: when a doc is superseded, move it (never delete) to an archive location and record the move and reason in `docs/ARCHIVED.md`.
 6. Communication vs documentation: commit messages, PR descriptions, and chat replies are communication — addressed to a reader right now, may reference a doc but should not reproduce it at length. Anything that needs to persist as project knowledge belongs in a doc file, not only in a commit message or reply.

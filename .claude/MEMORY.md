@@ -61,7 +61,7 @@ publish).
 
 ### 2026-07-01
 
-*Details: [.claude/memory/session-2026-07-01.md](.claude/memory/session-2026-07-01.md)*
+*Details: [.claude/memory/session-2026-07-01.md](memory/session-2026-07-01.md)*
 
 - Fixed add-memory.sh hook: PROJECT_ROOT path resolution was one level too shallow (wrote to phantom .claude/.claude/memory/) and the sed multi-line Work Log append was malformed (silently never ran); replaced with a portable awk insert
 - Released v0.4.2: bumped Cargo.toml, cut CHANGELOG Unreleased into 0.4.2 section, synced README/TODO.md/docs/PLAN.md off stale 0.3.1 references; PR #43 merged to main; v0.4.2 git tag + crates.io publish still pending explicit user go-ahead

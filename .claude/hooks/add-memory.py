@@ -24,7 +24,12 @@ HEADING_RE = re.compile(r"^(#{1,6})\s+(.*?)\s*$")
 NUMBERED_RE = re.compile(r"^\d+\.\s")
 
 
+def single_line(text: str) -> str:
+    return " ".join(text.split())
+
+
 def parse_summary(summary: str) -> tuple[str, str]:
+    summary = single_line(summary)
     m = re.match(r"^([a-z]+)(\([^)]*\))?:\s*(.+)$", summary)
     if m and m.group(1) in TYPES:
         return m.group(1), m.group(3).strip()
@@ -66,9 +71,10 @@ def insert_numbered(lines, level, idx, text):
 TIMESTAMP_SUFFIX_RE = re.compile(r"\s*\(\d{2}:\d{2}\)\s*$")
 
 
-def already_logged(lines, text):
+def already_logged(lines, text, start=0, end=None):
+    end = len(lines) if end is None else end
     needle = TIMESTAMP_SUFFIX_RE.sub("", text).strip()
-    for l in lines:
+    for l in lines[start:end]:
         candidate = TIMESTAMP_SUFFIX_RE.sub("", NUMBERED_RE.sub("", l)).strip()
         if candidate == needle:
             return True
@@ -125,24 +131,27 @@ def update_session_file(path: Path, day_iso: str, memory_rel_link: str, type_: s
     path.write_text("".join(normalize(lines)))
 
 
-def update_memory_file(path: Path, day_iso: str, session_rel_link: str, type_: str, entry: str) -> None:
+def update_memory_file(path: Path, day_iso: str, session_link: str, type_: str, entry: str) -> None:
     if not path.exists():
         return
     lines = path.read_text().splitlines(keepends=True)
-    if already_logged(lines, entry):
-        return
     wl_idx = find_heading(lines, 2, "Work Log")
     if wl_idx is None:
         return
     wl_end = section_end(lines, 2, wl_idx)
     day_idx = find_heading(lines, 3, day_iso, wl_idx + 1, wl_end)
-    link_line = f"*Details: [{session_rel_link}]({session_rel_link})*\n"
+    link_line = f"*Details: [{session_link}]({session_link})*\n"
     if day_idx is None:
         block = [f"### {day_iso}\n", "\n", link_line, "\n"]
         lines = lines[: wl_idx + 1] + block + lines[wl_idx + 1 :]
         day_idx = wl_idx + 1
     else:
-        has_link = any(session_rel_link in l for l in lines[day_idx : day_idx + 4])
+        # dedupe only within today's section: identical text logged on a
+        # different day is a legitimate distinct recurrence, not a repeat.
+        day_end_check = section_end(lines, 3, day_idx)
+        if already_logged(lines, entry, day_idx, day_end_check):
+            return
+        has_link = any(session_link in l for l in lines[day_idx : day_idx + 4])
         if not has_link:
             lines = lines[: day_idx + 1] + ["\n", link_line, "\n"] + lines[day_idx + 1 :]
     day_end = section_end(lines, 3, day_idx)
@@ -168,12 +177,13 @@ def main() -> None:
     memory_dir.mkdir(parents=True, exist_ok=True)
 
     session_file = memory_dir / f"session-{day_iso}.md"
-    session_rel = f".claude/memory/session-{day_iso}.md"
+    session_rel = f".claude/memory/session-{day_iso}.md"  # repo-root-relative, for the printed message only
+    session_link = f"memory/session-{day_iso}.md"  # relative to MEMORY.md's own .claude/ directory
     memory_file = root / ".claude" / "MEMORY.md"
-    memory_rel = "../MEMORY.md"
+    memory_rel = "../MEMORY.md"  # relative to the session file's .claude/memory/ directory
 
     update_session_file(session_file, day_iso, memory_rel, type_, entry)
-    update_memory_file(memory_file, day_iso, session_rel, type_, entry)
+    update_memory_file(memory_file, day_iso, session_link, type_, entry)
 
     print(f"Memory: {session_rel} [{type_}]")
 

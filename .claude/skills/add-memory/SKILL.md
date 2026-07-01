@@ -11,7 +11,7 @@ description: "Append a work summary to today's session log and .claude/MEMORY.md
 
 The `type:` prefix is optional. If it matches one of `feat`, `fix`, `docs`,
 `refactor`, `perf`, `test`, `ci`, `chore`, `deps` (the same vocabulary as
-commit messages and labels — see `AGENTS.md`), the entry files under that
+commit messages and labels — see `AGENTS.md`), the entry is filed under that
 section. Otherwise it lands under `notes`.
 
 ## 2. What each file is for
@@ -21,7 +21,7 @@ section. Otherwise it lands under `notes`.
    files. Raw, in the moment.
 2. `.claude/MEMORY.md`'s `## Work Log` — the same entries, curated over
    time: prune anything no longer worth keeping, keep the rest. Each day
-   heading links to that day's session file (`*Details: [...]`), and each
+   heading links to that day's session file (`*Details: [...]*`), and each
    session file links back to `MEMORY.md`, so either file can be read alone.
 
 ## 3. Format
