@@ -60,7 +60,7 @@
 ### 1. Google Workspace OAuth + API Adapter
 - [ ] Create `src/oauth.rs` - token provider trait + caching (adapted from google-workspace-cli)
 - [ ] Create `src/services.rs` - service registry mapping aliases to API names/versions
-- [ ] Add `--google` feature to Cargo.toml
+- [ ] Add `google` feature to Cargo.toml
 - [ ] Create `src/api/google/mod.rs` - common Google API utilities
 - [ ] Create `src/api/google/docs.rs` - Google Docs read/write
 - [ ] Create `src/api/google/sheets.rs` - Spreadsheet API
