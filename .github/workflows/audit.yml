@@ -1,11 +1,27 @@
 # Security audit workflow for blink-md
 name: Audit
 
+# Dependency audit is unaffected by docs-only changes; skip them for push/PR.
+# The daily `schedule` run below is unaffected by paths-ignore and still audits.
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.gitattributes'
+      - '.claude/**'
   pull_request:
     branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.gitattributes'
+      - '.claude/**'
   schedule:
     - cron: '0 6 * * *'
   workflow_dispatch:

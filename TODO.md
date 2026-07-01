@@ -1,11 +1,11 @@
-# blink-md TODO.md — v0.3.1
+# blink-md TODO.md — v0.4.2
 
 ## Overview
-- Version: 0.3.1
+- Version: 0.4.2
 - Current branch: `main`
 - Quality gate: `make ci`
 - Package gate: `python scripts/check-package-hygiene.py`
-- CI: `.github/workflows/rust-ci.yml` and `.github/workflows/cross-platform.yml`
+- CI: `.github/workflows/ci.yml`, `.github/workflows/coverage.yml`, and `.github/workflows/cross-platform.yml`
 
 ## Definition of done for every change
 - Code, tests, docs, CI/package gates, and release notes are updated together.
@@ -62,6 +62,7 @@
 - [x] **Phase E — export**: `export_page_to_md(page_id, out_dir)` (CLI: `blink-md export-page <id> [--out-dir <dir>]`) writes one `<slug>-<page-id>.md` file per page with a typed YAML header + Markdown body — the reverse of Phase D, reusing `properties_to_yaml()`. Notion properties are mapped back to typed `PropertyValue`s (title, rich_text, number, select, multi_select, date, checkbox, url, email; unknown kinds fall back to `custom`). Implemented in [`src/cli/export_cmd.rs`](src/cli/export_cmd.rs) with `slugify()` / property-mapping unit tests.
 
 ### 1. Platform adapters behind Universal IR
+> Architecture overhaul for making new platforms cheap to add (Reader/Writer + Source/Sink, filters, capabilities, ChangeSet write path) is designed in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). New Notion-remainder work is tracked in issues #39 (OAuth), #40 (webhook worker), #41 (API surface).
 - [x] **GFM tables**: `MarkdownConverter` round-trips pipe tables (parse → IR `Table`, render IR → aligned pipe table). `block_ir_to_notion` writes Notion `Table`/`TableRow` blocks (so `sync` pushes tables) and `NotionFromPlatform` regroups flattened API rows back into one IR table (so `export-page` renders a single table). Implemented in [`src/api/markdown.rs`](src/api/markdown.rs), [`src/converter/markdown.rs`](src/converter/markdown.rs), and [`src/converter/notion.rs`](src/converter/notion.rs).
 - [ ] GitHub Markdown/GFM extensions: footnotes, alerts, issue/PR refs, mentions, commit refs. _(Cell alignment is lost on the md→Notion→IR path since the Notion table model has no per-column alignment.)_
 - [ ] HTML adapter: semantic tags, styles, images, links, and platform extensions.
@@ -110,4 +111,4 @@
 - [ ] Verify GitHub Actions CI and Cross-Platform Build are green.
 - [ ] Verify release artifacts are produced for all target platforms.
 
-*Updated: 2026-06-30 | Frontmatter Phases A–E complete (sync glue + page export landed).*
+*Updated: 2026-07-01 | v0.4.2 released — CLI output/error formatting, webhooks, frontmatter Phases A–E, GFM tables, and the adapter architecture proposal (`docs/ARCHITECTURE.md`) landed.*

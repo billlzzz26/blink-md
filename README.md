@@ -1,9 +1,9 @@
 # blink-md ⚡️
 
 [![Crates.io](https://img.shields.io/crates/v/blink-md.svg)](https://crates.io/crates/blink-md)
-[![Build Status](https://github.com/billlzzz26/blink-md/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/billlzzz26/blink-md/actions)
+[![Build Status](https://github.com/billlzzz26/blink-md/actions/workflows/ci.yml/badge.svg)](https://github.com/billlzzz26/blink-md/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.3.1-blue.svg)](https://github.com/billlzzz26/blink-md/releases/tag/v0.3.1)
+[![Version](https://img.shields.io/badge/version-0.4.2-blue.svg)](https://github.com/billlzzz26/blink-md/releases/tag/v0.4.2)
 
 **blink-md** is a high-performance, platform-agnostic document sync and conversion engine built in Rust. It serves as a bridge between structured SaaS documents (Notion, Lark, Google Docs) and standard file formats (Markdown, HTML, PDF), ensuring **100% visual fidelity and lossless transformation**.
 
@@ -133,14 +133,14 @@ async fn main() -> anyhow::Result<()> {
 
 ---
 
-## 🗺 Roadmap (v0.3.1)
+## 🗺 Roadmap (v0.4.2)
 Track detailed progress in `TODO.md` and `docs/PLAN.md`.
 
-- **Current release**: v0.3.1 — cross-platform release artifacts, Thai TUI hardening, Universal Data Adapters, self-update, installers, and CLI help polish.
-- **Next engineering focus**: make every new feature update code, tests, docs, CI/package gates, and release notes together.
-- **Upcoming converter work**: GitHub Markdown/GFM, HTML, Lark/Feishu, Google Docs, PDF, Docx, and Sheets/Excel adapters behind Universal IR.
-- **Upcoming API work**: page markdown endpoints, data source CRUD, webhooks, search sort/filter, block position updates, and file upload polish.
-- **Upcoming UX work**: deeper TUI preview/edit flows and better status/help surfaces.
+- **Current release**: v0.4.2 — table/JSON CLI output with standard error reporting, Notion webhook signature verification, `get_block`/`search_all` pagination, Markdown YAML frontmatter round-trip (Phases A–E), GFM table support, and the adapter architecture proposal (`docs/ARCHITECTURE.md`).
+- **Next engineering focus**: land the M1–M5 architecture migration (Reader/Writer, Source/Sink, filters, capabilities, ChangeSet write path) from `docs/ARCHITECTURE.md`.
+- **Upcoming converter work**: GitHub Markdown/GFM extensions, HTML, full Lark/Feishu, Google Docs, PDF, Docx, and Sheets/Excel adapters behind Universal IR.
+- **Upcoming API work**: page markdown endpoints, data source CRUD, OAuth, and a webhook receiver worker (tracked in issues #39–#41).
+- **Upcoming UX work**: CLI `--limit`/`--sort`/`--filter`, TUI preview/edit flows, and conflict resolution.
 
 ---
 

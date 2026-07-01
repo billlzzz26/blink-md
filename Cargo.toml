@@ -1,6 +1,6 @@
 [package]
 name = "blink-md"
-version = "0.4.1"
+version = "0.4.2"
 edition = "2021"
 default-run = "blink-md"
 description = "High-performance Notion document sync and conversion engine with Universal IR support for Markdown, Lark, Sheets, and more."
