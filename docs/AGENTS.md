@@ -18,3 +18,9 @@
 - ห้ามขอโทษในทุกกรณี เมื่อทำผิดต้องลงมือแก้ไขเชิงระบบ
 - ห้ามใช้ตัวหนา ในการจัดรูปแบบทุกพื้นที่
 - Header ต้องเป็นภาษาอังกฤษล้วน สั้น และกระชับ
+
+## 4. COMMIT MESSAGES & LABELS
+- Commit message และ PR title ต้องใช้รูปแบบ Conventional Commits: `type(scope): summary` เช่น `feat(cli): add --sort flag`, `fix(api): handle empty search results`, `docs: update README roadmap`
+- Types ต้องตรงกับ Type of Change ใน `.github/PULL_REQUEST_TEMPLATE.md`: `feat` (New feature), `fix` (Bug fix), `perf` (Performance optimization), `refactor` (Refactoring), `docs` (Documentation update), `test`, `ci`, `chore`
+- `.github/labels.yml` ติดป้ายตามพื้นที่ที่เปลี่ยนโดยอัตโนมัติ (documentation, ci, rust, tests, dependencies, scripts, tooling) — path glob บอกความหมายเชิง feature/fix/refactor ไม่ได้
+- ป้ายเชิงความหมาย (feature/fix/refactor/…) ต้องติดเองให้ตรงกับ Conventional Commit type ที่ใช้ในหัวข้อ PR อย่ารอให้ผู้ใช้ติดแทน และอย่าติดป้ายที่ไม่ตรงกับสิ่งที่เปลี่ยนจริง

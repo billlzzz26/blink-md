@@ -1,13 +1,45 @@
 # GitHub PR label configuration
 # https://github.com/actions/labeler
+#
+# Each top-level key is a label; actions/labeler applies it when any file in
+# the PR matches one of its globs. Keep these mapped to distinct areas of the
+# repo so a PR gets the labels that actually describe what changed, not one
+# catch-all. Semantic type (feature/fix/refactor) comes from the PR's Type of
+# Change checklist and Conventional Commits prefix (see docs/AGENTS.md), not
+# from path matching — path globs can't tell a fix from a feature.
 
-features:
-  - docs:
-      - changed-files:
-          - any-glob-to-any-file: "docs/**"
-  - code:
-      - changed-files:
-          - any-glob-to-any-file: "src/**/*.rs"
-  - workflows:
-      - changed-files:
-          - any-glob-to-any-file: ".github/workflows/**"
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.md"
+          - "docs/**"
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file: ".github/workflows/**"
+
+rust:
+  - changed-files:
+      - any-glob-to-any-file: "src/**/*.rs"
+
+tests:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "tests/**/*.rs"
+          - "src/**/tests.rs"
+
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "Cargo.toml"
+          - "Cargo.lock"
+
+scripts:
+  - changed-files:
+      - any-glob-to-any-file: "scripts/**"
+
+tooling:
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".claude/**"
+          - "AGENTS.md"
