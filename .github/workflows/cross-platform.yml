@@ -1,11 +1,27 @@
 name: Cross-Platform Build
 
+# Cross-platform release builds are heavy; skip them for docs-only changes.
+# Release tag pushes ('v*') still build regardless of paths.
 on:
   push:
     branches: [main]
     tags: ['v*']
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.gitattributes'
+      - '.claude/**'
   pull_request:
     branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.gitattributes'
+      - '.claude/**'
 
 env:
   CARGO_TERM_COLOR: always

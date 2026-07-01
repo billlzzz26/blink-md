@@ -1,10 +1,27 @@
 name: CI
 
+# Skip this Rust build/lint/test workflow for changes that cannot affect it —
+# documentation, license, and agent config. Any change touching source, Cargo
+# manifests, scripts, or the workflows themselves still runs it.
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.gitattributes'
+      - '.claude/**'
   pull_request:
     branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.gitattributes'
+      - '.claude/**'
 
 env:
   CARGO_TERM_COLOR: always
