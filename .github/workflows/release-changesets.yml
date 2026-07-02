@@ -21,7 +21,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: changesets/action@v0
+      - uses: changesets/action@v1
         id: changeset
         with:
           publish: false
@@ -37,7 +37,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: changesets/action@v0
+      - uses: changesets/action@v1
         with:
           publish: true
           # npm token for publishing packages
