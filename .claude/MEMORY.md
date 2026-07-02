@@ -37,8 +37,8 @@
 PR #45 open (branch claude/project-next-steps-j2m3t3): root AGENTS.md
 rewrite (merged docs/AGENTS.md in, added numbered sections + GFM alerts,
 file-placement rules in section 12), a fixed label system (`.github/labels.yml`
-corrected to actions/labeler@v4's flat glob syntax, `.github/label-definitions.yml`
-+ `sync-labels.yml` for colors), and this memory system rewrite
+corrected to actions/labeler@v4's flat glob syntax, and `.github/label-definitions.yml`
+and `sync-labels.yml` for colors), and this memory system rewrite
 (`.claude/skills/add-memory/`, now portable with templates). Passed
 CodeRabbit + cubic review rounds; awaiting merge.
 
