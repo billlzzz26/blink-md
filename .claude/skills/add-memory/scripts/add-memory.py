@@ -1,6 +1,15 @@
 #!/usr/bin/env python3
 """Append a work summary to today's session log and MEMORY.md's Work Log.
 
+This is the portable implementation of the add-memory skill — the whole
+`.claude/skills/add-memory/` folder is meant to be copied into other
+projects as-is. It never hardcodes anything specific to the project it
+happens to be running in: the project root is found by walking up from
+this script's own location (looking for `.git`, or the `.claude` folder
+this skill lives under), and a fresh `.claude/MEMORY.md` or session log is
+bootstrapped from the templates shipped alongside this script, not from
+logic specific to any one project.
+
 Entries are filed under a Conventional Commit type heading (feat/fix/docs/
 refactor/perf/test/ci/chore/deps, matching the vocabulary already used for
 commits and labels — see AGENTS.md), as a GFM numbered list within that
@@ -10,7 +19,7 @@ files.
 
 This only records project facts and history. It never restates what
 README.md (user-facing pitch/usage) or AGENTS.md (agent rules/workflow)
-already say — see AGENTS.md section 12.
+already say — see AGENTS.md's file-placement rules.
 """
 import re
 import sys
@@ -22,6 +31,20 @@ DEFAULT_TYPE = "notes"
 
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.*?)\s*$")
 NUMBERED_RE = re.compile(r"^\d+\.\s")
+TIMESTAMP_SUFFIX_RE = re.compile(r"\s*\(\d{2}:\d{2}\)\s*$")
+
+
+def find_repo_root(start: Path) -> Path:
+    """Walk up from this script's own location. Works no matter how deep
+    this skill folder is nested, and however this project is laid out —
+    it never assumes a fixed number of parent directories."""
+    for p in (start, *start.parents):
+        if (p / ".git").exists():
+            return p
+    for p in (start, *start.parents):
+        if p.name == ".claude":
+            return p.parent
+    return start.parents[-1]
 
 
 def single_line(text: str) -> str:
@@ -68,9 +91,6 @@ def insert_numbered(lines, level, idx, text):
     return lines[:end] + [f"{n}. {text}\n"] + lines[end:]
 
 
-TIMESTAMP_SUFFIX_RE = re.compile(r"\s*\(\d{2}:\d{2}\)\s*$")
-
-
 def already_logged(lines, text, start=0, end=None):
     end = len(lines) if end is None else end
     needle = TIMESTAMP_SUFFIX_RE.sub("", text).strip()
@@ -112,16 +132,16 @@ def normalize(lines):
     return spaced
 
 
-def update_session_file(path: Path, day_iso: str, memory_rel_link: str, type_: str, entry: str) -> None:
-    if path.exists():
-        lines = path.read_text().splitlines(keepends=True)
-    else:
-        lines = [
-            f"# Session Memory — {day_iso}\n",
-            "\n",
-            f"*Full project memory: [{memory_rel_link}]({memory_rel_link})*\n",
-            "\n",
-        ]
+def bootstrap_from_template(path: Path, template_path: Path, day_iso: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    template = template_path.read_text()
+    path.write_text(template.replace("{DATE}", day_iso))
+
+
+def update_session_file(path: Path, templates_dir: Path, day_iso: str, type_: str, entry: str) -> None:
+    if not path.exists():
+        bootstrap_from_template(path, templates_dir / "session.md", day_iso)
+    lines = path.read_text().splitlines(keepends=True)
     if already_logged(lines, entry):
         return
     idx = find_heading(lines, 2, type_)
@@ -131,9 +151,9 @@ def update_session_file(path: Path, day_iso: str, memory_rel_link: str, type_: s
     path.write_text("".join(normalize(lines)))
 
 
-def update_memory_file(path: Path, day_iso: str, session_link: str, type_: str, entry: str) -> None:
+def update_memory_file(path: Path, templates_dir: Path, day_iso: str, session_link: str, type_: str, entry: str) -> None:
     if not path.exists():
-        return
+        bootstrap_from_template(path, templates_dir / "MEMORY.md", day_iso)
     lines = path.read_text().splitlines(keepends=True)
     wl_idx = find_heading(lines, 2, "Work Log")
     if wl_idx is None:
@@ -172,18 +192,18 @@ def main() -> None:
     day_iso = now.strftime("%Y-%m-%d")
     entry = f"{text} ({now.strftime('%H:%M')})"
 
-    root = Path(__file__).resolve().parent.parent.parent
-    memory_dir = root / ".claude" / "memory"
-    memory_dir.mkdir(parents=True, exist_ok=True)
+    skill_dir = Path(__file__).resolve().parent.parent
+    templates_dir = skill_dir / "templates"
+    root = find_repo_root(Path(__file__).resolve())
 
+    memory_dir = root / ".claude" / "memory"
     session_file = memory_dir / f"session-{day_iso}.md"
     session_rel = f".claude/memory/session-{day_iso}.md"  # repo-root-relative, for the printed message only
     session_link = f"memory/session-{day_iso}.md"  # relative to MEMORY.md's own .claude/ directory
     memory_file = root / ".claude" / "MEMORY.md"
-    memory_rel = "../MEMORY.md"  # relative to the session file's .claude/memory/ directory
 
-    update_session_file(session_file, day_iso, memory_rel, type_, entry)
-    update_memory_file(memory_file, day_iso, session_link, type_, entry)
+    update_session_file(session_file, templates_dir, day_iso, type_, entry)
+    update_memory_file(memory_file, templates_dir, day_iso, session_link, type_, entry)
 
     print(f"Memory: {session_rel} [{type_}]")
 

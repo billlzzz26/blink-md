@@ -16,7 +16,7 @@ secrets/
 
 # Project memory (keep templates/hooks, ignore runtime files)
 .claude/hooks/*.sh.local
-.claude/hooks/__pycache__/
+.claude/skills/*/scripts/__pycache__/
 .claude/memory/*/
 
 # MCP subproject build artifacts

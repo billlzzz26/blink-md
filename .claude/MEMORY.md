@@ -59,6 +59,14 @@ publish).
 
 ## Work Log
 
+### 2026-07-02
+
+*Details: [memory/session-2026-07-02.md](memory/session-2026-07-02.md)*
+
+#### refactor
+
+1. relocate add-memory into skills/add-memory/scripts, add portable root-detection and MEMORY.md/session templates for reuse in other projects (00:04)
+
 ### 2026-07-01
 
 *Details: [.claude/memory/session-2026-07-01.md](memory/session-2026-07-01.md)*

@@ -1,10 +1,10 @@
 #!/bin/bash
-# add-memory.sh - Append a work summary to today's session log and
-# .claude/MEMORY.md's Work Log. Thin wrapper; the actual file editing
-# (section/heading handling, numbered lists, dedup) lives in add-memory.py
-# since that logic is far more reliable in Python than sed/awk.
+# Forwarding stub: hooks.json's session_end trigger needs a script it can
+# find at a fixed location under .claude/hooks/. The real, portable
+# implementation lives in .claude/skills/add-memory/scripts/, so that skill
+# folder alone can be copied into other projects.
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-exec python3 "$SCRIPT_DIR/add-memory.py" "${1:-}"
+exec "$SCRIPT_DIR/../skills/add-memory/scripts/add-memory.sh" "${1:-}"
