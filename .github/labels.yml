@@ -1,13 +1,38 @@
 # GitHub PR label configuration
-# https://github.com/actions/labeler
+# https://github.com/actions/labeler (v4 config schema)
+#
+# actions/labeler@v4 only understands the flat "label: [glob, glob, ...]"
+# format below — the "changed-files"/"any-glob-to-any-file" matcher block is
+# a v5-only feature and silently fails to match under v4, which is why every
+# PR used to get mislabeled. Keep these short (matching the Conventional
+# Commits types used in commit/PR titles — see AGENTS.md) and mapped to
+# a distinct area of the repo, so a PR gets the labels that actually describe
+# what changed, not one catch-all. Colors and descriptions for every label
+# (these plus the semantic feat/fix/refactor/perf/chore types) live in
+# .github/label-definitions.yml, applied by the "Sync Labels" workflow —
+# path globs can't tell a fix from a feature, so that part stays manual.
 
-features:
-  - docs:
-      - changed-files:
-          - any-glob-to-any-file: "docs/**"
-  - code:
-      - changed-files:
-          - any-glob-to-any-file: "src/**/*.rs"
-  - workflows:
-      - changed-files:
-          - any-glob-to-any-file: ".github/workflows/**"
+docs:
+  - "**/*.md"
+  - "docs/**"
+
+ci:
+  - ".github/workflows/**"
+
+rust:
+  - "src/**/*.rs"
+
+test:
+  - "tests/**/*.rs"
+  - "src/**/tests.rs"
+
+deps:
+  - "Cargo.toml"
+  - "Cargo.lock"
+
+scripts:
+  - "scripts/**"
+
+tooling:
+  - ".claude/**"
+  - "AGENTS.md"

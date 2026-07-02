@@ -15,3 +15,8 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           configuration-path: .github/labels.yml
+          # sync-labels stays off: actions/labeler syncs against its config
+          # only, so it can't tell a manually-applied semantic label (feat,
+          # fix, refactor, perf, chore) from a stale one and will strip both.
+          # There's no native way to protect specific labels from sync, so
+          # this only ever adds area labels and never removes anything.

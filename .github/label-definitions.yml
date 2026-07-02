@@ -1,0 +1,71 @@
+# Label name, color, and description definitions, applied by
+# .github/workflows/sync-labels.yml (EndBug/label-sync). This is the single
+# place colors live; .github/labels.yml only maps labels to path globs and
+# has no color field.
+#
+# Color groups:
+# - Danger/urgent (red)    -> fix
+# - Docs (light gray)      -> docs
+# - CI/CD, GitHub (purple) -> ci
+# - everything else has its own distinct color so groups stay visually
+#   separable at a glance.
+#
+# `aliases` rename an existing default GitHub label in place (keeps its
+# history on already-labeled issues/PRs) instead of creating a duplicate.
+
+# Semantic type — matches the Conventional Commits prefix used in commit
+# messages and PR titles (see AGENTS.md). Applied by hand; path globs
+# can't tell a fix from a feature.
+- name: feat
+  color: "2ea44f"
+  description: New feature
+  aliases: [enhancement]
+
+- name: fix
+  color: "d73a4a"
+  description: Bug fix
+  aliases: [bug]
+
+- name: refactor
+  color: "fbca04"
+  description: Code change with no behavior change
+
+- name: perf
+  color: "1abc9c"
+  description: Performance improvement
+
+- name: chore
+  color: "cccccc"
+  description: Maintenance with no user-facing change
+
+# Area — auto-applied by .github/labels.yml based on changed paths.
+- name: docs
+  color: "eeeeee"
+  description: Documentation changes
+  aliases: [documentation]
+
+- name: test
+  color: "c5def5"
+  description: Test-only changes
+  aliases: [tests]
+
+- name: ci
+  color: "6f42c1"
+  description: GitHub Actions / CI workflow changes
+
+- name: deps
+  color: "0366d6"
+  description: Dependency updates (Cargo.toml/Cargo.lock)
+  aliases: [dependencies]
+
+- name: rust
+  color: "dea584"
+  description: Rust source changes (src/**/*.rs)
+
+- name: scripts
+  color: "5319e7"
+  description: Repo scripts (scripts/**)
+
+- name: tooling
+  color: "6a737d"
+  description: Agent/workspace tooling (.claude/**, AGENTS.md)
