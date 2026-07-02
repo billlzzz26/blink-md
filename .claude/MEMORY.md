@@ -86,6 +86,7 @@ surface).
 
 1. merged docs/AGENTS.md into root AGENTS.md (single crate, no workspace members needing their own copy) and added section 12 file-placement/documentation rules (00:08)
 2. added CLAUDE.md (commands + architecture only, pointer to AGENTS.md for behavior/workflow rules) (00:17)
+3. clarify CLAUDE.md that mcp-serve's early dispatch means no token needed to start, not that it never touches the network (notion_live tools do) (00:29)
 
 ### 2026-07-01
 

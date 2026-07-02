@@ -30,7 +30,9 @@ Two separate type layers for Notion, easy to conflate. `src/models/` are raw Not
 
 `NotionClient` (`src/client.rs`) is just the HTTP/rate-limit layer. Its actual API surface is implemented as methods across `src/api/*.rs`, one file per Notion resource (`pages.rs`, `blocks.rs`, `databases.rs`, `search.rs`, `users.rs`, `comments.rs`, `views.rs`, `files.rs`, `trash.rs`, `webhooks.rs`), plus `markdown.rs`/`markdown_frontmatter.rs` for the Markdown-side parsing that `src/converter/` consumes.
 
-CLI command dispatch order matters. `src/main.rs` checks for `NOTION_TOKEN` before running most commands, but offline commands (`convert`, `diff`, `upgrade`, `generate-skills`, `mcp-serve`) are dispatched before that check since they never touch the network. When adding a new command that doesn't need Notion, add it to that early-dispatch list — it's an easy thing to regress.
+CLI command dispatch order matters. `src/main.rs` checks for `NOTION_TOKEN` before running most commands, but offline commands (`convert`, `diff`, `upgrade`, `generate-skills`) are dispatched before that check since they never touch the network. When adding a new command that doesn't need Notion, add it to that early-dispatch list — it's an easy thing to regress.
+
+`mcp-serve` is also dispatched before the token check, but for a different reason: starting the MCP server itself needs no token, since `src/mcp/server.rs` only registers the `notion_live` tools (`src/mcp/tools/notion_live.rs`) when `NOTION_TOKEN` is present in the environment. Once registered, those tools do make live Notion API calls through `NotionClient` — so "dispatched early" here means "doesn't need a token to start," not "never touches the network."
 
 `src/sync/` backs `blink-md sync --dir`: `id_mapper.rs` maps local files to remote Notion page IDs, `builder.rs`/`schema.rs`/`json_schema.rs` support frontmatter-driven sync. `generate_skills.rs` is unrelated to `.claude/skills/` — it generates product-facing "persona/recipe" skill docs from `src/registry/{personas,recipes}.toml` (a CLI feature, not agent tooling).
 
