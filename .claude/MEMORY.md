@@ -34,13 +34,19 @@
 
 ## Current Focus (v0.4.2)
 
-Markdown + YAML Frontmatter <-> Notion Database: complete (Phases A-E - detection,
-property mapping, converter, sync glue, page export). Next up: M1 of the
-`docs/ARCHITECTURE.md` migration plan (freeze/version the IR contract), pending
-user go-ahead. Deferred Notion work tracked in issues #39 (OAuth), #40 (webhook
-worker), #41 (remaining API surface). v0.4.2 tag/crates.io publish also pending
-user go-ahead (PR #43 merged to main; tagging triggers an irreversible crates.io
-publish).
+PR #45 open (branch claude/project-next-steps-j2m3t3): root AGENTS.md
+rewrite (merged docs/AGENTS.md in, added numbered sections + GFM alerts,
+file-placement rules in section 12), a fixed label system (`.github/labels.yml`
+corrected to actions/labeler@v4's flat glob syntax, `.github/label-definitions.yml`
++ `sync-labels.yml` for colors), and this memory system rewrite
+(`.claude/skills/add-memory/`, now portable with templates). Passed
+CodeRabbit + cubic review rounds; awaiting merge.
+
+Separately, still pending user go-ahead: M1 of the `docs/ARCHITECTURE.md`
+migration plan (freeze/version the IR contract), and the v0.4.2 git
+tag/crates.io publish (irreversible once tagged). Deferred Notion work
+tracked in issues #39 (OAuth), #40 (webhook worker), #41 (remaining API
+surface).
 
 ## Build & CI
 
@@ -66,6 +72,19 @@ publish).
 #### refactor
 
 1. relocate add-memory into skills/add-memory/scripts, add portable root-detection and MEMORY.md/session templates for reuse in other projects (00:04)
+
+#### fix
+
+1. root-caused labels.yml mislabeling everything as one label - actions/labeler@v4 doesn't support the v5-only changed-files/any-glob-to-any-file matcher syntax; rewrote to the flat v4-compatible glob format (00:08)
+2. reverted sync-labels:true on the path-based labeler after confirming it can strip manually-applied semantic labels with no way to protect them; added persist-credentials:false to sync-labels.yml checkout (00:08)
+
+#### feat
+
+1. added .github/label-definitions.yml (color-grouped label colors/descriptions: red=fix, light gray=docs, dark purple=ci) and .github/workflows/sync-labels.yml (EndBug/label-sync) to apply them (00:08)
+
+#### docs
+
+1. merged docs/AGENTS.md into root AGENTS.md (single crate, no workspace members needing their own copy) and added section 12 file-placement/documentation rules (00:08)
 
 ### 2026-07-01
 
